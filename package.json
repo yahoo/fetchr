@@ -19,14 +19,6 @@
       "url": "https://github.com/ouchtown/fetchr/blob/master/LICENSE.md"
     }
   ],
-  "devDependencies": {
-    "chai": "^1.9.1",
-    "istanbul": "^0.2.10",
-    "jshint": "^2.5.1",
-    "mocha": "^1.20.0",
-    "mockery" : "^1.4.0",
-    "precommit-hook": "^1.0.2"
-  },
   "dependencies": {
     "debug": "^1.0.2",
     "lodash.foreach": "^2.4.1",
@@ -39,6 +31,15 @@
     "lodash.pick": "^2.4.1",
     "lodash.some": "^2.4.1",
     "lodash.values": "^2.4.1"
+  },
+  "devDependencies": {
+    "chai": "^1.9.1",
+    "istanbul": "^0.2.10",
+    "jshint": "^2.5.1",
+    "lodash": "^2.4.1",
+    "mocha": "^1.20.0",
+    "mockery" : "^1.4.0",
+    "precommit-hook": "^1.0.2"
   },
   "jshintConfig": {
     "node": true
