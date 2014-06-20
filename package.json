@@ -1,0 +1,51 @@
+{
+  "name": "fetchr",
+  "version": "0.0.3",
+  "description": "Fetchr augments Flux applications by allowing Flux stores to be used on server and client to fetch data",
+  "main": "index.js",
+  "scripts": {
+    "cover": "node node_modules/istanbul/lib/cli.js cover --dir artifacts -- ./node_modules/mocha/bin/_mocha tests/unit/ --recursive --reporter spec",
+    "lint": "./node_modules/.bin/jshint libs tests",
+    "test": "./node_modules/.bin/mocha tests/unit/ --recursive --reporter spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:ouchtown/fetchr"
+  },
+  "author": "Rajiv Tirumalareddy <rajivtirum@yahoo-inc.com>",
+  "licenses": [
+    {
+      "type": "BSD",
+      "url": "https://github.com/ouchtown/fetchr/blob/master/LICENSE.md"
+    }
+  ],
+  "devDependencies": {
+    "chai": "^1.9.1",
+    "istanbul": "^0.2.10",
+    "jshint": "^2.5.1",
+    "mocha": "^1.20.0",
+    "precommit-hook": "^1.0.2"
+  },
+  "dependencies": {
+    "debug": "^1.0.2",
+    "lodash.foreach": "^2.4.1",
+    "lodash.isarray": "^2.4.1",
+    "lodash.isfunction": "^2.4.1",
+    "lodash.isnumber": "^2.4.1",
+    "lodash.isobject": "^2.4.1",
+    "lodash.merge": "^2.4.1",
+    "lodash.noop": "^2.4.1",
+    "lodash.pick": "^2.4.1",
+    "lodash.some": "^2.4.1",
+    "lodash.values": "^2.4.1"
+  },
+  "jshintConfig": {
+    "node": true
+  },
+  "keywords": [
+    "flux",
+    "react",
+    "fetchr",
+    "dispatchr"
+  ]
+}
