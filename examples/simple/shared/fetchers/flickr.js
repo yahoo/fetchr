@@ -1,3 +1,7 @@
+/**
+ * Copyright 2014, Yahoo! Inc.
+ * Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
+ */
 var request = require('superagent'),
     flickr_api_key = '7debd4efa50e751b97e1b34b78c14231',
     flickr_api_root = 'https://api.flickr.com/services/rest/',

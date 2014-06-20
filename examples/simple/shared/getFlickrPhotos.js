@@ -1,3 +1,7 @@
+/**
+ * Copyright 2014, Yahoo! Inc.
+ * Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
+ */
 var fetcher = require('fetchr');
 module.exports = function flickrRead (callback) {
     fetcher.read('flickr', {
