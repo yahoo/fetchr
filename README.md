@@ -9,7 +9,7 @@ On the client, however, stores can NOT call the database in the same way. Instea
 Fetchr provides an appropriate abstraction so that you can fetch (CRUD) your data in your stores using the same exact syntax on server and client side.
 
 
-# Usage
+# Setup
 
 Fetchr needs delicate set up to work properly.
 
@@ -78,6 +78,10 @@ plugins: [
     //...
 ]
 ```
+
+# Usage Examples
+
+See the [simple example](https://github.com/ouchtown/fetchr/tree/master/examples/simple)
 
 # License
 
