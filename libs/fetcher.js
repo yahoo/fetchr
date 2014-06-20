@@ -25,6 +25,7 @@ var Fetcher = {
      *     @param {Object} next
      */
     middleware: function (config) {
+        config = config || {};
         pathPrefix = config.pathPrefix || defaultPathPrefix;
         return function (req, res, next) {
             var request;
