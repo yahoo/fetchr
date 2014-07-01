@@ -1,4 +1,4 @@
-# Fetchr [![Build Status](https://travis-ci.org/ouchtown/fetchr.svg?branch=master)](https://travis-ci.org/ouchtown/fetchr) [![Dependency Status](https://david-dm.org/ouchtown/fetchr.svg)](https://david-dm.org/ouchtown/fetchr)
+# Fetchr [![Build Status](https://travis-ci.org/yahoo/fetchr.svg?branch=master)](https://travis-ci.org/yahoo/fetchr) [![Dependency Status](https://david-dm.org/yahoo/fetchr.svg)](https://david-dm.org/yahoo/fetchr)
 
 Fetchr augments [Flux][] applications by allowing [Flux][] stores to be used on server and client to fetch data.
 
@@ -86,13 +86,13 @@ plugins: [
 
 # Usage Examples
 
-See the [simple example](https://github.com/ouchtown/fetchr/tree/master/examples/simple)
+See the [simple example](https://github.com/yahoo/fetchr/tree/master/examples/simple)
 
 # License
 
 This software is free to use under the Yahoo! Inc. BSD license.
 See the [LICENSE file][] for license text and copyright information.
 
-[LICENSE file]: https://github.com/ouchtown/fetchr/blob/master/LICENSE.md
+[LICENSE file]: https://github.com/yahoo/fetchr/blob/master/LICENSE.md
 
 [Flux]: http://facebook.github.io/react/docs/flux-overview.html
