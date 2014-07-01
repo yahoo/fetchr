@@ -10,13 +10,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:ouchtown/fetchr"
+    "url": "git@github.com:yahoo/fetchr"
   },
   "author": "Rajiv Tirumalareddy <rajivtirum@yahoo-inc.com>",
   "licenses": [
     {
       "type": "BSD",
-      "url": "https://github.com/ouchtown/fetchr/blob/master/LICENSE.md"
+      "url": "https://github.com/yahoo/fetchr/blob/master/LICENSE.md"
     }
   ],
   "dependencies": {
@@ -45,6 +45,7 @@
     "node": true
   },
   "keywords": [
+    "yahoo",
     "flux",
     "react",
     "fetchr",
