@@ -30,7 +30,8 @@
     "lodash.noop": "^2.4.1",
     "lodash.pick": "^2.4.1",
     "lodash.some": "^2.4.1",
-    "lodash.values": "^2.4.1"
+    "lodash.values": "^2.4.1",
+    "xhr": "^1.13.0"
   },
   "devDependencies": {
     "chai": "^1.9.1",

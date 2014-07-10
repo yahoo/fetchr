@@ -33,7 +33,8 @@ var _ = {
     METHOD_PUT = 'PUT',
     METHOD_POST = 'POST',
     METHOD_DELETE = 'DELETE',
-    NULL = null;
+    NULL = null,
+    xhr = require('xhr');
 
 //trim polyfill, maybe pull from npm later
 if (!String.prototype.trim) {
@@ -139,7 +140,7 @@ function mergeConfig(config) {
     return cfg;
 }
 
-function xhr(method, url, headers, data, config, callback) {
+function doXhr(method, url, headers, data, config, callback) {
     var options, timeout;
 
     config = mergeConfig(config);
@@ -177,22 +178,20 @@ function xhr(method, url, headers, data, config, callback) {
 }
 
 function io(url, options) {
-    var method = options.method || METHOD_GET,
-        r = new XMLHttpRequest();
+    xhr({
+        url: url,
+        method: options.method || METHOD_GET,
+        timeout: options.timeout,
+        headers: options.headers,
+        body: options.data
+    }, function (err, r, body) {
+        if (err) {
+            options.on.failure.call(r, null, r);
+        } else {
+            options.on.success.call(r, null, r);
+        }
 
-    r.open(method, url, true);
-
-    r.timeout = options.timeout;
-
-    _.forEach(options.headers, function (v, k) {
-        r.setRequestHeader(k, v);
     });
-
-    r.onload = options.on.success.bind(r, null, r);
-    r.onerror = options.on.failure.bind(r, null, r);
-    r.ontimeout = options.on.failure.bind(r, null, r);
-
-    r.send(options.data);
 }
 
 /**
@@ -212,7 +211,7 @@ module.exports = {
      * @param {Function} callback The callback funciton, with two params (error, response)
      */
     get : function (url, headers, config, callback) {
-        xhr(METHOD_GET, url, headers, NULL, config, callback);
+        doXhr(METHOD_GET, url, headers, NULL, config, callback);
     },
 
     /**
@@ -227,7 +226,7 @@ module.exports = {
      * @param {Function} callback The callback funciton, with two params (error, response)
      */
     put : function (url, headers, data, config, callback) {
-        xhr(METHOD_PUT, url, headers, data, config, callback);
+        doXhr(METHOD_PUT, url, headers, data, config, callback);
     },
 
     /**
@@ -243,7 +242,7 @@ module.exports = {
      * @param {Function} callback The callback funciton, with two params (error, response)
      */
     post : function (url, headers, data, config, callback) {
-        xhr(METHOD_POST, url, headers, data, config, callback);
+        doXhr(METHOD_POST, url, headers, data, config, callback);
     },
 
     /**
@@ -257,6 +256,6 @@ module.exports = {
      * @param {Function} callback The callback funciton, with two params (error, response)
      */
     del : function (url, headers, config, callback) {
-        xhr(METHOD_DELETE, url, headers, NULL, config, callback);
+        doXhr(METHOD_DELETE, url, headers, NULL, config, callback);
     }
 };
