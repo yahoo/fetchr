@@ -7,19 +7,16 @@
 "use strict";
 
 var expect = require('chai').expect,
-    fetcher = require('../../../libs/fetcher'),
+    Fetchr = require('../../../libs/fetcher'),
     mockFetcher = require('../../mock/fakeFetcher'),
     _ = require('lodash'),
     qs = require('querystring');
 
 describe('Server Fetcher', function () {
+    var fetcher;
 
     before(function() {
-        fetcher._resetAllFetchers();
-    });
-
-    after(function() {
-        fetcher._resetAllFetchers();
+        fetcher = new Fetchr();
     });
 
     it('should register fetchers', function () {

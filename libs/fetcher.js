@@ -12,10 +12,21 @@ var fetchersList = {},
     GET = 'GET',
     qs = require('querystring'),
     debug = require('debug')('Fetchr:fetchr'),
-    defaultPathPrefix = '/api',
-    pathPrefix = '';
+    DEFAULT_PATH_PREFIX = '/api';
 
-var Fetcher = {
+/**
+ * @class Fetcher
+ * @param {object} options
+ * @param {string} options.pathPrefix The path for XHR requests
+ * @constructor
+ */
+function Fetcher(options) {
+    options = options || {};
+    this.pathPrefix = options.pathPrefix || DEFAULT_PATH_PREFIX;
+    this.fetchers = {};
+}
+
+Fetcher.prototype = {
     /**
      * @method middleware
      * @param {Object} config Configuration object for middleware
@@ -25,19 +36,19 @@ var Fetcher = {
      *     @param {Object} next
      */
     middleware: function (config) {
+        var self = this;
         config = config || {};
-        pathPrefix = config.pathPrefix || defaultPathPrefix;
         return function (req, res, next) {
             var request;
 
-            if (req.path.indexOf(pathPrefix) !== 0) {
+            if (req.path.indexOf(self.pathPrefix) !== 0) {
                 //Skip non fetchr requests
                 next();
                 return;
             }
 
             if (req.method === GET) {
-                var defaultPath = pathPrefix + '/resource/',
+                var defaultPath = self.pathPrefix + '/resource/',
                     path = req.path.substr(defaultPath.length).split(';');
                 request = {
                     resource: path.shift(),
@@ -78,7 +89,7 @@ var Fetcher = {
                 };
             }
 
-            Fetcher.single(request);
+            self.single(request);
             //TODO: Batching and multi requests
         };
     },
@@ -87,7 +98,7 @@ var Fetcher = {
      * @returns {String} get the path prefix to expose to client fetchr
      */
     getPathPrefix: function () {
-        return pathPrefix;
+        return this.pathPrefix;
     },
     /**
      * @method addFetcher
@@ -101,7 +112,7 @@ var Fetcher = {
             throw new Error('Fetcher is not defined correctly');
         }
 
-        fetchersList[name] = fetcher;
+        this.fetchers[name] = fetcher;
         return;
     },
     /**
@@ -111,10 +122,10 @@ var Fetcher = {
      */
     getFetcher: function (name) {
         //Access fetcher by name
-        if (!name || !fetchersList[name]) {
+        if (!name || !this.fetchers[name]) {
             throw new Error('Fetcher could not be found');
         }
-        return fetchersList[name];
+        return this.fetchers[name];
     },
     /**
      * @method getAllFetchers
@@ -122,13 +133,13 @@ var Fetcher = {
      * @returns {Array} array of stored fetchers
      */
     getAllFetchers: function () {
-        return fetchersList;
+        return this.fetchers;
     },
     /**
      * @method resetAllFetchers
      */
     _resetAllFetchers: function () {
-        fetchersList = {};
+        this.fetchers = {};
     },
 
     // ------------------------------------------------------------------
@@ -152,7 +163,7 @@ var Fetcher = {
      */
     single: function (request) {
         debug(request.resource);
-        var store = Fetcher.getFetcher(request.resource.split('.')[0]),
+        var store = this.getFetcher(request.resource.split('.')[0]),
             op = request.operation,
             resource = request.resource,
             params = request.params,
@@ -190,7 +201,7 @@ var Fetcher = {
             context: context,
             callback: callback
         };
-        Fetcher.single(request);
+        this.single(request);
     },
     /**
      * create operation (create as in CRUD).
@@ -212,7 +223,7 @@ var Fetcher = {
             context: context,
             callback: callback
         };
-        Fetcher.single(request);
+        this.single(request);
     },
     /**
      * update operation (update as in CRUD).
@@ -234,7 +245,7 @@ var Fetcher = {
             context: context,
             callback: callback
         };
-        Fetcher.single(request);
+        this.single(request);
     },
     /**
      * delete operation (delete as in CRUD).
@@ -254,7 +265,7 @@ var Fetcher = {
             context: context,
             callback: callback
         };
-        Fetcher.single(request);
+        this.single(request);
     }
 };
 

@@ -84,7 +84,7 @@ describe('Client Fetcher', function () {
                 useCleanCache: true,
                 warnOnUnregistered: false
             });
-            fetcher = require('../../../libs/fetcher.client');
+            fetcher = new (require('../../../libs/fetcher.client'))();
         });
 
         after(function(){
