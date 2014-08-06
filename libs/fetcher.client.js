@@ -28,9 +28,9 @@ var REST = require('./util/http.client'),
     },
     CORE_REQUEST_FIELDS = ['resource', 'operation', 'params', 'body'],
     DEFAULT_GUID = 'g0',
-    DEFAULT_URI = '/api',
+    DEFAULT_PATH_PREFIX = '/api',
     // By default, wait for 20ms to trigger sweep of the queue, after an item is added to the queue.
-    DEFAULT_CONFIG = {wait: 20},
+    DEFAULT_BATCH_WINDOW = 20,
     MAX_URI_LEN = 2048,
     OP_READ = 'read',
     NAME = 'clientFetcher';
@@ -81,7 +81,7 @@ function constructGroupUri(uri, context) {
  */
 function Queue(id, config, sweepFn, callback) {
     this.id = id;
-    this.config = _.merge(DEFAULT_CONFIG, config);
+    this.config = config || {};
     this._sweep = sweepFn;
     this._cb = callback;
     this._items = [];
@@ -162,10 +162,18 @@ Queue.prototype = {
  * }
  * </pre>
  *
- * @class Fetcher
+ * @class FetcherClient
+ * @param {object} options
+ * @param {string} [options.pathPrefix="/api"] The path for XHR requests
+ * @param {integer} [options.batchWindow=20] Number of milliseconds to wait to batch requests
  */
+function Fetcher (options) {
+    options = options || {};
+    this.pathPrefix = options.pathPrefix || DEFAULT_PATH_PREFIX;
+    this.batchWindow = options.batchWindow || DEFAULT_BATCH_WINDOW;
+}
 
-var Fetcher = {
+Fetcher.prototype = {
     /**
      * The store's name.  Same as services names, store names also need to be __globally unique__, through
      * proper namespacing. Namespace path needs to be dot-separated.
@@ -283,7 +291,9 @@ var Fetcher = {
 
         // push request to queue so that it can be batched
         if (!this._q) {
-            this._q = new Queue(this.name, {}, function (requests) {
+            this._q = new Queue(this.name, {
+                wait: this.batchWindow
+            }, function (requests) {
                 return self.batch(requests);
             }, function (batched) {
                 if (!batched) {
@@ -362,7 +372,7 @@ var Fetcher = {
             callback = request.callback || _.noop,
             use_post,
             allow_retry_post,
-            uri = (context.config && (context.config.uri || context.config.xhr)) || DEFAULT_URI,
+            uri = (context.config && (context.config.uri || context.config.xhr)) || this.pathPrefix,
             get_uri,
             requests,
             data;
@@ -490,7 +500,7 @@ var Fetcher = {
             return;
         }
 
-        uri = (context.config && (context.config.uri || context.config.xhr)) || DEFAULT_URI;
+        uri = (context.config && (context.config.uri || context.config.xhr)) || this.pathPrefix;
 
         data = {
             requests: {},

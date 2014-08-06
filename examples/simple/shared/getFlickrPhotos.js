@@ -2,11 +2,11 @@
  * Copyright 2014, Yahoo! Inc.
  * Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
  */
-var fetcher = require('fetchr');
+var fetcher = require('./fetcherInstance');
 module.exports = function flickrRead (callback) {
     fetcher.read('flickr', {
         method: 'flickr.photos.getRecent',
-        per_page: 5,
+        per_page: 5
     },
     {
         format: 'json'
