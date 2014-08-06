@@ -5,8 +5,7 @@
 /**
  * list of registered fetchers
  */
-var fetchersList = {},
-    OP_READ = 'read',
+var OP_READ = 'read',
     OP_CREATE = 'create',
     OP_UPDATE = 'update',
     GET = 'GET',
@@ -17,7 +16,7 @@ var fetchersList = {},
 /**
  * @class Fetcher
  * @param {object} options
- * @param {string} options.pathPrefix The path for XHR requests
+ * @param {string} [options.pathPrefix="/api"] The path for XHR requests
  * @constructor
  */
 function Fetcher(options) {
@@ -29,15 +28,13 @@ function Fetcher(options) {
 Fetcher.prototype = {
     /**
      * @method middleware
-     * @param {Object} config Configuration object for middleware
      * @returns {Function} middleware
      *     @param {Object} req
      *     @param {Object} res
      *     @param {Object} next
      */
-    middleware: function (config) {
+    middleware: function () {
         var self = this;
-        config = config || {};
         return function (req, res, next) {
             var request;
 

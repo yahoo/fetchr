@@ -6,19 +6,14 @@ var http = require('http'),
     path = require('path'),
     fs = require('fs'),
     express = require('express'),
-    fetcher = require('fetchr'),
-    flickrFetcher = require('../shared/fetchers/flickr'),
+    fetcher = require('../shared/fetcherInstance'),
     readFlickr = require('../shared/getFlickrPhotos'),
     readFlickrServer,
     templatePath = path.join(__dirname, '..', 'shared', 'index.html');
 
-fetcher.addFetcher(flickrFetcher);
-
 var app = express();
 
-app.use(fetcher.middleware({
-    pathPrefix: '/myapi'
-}));
+app.use(fetcher.middleware());
 
 
 app.use('/server', function (req, res, next) {

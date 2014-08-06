@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "express": "^4.4.3",
-    "fetchr": "0.0.4",
     "superagent": "^0.18.0"
   },
   "devDependencies": {

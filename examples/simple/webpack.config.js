@@ -11,6 +11,6 @@ module.exports = {
     },
     plugins: [
         //Replace fetcher lib with client side fetcher lib
-        new webpack.NormalModuleReplacementPlugin(/^fetchr$/, require.resolve('fetchr/libs/fetcher.client.js'))
+        new webpack.NormalModuleReplacementPlugin(/^..\/..\/..\/index.js$/, require.resolve('fetchr/libs/fetcher.client.js'))
     ]
 };

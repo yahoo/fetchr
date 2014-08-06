@@ -24,7 +24,8 @@ On the server side, add the fetchr middleware into your express app.
 
 ```js
 var express = require('express'),
-    fetcher = require('fetchr'),
+    Fetcher = require('fetchr'),
+    fetcher = new Fetcher({}),
     app = express();
 
 app.use(fetcher.middleware(
@@ -46,7 +47,8 @@ After setting up the middleware, you can get the pathPrefix by calling `fetcher.
 ```js
 //app.js
 //...
-var fetcher = require('fetchr'),
+var Fetcher = require('fetchr'),
+    fetcher = new Fetcher({}),
     myDataFetcher = require('./dataFetcher');
 
 fetcher.addFetcher(myDataFetcher);

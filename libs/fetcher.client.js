@@ -164,8 +164,8 @@ Queue.prototype = {
  *
  * @class FetcherClient
  * @param {object} options
- * @param {string} options.pathPrefix The path for XHR requests
- * @param {integer} options.batchWindow Number of milliseconds to wait to batch requests
+ * @param {string} [options.pathPrefix="/api"] The path for XHR requests
+ * @param {integer} [options.batchWindow=20] Number of milliseconds to wait to batch requests
  */
 function Fetcher (options) {
     options = options || {};
