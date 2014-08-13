@@ -3,7 +3,6 @@
  * Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
  */
 /*jslint nomen:true,plusplus:true*/
-/*global XMLHttpRequest*/
 /**
  * @module rest-http
  */
@@ -184,7 +183,7 @@ function io(url, options) {
         timeout: options.timeout,
         headers: options.headers,
         body: options.data
-    }, function (err, r, body) {
+    }, function (err, r) {
         if (err) {
             options.on.failure.call(r, null, r);
         } else {

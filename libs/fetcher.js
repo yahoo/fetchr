@@ -10,22 +10,46 @@ var OP_READ = 'read',
     OP_UPDATE = 'update',
     GET = 'GET',
     qs = require('querystring'),
-    debug = require('debug')('Fetchr:fetchr'),
     DEFAULT_PATH_PREFIX = '/api';
 
 /**
- * @class Fetcher
+ * @module fetcherController
  * @param {object} options
  * @param {string} [options.pathPrefix="/api"] The path for XHR requests
- * @constructor
  */
-function Fetcher(options) {
-    options = options || {};
-    this.pathPrefix = options.pathPrefix || DEFAULT_PATH_PREFIX;
-    this.fetchers = {};
-}
 
-Fetcher.prototype = {
+module.exports = function fetcherController (options) {
+    options = options || {};
+
+    var debug = require('debug')('Fetchr:fetchr');
+
+    /**
+     * @class Fetcher
+     * @param {Object} req The request object.  It can contain per-request data.
+     * @constructor
+     */
+    function Fetcher(req) {
+        this.req = req || {};
+    }
+
+    Fetcher.pathPrefix = options.pathPrefix || DEFAULT_PATH_PREFIX;
+    Fetcher.fetchers = {};
+
+    /**
+     * @method addFetcher
+     * @param {Function} fetcher
+     */
+    Fetcher.addFetcher = function (fetcher) {
+        var name = fetcher.name || null;
+        //Store fetcher by name
+        if (!(fetcher && name)) {
+            throw new Error('Fetcher is not defined correctly');
+        }
+
+        this.fetchers[name] = fetcher;
+        return;
+    };
+
     /**
      * @method middleware
      * @returns {Function} middleware
@@ -33,19 +57,19 @@ Fetcher.prototype = {
      *     @param {Object} res
      *     @param {Object} next
      */
-    middleware: function () {
+    Fetcher.prototype.middleware = function () {
         var self = this;
         return function (req, res, next) {
             var request;
 
-            if (req.path.indexOf(self.pathPrefix) !== 0) {
+            if (req.path.indexOf(Fetcher.pathPrefix) !== 0) {
                 //Skip non fetchr requests
                 next();
                 return;
             }
 
             if (req.method === GET) {
-                var defaultPath = self.pathPrefix + '/resource/',
+                var defaultPath = Fetcher.pathPrefix + '/resource/',
                     path = req.path.substr(defaultPath.length).split(';');
                 request = {
                     resource: path.shift(),
@@ -89,61 +113,26 @@ Fetcher.prototype = {
             self.single(request);
             //TODO: Batching and multi requests
         };
-    },
-    /**
-     * @method getPathPrefix
-     * @returns {String} get the path prefix to expose to client fetchr
-     */
-    getPathPrefix: function () {
-        return this.pathPrefix;
-    },
-    /**
-     * @method addFetcher
-     * @param {String} name
-     * @param {Function} fetcher
-     */
-    addFetcher: function (fetcher) {
-        var name = fetcher.name || null;
-        //Store fetcher by name
-        if (!(fetcher && name)) {
-            throw new Error('Fetcher is not defined correctly');
-        }
+    };
 
-        this.fetchers[name] = fetcher;
-        return;
-    },
     /**
      * @method getFetcher
      * @param {String} name
      * @returns {Function} fetcher
      */
-    getFetcher: function (name) {
+    Fetcher.prototype.getFetcher = function (name) {
         //Access fetcher by name
         if (!name || !this.fetchers[name]) {
             throw new Error('Fetcher could not be found');
         }
         return this.fetchers[name];
-    },
-    /**
-     * @method getAllFetchers
-     * @param {String} name
-     * @returns {Array} array of stored fetchers
-     */
-    getAllFetchers: function () {
-        return this.fetchers;
-    },
-    /**
-     * @method resetAllFetchers
-     */
-    _resetAllFetchers: function () {
-        this.fetchers = {};
-    },
+    };
 
     // ------------------------------------------------------------------
     // Data Access Wrapper Methods
     // ------------------------------------------------------------------
 
-/**
+    /**
      * Execute a single request.
      * @method single
      * @param {Object} request
@@ -158,7 +147,7 @@ Fetcher.prototype = {
      * @protected
      * @static
      */
-    single: function (request) {
+    Fetcher.prototype.single = function (request) {
         debug(request.resource);
         var store = this.getFetcher(request.resource.split('.')[0]),
             op = request.operation,
@@ -174,13 +163,13 @@ Fetcher.prototype = {
         }
 
         store[op].apply(store, args);
-    },
+    };
 
     // ------------------------------------------------------------------
     // CRUD Methods
     // ------------------------------------------------------------------
 
-/**
+    /**
      * read operation (read as in CRUD).
      * @method read
      * @param {String} resource  The resource name
@@ -190,7 +179,7 @@ Fetcher.prototype = {
      * @param {Function} callback callback convention is the same as Node.js
      * @static
      */
-    read: function (resource, params, context, callback) {
+    Fetcher.prototype.read = function (resource, params, context, callback) {
         var request = {
             resource: resource,
             operation: 'read',
@@ -199,7 +188,7 @@ Fetcher.prototype = {
             callback: callback
         };
         this.single(request);
-    },
+    };
     /**
      * create operation (create as in CRUD).
      * @method create
@@ -211,7 +200,7 @@ Fetcher.prototype = {
      * @param {Function} callback callback convention is the same as Node.js
      * @static
      */
-    create: function (resource, params, body, context, callback) {
+    Fetcher.prototype.create = function (resource, params, body, context, callback) {
         var request = {
             resource: resource,
             operation: 'create',
@@ -221,7 +210,7 @@ Fetcher.prototype = {
             callback: callback
         };
         this.single(request);
-    },
+    };
     /**
      * update operation (update as in CRUD).
      * @method update
@@ -233,7 +222,7 @@ Fetcher.prototype = {
      * @param {Function} callback callback convention is the same as Node.js
      * @static
      */
-    update: function (resource, params, body, context, callback) {
+    Fetcher.prototype.update = function (resource, params, body, context, callback) {
         var request = {
             resource: resource,
             operation: 'update',
@@ -243,7 +232,7 @@ Fetcher.prototype = {
             callback: callback
         };
         this.single(request);
-    },
+    };
     /**
      * delete operation (delete as in CRUD).
      * @method del
@@ -254,7 +243,7 @@ Fetcher.prototype = {
      * @param {Function} callback callback convention is the same as Node.js
      * @static
      */
-    del: function (resource, params, context, callback) {
+    Fetcher.prototype.del = function (resource, params, context, callback) {
         var request = {
             resource: resource,
             operation: 'del',
@@ -263,7 +252,7 @@ Fetcher.prototype = {
             callback: callback
         };
         this.single(request);
-    }
-};
+    };
 
-module.exports = Fetcher;
+    return Fetcher;
+};

@@ -3,7 +3,7 @@
  * Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
  */
 /*jshint expr:true*/
-/*globals before,after,describe,it */
+/*globals before,describe,it */
 "use strict";
 
 var expect = require('chai').expect,
