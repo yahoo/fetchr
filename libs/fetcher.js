@@ -13,23 +13,24 @@ var OP_READ = 'read',
     DEFAULT_PATH_PREFIX = '/api';
 
 /**
- * @module fetcherController
+ * @module createFetcherClass
  * @param {object} options
  * @param {string} [options.pathPrefix="/api"] The path for XHR requests
  */
 
-module.exports = function fetcherController (options) {
+module.exports = function createFetcherClass (options) {
     options = options || {};
 
-    var debug = require('debug')('Fetchr:fetchr');
+    var debug = require('debug')('Fetchr');
 
     /**
      * @class Fetcher
-     * @param {Object} req The request object.  It can contain per-request data.
+     * @param {Object} options congiguration options for Fetcher
+     * @param {Object} [options.req] The request object.  It can contain per-request data.
      * @constructor
      */
-    function Fetcher(req) {
-        this.req = req || {};
+    function Fetcher(options) {
+        this.options = options || {};
     }
 
     Fetcher.pathPrefix = options.pathPrefix || DEFAULT_PATH_PREFIX;
@@ -46,8 +47,22 @@ module.exports = function fetcherController (options) {
             throw new Error('Fetcher is not defined correctly');
         }
 
-        this.fetchers[name] = fetcher;
+        Fetcher.fetchers[name] = fetcher;
+        debug('fetcher ' + name + ' added');
         return;
+    };
+
+    /**
+     * @method getFetcher
+     * @param {String} name
+     * @returns {Function} fetcher
+     */
+    Fetcher.getFetcher = function (name) {
+        //Access fetcher by name
+        if (!name || !Fetcher.fetchers[name]) {
+            throw new Error('Fetcher could not be found');
+        }
+        return Fetcher.fetchers[name];
     };
 
     /**
@@ -57,8 +72,7 @@ module.exports = function fetcherController (options) {
      *     @param {Object} res
      *     @param {Object} next
      */
-    Fetcher.prototype.middleware = function () {
-        var self = this;
+    Fetcher.middleware = function () {
         return function (req, res, next) {
             var request;
 
@@ -94,6 +108,7 @@ module.exports = function fetcherController (options) {
                 var DEFAULT_GUID = 'g0',
                     singleRequest = requests[DEFAULT_GUID];
                 request = {
+                    req: req,
                     resource: singleRequest.resource,
                     operation: singleRequest.operation,
                     params: singleRequest.params,
@@ -110,23 +125,11 @@ module.exports = function fetcherController (options) {
                 };
             }
 
-            self.single(request);
+            Fetcher.single(request);
             //TODO: Batching and multi requests
         };
     };
 
-    /**
-     * @method getFetcher
-     * @param {String} name
-     * @returns {Function} fetcher
-     */
-    Fetcher.prototype.getFetcher = function (name) {
-        //Access fetcher by name
-        if (!name || !this.fetchers[name]) {
-            throw new Error('Fetcher could not be found');
-        }
-        return this.fetchers[name];
-    };
 
     // ------------------------------------------------------------------
     // Data Access Wrapper Methods
@@ -136,6 +139,7 @@ module.exports = function fetcherController (options) {
      * Execute a single request.
      * @method single
      * @param {Object} request
+     * @param {String} request.req       The req object from express/connect
      * @param {String} request.resource  The resource name
      * @param {String} request.operation The CRUD operation name: 'create|read|update|delete'.
      * @param {Object} request.params    The parameters identify the resource, and along with information
@@ -147,23 +151,25 @@ module.exports = function fetcherController (options) {
      * @protected
      * @static
      */
-    Fetcher.prototype.single = function (request) {
+    Fetcher.single = function (request) {
         debug(request.resource);
-        var store = this.getFetcher(request.resource.split('.')[0]),
+        var fetcher = Fetcher.getFetcher(request.resource.split('.')[0]),
             op = request.operation,
+            req = request.req,
             resource = request.resource,
             params = request.params,
             body = request.body,
             context = request.context,
             callback = request.callback,
-            args = [resource, params, context, callback];
+            args = [req, resource, params, context, callback];
 
         if ((op === OP_CREATE) || (op === OP_UPDATE)) {
-            args.splice(2, 0, body);
+            args.splice(3, 0, body);
         }
 
-        store[op].apply(store, args);
+        fetcher[op].apply(fetcher, args);
     };
+
 
     // ------------------------------------------------------------------
     // CRUD Methods
@@ -181,13 +187,14 @@ module.exports = function fetcherController (options) {
      */
     Fetcher.prototype.read = function (resource, params, context, callback) {
         var request = {
+            req: this.options.req,
             resource: resource,
             operation: 'read',
             params: params,
             context: context,
             callback: callback
         };
-        this.single(request);
+        Fetcher.single(request);
     };
     /**
      * create operation (create as in CRUD).
@@ -202,6 +209,7 @@ module.exports = function fetcherController (options) {
      */
     Fetcher.prototype.create = function (resource, params, body, context, callback) {
         var request = {
+            req: this.options.req,
             resource: resource,
             operation: 'create',
             params: params,
@@ -209,7 +217,7 @@ module.exports = function fetcherController (options) {
             context: context,
             callback: callback
         };
-        this.single(request);
+        Fetcher.single(request);
     };
     /**
      * update operation (update as in CRUD).
@@ -224,6 +232,7 @@ module.exports = function fetcherController (options) {
      */
     Fetcher.prototype.update = function (resource, params, body, context, callback) {
         var request = {
+            req: this.options.req,
             resource: resource,
             operation: 'update',
             params: params,
@@ -231,7 +240,7 @@ module.exports = function fetcherController (options) {
             context: context,
             callback: callback
         };
-        this.single(request);
+        Fetcher.single(request);
     };
     /**
      * delete operation (delete as in CRUD).
@@ -245,13 +254,14 @@ module.exports = function fetcherController (options) {
      */
     Fetcher.prototype.del = function (resource, params, context, callback) {
         var request = {
+            req: this.options.req,
             resource: resource,
             operation: 'del',
             params: params,
             context: context,
             callback: callback
         };
-        this.single(request);
+        Fetcher.single(request);
     };
 
     return Fetcher;

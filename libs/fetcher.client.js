@@ -13,7 +13,7 @@
  */
 var REST = require('./util/http.client'),
     debug = require('debug'),
-    clientFDebug = debug('client-fetcher'),
+    clientFDebug = debug('FetchrClient'),
     _ = {
         forEach :     require('lodash.foreach'),
         values :      require('lodash.values'),
@@ -32,7 +32,7 @@ var REST = require('./util/http.client'),
     DEFAULT_BATCH_WINDOW = 20,
     MAX_URI_LEN = 2048,
     OP_READ = 'read',
-    NAME = 'clientFetcher';
+    NAME = 'FetcherClient';
 
 function parseResponse(response) {
     if (response && response.responseText) {
@@ -141,13 +141,13 @@ Queue.prototype = {
 };
 
 /**
- * @module fetcherClientController
+ * @module createFetcherClient
  * @param {object} options
  * @param {string} [options.pathPrefix="/api"] The path for XHR requests
  * @param {integer} [options.batchWindow=20] Number of milliseconds to wait to batch requests
  */
 
-module.exports = function fetcherClientController (options) {
+module.exports = function createFetcherClient (options) {
     options = options || {};
 
     /**
@@ -172,12 +172,13 @@ module.exports = function fetcherClientController (options) {
      * </pre>
      *
      * @class FetcherClient
-     * @param {object} options
-     * @param {Object} req The request object.  It can contain current-session/context data.
+     * @param {object} options congiguration options for Fetcher
+     * @param {Object} [options.req] The request object.  It can contain current-session/context data.
+     * @param {Object} [options.crumb] The crumb for current session
      */
 
-    function Fetcher (req) {
-        this.req = req || {};
+    function Fetcher (options) {
+        this.options = options || {};
     }
 
     Fetcher.pathPrefix = options.pathPrefix || DEFAULT_PATH_PREFIX;
@@ -200,6 +201,7 @@ module.exports = function fetcherClientController (options) {
          * @static
          */
         create: function (resource, params, body, context, callback) {
+            clientFDebug('is crumb checking enabled', this._isCrumbEnabled());
             this._sync(resource, 'create', params, body, context, callback);
         },
 
@@ -268,6 +270,9 @@ module.exports = function fetcherClientController (options) {
             context = context || {};
             context.config = {};
             context.config.xhr = Fetcher.pathPrefix;
+            if (this.options.crumb) {
+                context.crumb = this.crumb;
+            }
 
             var self = this,
                 request = {
@@ -303,7 +308,9 @@ module.exports = function fetcherClientController (options) {
             }
             this._q.push(request);
         },
-
+        // ------------------------------------------------------------------
+        // Helper Methods
+        // ------------------------------------------------------------------
         /**
          * @method _constructGetUri
          * @private
@@ -337,6 +344,13 @@ module.exports = function fetcherClientController (options) {
                 final_uri += '?' + query.sort().join('&');
             }
             return final_uri;
+        },
+        /**
+         * @method _isCrumbEnabled
+         * @private
+         */
+        _isCrumbEnabled: function () {
+            return !!this.options.crumb;
         },
 
         // ------------------------------------------------------------------
@@ -372,7 +386,8 @@ module.exports = function fetcherClientController (options) {
                 requests,
                 data;
 
-            if (OP_READ !== request.operation && (!context.context || !context.context.crumb)) {
+            if (OP_READ !== request.operation && this._isCrumbEnabled() && (!context.context || !context.context.crumb)) {
+                clientFDebug('missing crumb');
                 return callback({statusCode: 400, statusText: 'missing crumb'});
             }
 
@@ -473,7 +488,8 @@ module.exports = function fetcherClientController (options) {
          * @static
          */
         multi : function (requests) {
-            var uri,
+            var self = this,
+                uri,
                 data,
                 count = 0,
                 context,
@@ -481,15 +497,19 @@ module.exports = function fetcherClientController (options) {
                 request_map = {};
 
             _.some(requests, function (request) {
-                if (request.context && request.context.context && request.context.context.crumb) {
+                if (request.context && request.context.context) {
                     context = request.context;
+                    if (self._isCrumbEnabled() && !request.context.context.crumb) {
+                        return false;
+                    }
                     return true;
                 }
                 return false;
             }, this);
 
-            if (!context || !context.context.crumb) {
+            if (!context || (self._isCrumbEnabled() && !context.context.crumb)) {
                 _.forEach(requests, function (request) {
+                    clientFDebug('missing crumb');
                     request.callback({statusCode: 400, statusText: 'missing crumb'});
                 });
                 return;

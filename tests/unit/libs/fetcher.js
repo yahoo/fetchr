@@ -6,25 +6,28 @@
 /*globals before,describe,it */
 "use strict";
 
-var expect = require('chai').expect,
-    Fetchr = require('../../../libs/fetcher'),
+var chai = require('chai');
+chai.config.includeStack = true;
+var expect = chai.expect,
+    fetchr = require('../../../libs/fetcher'),
+    Fetcher = fetchr(),
+    fetcher = new Fetcher({
+        req: {}
+    }),
     mockFetcher = require('../../mock/fakeFetcher'),
     _ = require('lodash'),
     qs = require('querystring');
 
 describe('Server Fetcher', function () {
-    var fetcher;
-
-    before(function() {
-        fetcher = new Fetchr();
-    });
+//    var Fetcher = fetchr(),
+//        fetcher = new Fetcher();
 
     it('should register fetchers', function () {
-        var fn = fetcher.getFetcher.bind(fetcher, mockFetcher.name);
-        expect(_.size(fetcher.getAllFetchers())).to.equal(0);
+        var fn = Fetcher.getFetcher.bind(fetcher, mockFetcher.name);
+        expect(_.size(Fetcher.fetchers)).to.equal(0);
         expect(fn).to.throw(Error, 'Fetcher could not be found');
-        fetcher.addFetcher(mockFetcher);
-        expect(_.size(fetcher.getAllFetchers())).to.equal(1);
+        Fetcher.addFetcher(mockFetcher);
+        expect(_.size(Fetcher.fetchers)).to.equal(1);
         expect(fn()).to.deep.equal(mockFetcher);
     });
 
@@ -44,7 +47,7 @@ describe('Server Fetcher', function () {
                 next = function () {
                     done();
                 },
-                middleware = fetcher.middleware({pathPrefix: '/api'});
+                middleware = Fetcher.middleware();
 
             middleware(req, res, next);
         });
@@ -88,7 +91,7 @@ describe('Server Fetcher', function () {
                 next = function () {
                     console.log('Not Expected: middleware skipped request');
                 },
-                middleware = fetcher.middleware({pathPrefix: '/api'});
+                middleware = Fetcher.middleware();
 
             middleware(req, res, next);
         });
@@ -119,7 +122,7 @@ describe('Server Fetcher', function () {
                 next = function () {
                     console.log('Not Expected: middleware skipped request');
                 },
-                middleware = fetcher.middleware({pathPrefix: '/api'});
+                middleware = Fetcher.middleware({pathPrefix: '/api'});
             middleware(req, res, next);
         });
     });
@@ -129,21 +132,19 @@ describe('Server Fetcher', function () {
             params = {},
             body = {},
             context = {};
+
+
         it('should handle CREATE', function (done) {
-            var operation = 'create';
-            fetcher[operation](resource, params, body, context, done);
+            fetcher.create(resource, params, body, context, done);
         });
         it('should handle READ', function (done) {
-            var operation = 'read';
-            fetcher[operation](resource, params, context, done);
+            fetcher.read(resource, params, context, done);
         });
         it('should handle UPDATE', function (done) {
-            var operation = 'update';
-            fetcher[operation](resource, params, body, context, done);
+            fetcher.update(resource, params, body, context, done);
         });
         it('should handle DELETE', function (done) {
-            var operation = 'del';
-            fetcher[operation](resource, params, context, done);
+            fetcher.del(resource, params, context, done);
         });
     });
 
