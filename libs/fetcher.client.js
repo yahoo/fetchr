@@ -7,7 +7,7 @@
  * Fetcher is a RESTful data store, that implements the CRUD interface.
  *
  * In addition, it allows request consolidation.
- * Because touchdown /_td_api accepts multi-request in one HTTP request, remote store
+ * If /api accepts multi-request in one HTTP request, remote store
  * batches requests into one request.
  * @module Fetcher
  */
@@ -140,8 +140,8 @@ module.exports = function createFetcherClient (options) {
     options = options || {};
 
     /**
-     * Requests that are initiated within a time window are batched and sent to td-api xhr endpoint.
-     * The received responses are splitted and routed back to the callback function assigned by initiator
+     * Requests that are initiated within a time window are batched and sent to xhr endpoint.
+     * The received responses are split and routed back to the callback function assigned by initiator
      * of each request.
      *
      * All requests go out from this store is via HTTP POST.  Therefore, crumb is required in the context
@@ -149,7 +149,7 @@ module.exports = function createFetcherClient (options) {
      * <pre>
      * {
      *   config: {
-     *     uri : '/myxhr/_td_api'
+     *     uri : '/api'
      *   },
      *   context: {
      *     crumb : '5YFuDK6R',

@@ -23,35 +23,44 @@ Fetchr needs delicate set up to work properly.
 On the server side, add the fetchr middleware into your express app.
 
 ```js
+//...
 var express = require('express'),
-    Fetcher = require('fetchr'),
-    fetcher = new Fetcher({}),
+    fetchr = require('fetchr'),
+    Fetcher = fetchr({
+        pathPrefix: '/myCustomAPIEndpoint'
+    }),
     app = express();
 
-app.use(fetcher.middleware(
-    pathPrefix: '/myCustomAPIEndpoint'
-));
+app.use(Fetcher.middleware());
+//...
 ```
 
 ## 2. API pathPrefix
 
 `pathPrefix` config option for the middleware is optional. Defaults to `/api`.
 
-It is necessary to expose this prefix to the client side fetcher (`fetchr.client.js`) via a global variable, `window.fetcherPathPrefix`.
-
-After setting up the middleware, you can get the pathPrefix by calling `fetcher.getPathPrefix()` and assign it to the global `window.fetcherPathPrefix`.
-
+It is necessary to define this prefix on the client side fetcher (`fetchr.client.js`) just as on the server side.
+```js
+//...
+var fetchr = require('fetchr'),
+    Fetcher = fetchr({
+        pathPrefix: '/myCustomAPIEndpoint'
+    });
+//...
+```
 
 ## 3. Register data fetchers for API and/or DB access
 
 ```js
 //app.js
 //...
-var Fetcher = require('fetchr'),
-    fetcher = new Fetcher({}),
+var fetchr = require('fetchr'),
+    Fetcher = fetchr({
+        pathPrefix: '/myCustomAPIEndpoint'
+    }),
     myDataFetcher = require('./dataFetcher');
 
-fetcher.addFetcher(myDataFetcher);
+Fetcher.addFetcher(myDataFetcher);
 //...
 ```
 
@@ -61,18 +70,75 @@ module.exports = {
     //Name is required
     name: 'data_api_fetcher',
     //At least one of the CRUD methods is Required
-    read: function(resource, params, context, callback) {
+    read: function(req, resource, params, config, callback) {
       //...
     },
     //other methods
-    //create: function(resource, params, body, context, callback) {},
-    //update: function(resource, params, body, context, callback) {},
-    //del: function(resource, params, context, callback) {}
+    //create: function(req, resource, params, body, config, callback) {},
+    //update: function(req, resource, params, body, config, callback) {},
+    //del: function(req, resource, params, config, callback) {}
 }
 
 ```
 
-## 4. Swap Fetchr <=> Fetchr.client
+## 4. Instantiating the Fetchr Class
+
+Data fetchers might need access to each individual request, for example, to get the current logged in user's session. For this reason, Fetcher will have to be instantiated once per request.
+
+On the serverside, this requires fetcher to be instantiated per request, in express middleware.
+
+On the clientside, this only needs to happen on page load.
+
+
+```js
+//app.js - server
+//...
+var express = require('express'),
+    fetchr = require('fetchr'),
+    Fetcher = fetchr({
+        pathPrefix: '/myCustomAPIEndpoint'
+    }),
+    app = express(),
+    myDataFetcher = require('./dataFetcher');
+
+Fetcher.addFetcher(myDataFetcher);
+
+app.use(Fetcher.middleware());
+
+app.use(function(req, res, next) {
+    //instantiated fetcher with access to req object
+    var fetcher = new Fetcher({req: req});
+
+    fetcher.read('data_api_fetcher', {id: ###}, {}, function (err, data) {
+        //handle err and/or data returned from data fetcher in this callback
+    })
+});
+
+//...
+```
+
+
+```js
+//app.js - client
+//...
+var fetchr = require('fetchr'),
+    Fetcher = fetchr({
+        pathPrefix: '/myCustomAPIEndpoint'
+    }),
+    fetcher = new Fetcher({
+        crumb: false, // if crumbs should be enabled, default: false
+        context: {
+            crumb: 'Ax89D94j', //optional crumb string to send back to server with each request. Validation should happen on server.
+        }
+    });
+    fetcher.read('data_api_fetcher', {id: ###}, {}, function (err, data) {
+        //handle err and/or data returned from data fetcher in this callback
+    })
+//...
+```
+
+
+## 5. Swap Fetchr <=> Fetchr.client
 
 Fetchr relies on a build process that swaps out `lib/fetchr.js` with `lib/fetchr.client.js` in the bundle that is generated for client side use. Usually the bundle is generated using tools like [webpack](http://webpack.github.io/) or [browserify](http://browserify.org/).
 
