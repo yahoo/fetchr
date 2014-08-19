@@ -26,11 +26,12 @@ module.exports = function createFetcherClass (options) {
     /**
      * @class Fetcher
      * @param {Object} options congiguration options for Fetcher
-     * @param {Object} [options.req] The request object.  It can contain per-request data.
+     * @param {Object} [options.req] The request object.  It can contain per-request/context data.
      * @constructor
      */
     function Fetcher(options) {
         this.options = options || {};
+        this.req = this.options.req || {};
     }
 
     Fetcher.pathPrefix = options.pathPrefix || DEFAULT_PATH_PREFIX;
@@ -89,7 +90,7 @@ module.exports = function createFetcherClass (options) {
                     resource: path.shift(),
                     operation: OP_READ,
                     params: qs.parse(path.join('&')),
-                    context: {},
+                    config: {},
                     callback: function (err, data) {
                         if (err) {
                             res.send('400', 'request failed');
@@ -98,8 +99,7 @@ module.exports = function createFetcherClass (options) {
                     }
                 };
             } else {
-                var requests = req.body.requests,
-                    context = req.body.context;
+                var requests = req.body.requests;
 
                 if (!requests || requests.length === 0) {
                     res.send(204);
@@ -113,7 +113,7 @@ module.exports = function createFetcherClass (options) {
                     operation: singleRequest.operation,
                     params: singleRequest.params,
                     body: singleRequest.body || {},
-                    context: context,
+                    config: singleRequest.config,
                     callback: function(err, data) {
                         if(err) {
                             res.send('400', 'request failed');
@@ -146,7 +146,7 @@ module.exports = function createFetcherClass (options) {
      *                           carried in query and matrix parameters in typical REST API
      * @param {Object} request.body      The JSON object that contains the resource data that is being updated. Not used
      *                           for read and delete operations.
-     * @param {Object} request.context The context object.  It can contain "config" for per-request config data.
+     * @param {Object} request.config The config object.  It can contain "config" for per-request config data.
      * @param {Function} request.callback callback convention is the same as Node.js
      * @protected
      * @static
@@ -159,9 +159,9 @@ module.exports = function createFetcherClass (options) {
             resource = request.resource,
             params = request.params,
             body = request.body,
-            context = request.context,
+            config = request.config,
             callback = request.callback,
-            args = [req, resource, params, context, callback];
+            args = [req, resource, params, config, callback];
 
         if ((op === OP_CREATE) || (op === OP_UPDATE)) {
             args.splice(3, 0, body);
@@ -181,17 +181,17 @@ module.exports = function createFetcherClass (options) {
      * @param {String} resource  The resource name
      * @param {Object} params    The parameters identify the resource, and along with information
      *                           carried in query and matrix parameters in typical REST API
-     * @param {Object} [context={}] The context object.  It can contain "config" for per-request config data.
+     * @param {Object} [config={}] The config object.  It can contain "config" for per-request config data.
      * @param {Function} callback callback convention is the same as Node.js
      * @static
      */
-    Fetcher.prototype.read = function (resource, params, context, callback) {
+    Fetcher.prototype.read = function (resource, params, config, callback) {
         var request = {
-            req: this.options.req,
+            req: this.req,
             resource: resource,
             operation: 'read',
             params: params,
-            context: context,
+            config: config,
             callback: callback
         };
         Fetcher.single(request);
@@ -203,18 +203,18 @@ module.exports = function createFetcherClass (options) {
      * @param {Object} params    The parameters identify the resource, and along with information
      *                           carried in query and matrix parameters in typical REST API
      * @param {Object} body      The JSON object that contains the resource data that is being created
-     * @param {Object} [context={}] The context object.  It can contain "config" for per-request config data.
+     * @param {Object} [config={}] The config object.  It can contain "config" for per-request config data.
      * @param {Function} callback callback convention is the same as Node.js
      * @static
      */
-    Fetcher.prototype.create = function (resource, params, body, context, callback) {
+    Fetcher.prototype.create = function (resource, params, body, config, callback) {
         var request = {
-            req: this.options.req,
+            req: this.req,
             resource: resource,
             operation: 'create',
             params: params,
             body: body,
-            context: context,
+            config: config,
             callback: callback
         };
         Fetcher.single(request);
@@ -226,18 +226,18 @@ module.exports = function createFetcherClass (options) {
      * @param {Object} params    The parameters identify the resource, and along with information
      *                           carried in query and matrix parameters in typical REST API
      * @param {Object} body      The JSON object that contains the resource data that is being updated
-     * @param {Object} [context={}] The context object.  It can contain "config" for per-request config data.
+     * @param {Object} [config={}] The config object.  It can contain "config" for per-request config data.
      * @param {Function} callback callback convention is the same as Node.js
      * @static
      */
-    Fetcher.prototype.update = function (resource, params, body, context, callback) {
+    Fetcher.prototype.update = function (resource, params, body, config, callback) {
         var request = {
-            req: this.options.req,
+            req: this.req,
             resource: resource,
             operation: 'update',
             params: params,
             body: body,
-            context: context,
+            config: config,
             callback: callback
         };
         Fetcher.single(request);
@@ -248,17 +248,17 @@ module.exports = function createFetcherClass (options) {
      * @param {String} resource  The resource name
      * @param {Object} params    The parameters identify the resource, and along with information
      *                           carried in query and matrix parameters in typical REST API
-     * @param {Object} [context={}] The context object.  It can contain "config" for per-request config data.
+     * @param {Object} [config={}] The config object.  It can contain "config" for per-request config data.
      * @param {Function} callback callback convention is the same as Node.js
      * @static
      */
-    Fetcher.prototype.del = function (resource, params, context, callback) {
+    Fetcher.prototype.del = function (resource, params, config, callback) {
         var request = {
-            req: this.options.req,
+            req: this.req,
             resource: resource,
             operation: 'del',
             params: params,
-            context: context,
+            config: config,
             callback: callback
         };
         Fetcher.single(request);

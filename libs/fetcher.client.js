@@ -53,17 +53,6 @@ function jsonifyComplexType(value) {
     return value;
 }
 
-function constructGroupUri(uri, context) {
-    var query = [], final_uri = uri;
-    _.forEach(context.context, function (v, k) {
-        query.push(k + '=' + encodeURIComponent(v));
-    });
-    if (query.length > 0) {
-        final_uri += '?' + query.sort().join('&');
-    }
-    return final_uri;
-}
-
 /**
  * The queue sweeps and processs items in the queue when there are items in the queue.
  * When a item is pushed into the queue, a timeout is set to guarantee the item will be processd soon.
@@ -173,12 +162,14 @@ module.exports = function createFetcherClient (options) {
      *
      * @class FetcherClient
      * @param {object} options congiguration options for Fetcher
-     * @param {Object} [options.req] The request object.  It can contain current-session/context data.
-     * @param {Object} [options.crumb] The crumb for current session
+     * @param {Object} [options.context] The context object.  It can contain current-session/context data.
+     * @param {String} [options.context.crumb] The crumb for current session
+     * @param {Boolean} [options.crumb = false]  Is crumb enabled for current session
      */
 
     function Fetcher (options) {
         this.options = options || {};
+        this.context = this.options.context || {};
     }
 
     Fetcher.pathPrefix = options.pathPrefix || DEFAULT_PATH_PREFIX;
@@ -196,13 +187,12 @@ module.exports = function createFetcherClient (options) {
          * @param {Object} params    The parameters identify the resource, and along with information
          *                           carried in query and matrix parameters in typical REST API
          * @param {Object} body      The JSON object that contains the resource data that is being created
-         * @param {Object} [context={}] The context object.  It can contain "config" for per-request config data.
+         * @param {Object} config    The "config" object for per-request config data.
          * @param {Function} callback callback convention is the same as Node.js
          * @static
          */
-        create: function (resource, params, body, context, callback) {
-            clientFDebug('is crumb checking enabled', this._isCrumbEnabled());
-            this._sync(resource, 'create', params, body, context, callback);
+        create: function (resource, params, body, config, callback) {
+            this._sync(resource, 'create', params, body, config, callback);
         },
 
         /**
@@ -211,12 +201,12 @@ module.exports = function createFetcherClient (options) {
          * @param {String} resource  The resource name
          * @param {Object} params    The parameters identify the resource, and along with information
          *                           carried in query and matrix parameters in typical REST API
-         * @param {Object} [context={}] The context object.  It can contain "config" for per-request config data.
+         * @param {Object} config    The "config" object for per-request config data.
          * @param {Function} callback callback convention is the same as Node.js
          * @static
          */
-        read: function (resource, params, context, callback) {
-            this._sync(resource, 'read', params, undefined, context, callback);
+        read: function (resource, params, config, callback) {
+            this._sync(resource, 'read', params, undefined, config, callback);
         },
 
         /**
@@ -226,12 +216,12 @@ module.exports = function createFetcherClient (options) {
          * @param {Object} params    The parameters identify the resource, and along with information
          *                           carried in query and matrix parameters in typical REST API
          * @param {Object} body      The JSON object that contains the resource data that is being updated
-         * @param {Object} [context={}] The context object.  It can contain "config" for per-request config data.
+         * @param {Object} config    The "config" object for per-request config data.
          * @param {Function} callback callback convention is the same as Node.js
          * @static
          */
-        update: function (resource, params, body, context, callback) {
-            this._sync(resource, 'update', params, body, context, callback);
+        update: function (resource, params, body, config, callback) {
+            this._sync(resource, 'update', params, body, config, callback);
         },
 
         /**
@@ -240,12 +230,12 @@ module.exports = function createFetcherClient (options) {
          * @param {String} resource  The resource name
          * @param {Object} params    The parameters identify the resource, and along with information
          *                           carried in query and matrix parameters in typical REST API
-         * @param {Object} [context={}] The context object.  It can contain "config" for per-request config data.
+         * @param {Object} config    The "config" object for per-request config data.
          * @param {Function} callback callback convention is the same as Node.js
          * @static
          */
-        del: function (resource, params, context, callback) {
-            this._sync(resource, 'delete', params, undefined, context, callback);
+        del: function (resource, params, config, callback) {
+            this._sync(resource, 'delete', params, undefined, config, callback);
         },
 
         /**
@@ -257,22 +247,14 @@ module.exports = function createFetcherClient (options) {
          *                           carried in query and matrix parameters in typical REST API
          * @param {Object} body      The JSON object that contains the resource data that is being updated. Not used
          *                           for read and delete operations.
-         * @param {Object} [context={}] The context object.  It can contain "config" for per-request config data.
+         * @param {Object} config    The "config" object for per-request config data.
          * @param {Function} callback callback convention is the same as Node.js
          * @static
          * @private
          */
-        _sync: function (resource, operation, params, body, context, callback) {
-            if (_.isFunction(context)) {
-                callback = context;
-                context = {};
-            }
-            context = context || {};
-            context.config = {};
-            context.config.xhr = Fetcher.pathPrefix;
-            if (this.options.crumb) {
-                context.crumb = this.crumb;
-            }
+        _sync: function (resource, operation, params, body, config, callback) {
+            config = config || {};
+            config.xhr = Fetcher.pathPrefix;
 
             var self = this,
                 request = {
@@ -280,11 +262,11 @@ module.exports = function createFetcherClient (options) {
                     operation: operation,
                     params: params,
                     body: body,
-                    context: context,
+                    config: config,
                     callback: callback
                 };
 
-            if (!_.isFunction(this.batch) || (context.config && context.config.consolidate === false)) {
+            if (!_.isFunction(this.batch) || !config.consolidate) {
                 this.single(request);
                 return;
             }
@@ -315,8 +297,8 @@ module.exports = function createFetcherClient (options) {
          * @method _constructGetUri
          * @private
          */
-        _constructGetUri: function (uri, resource, params, context) {
-            var query = [], matrix = [], id_param = context.config.id_param, id_val, final_uri = uri + '/resource/' + resource;
+        _constructGetUri: function (uri, resource, params, config) {
+            var query = [], matrix = [], id_param = config.id_param, id_val, final_uri = uri + '/resource/' + resource;
             _.forEach(params, function (v, k) {
                 if (k === id_param) {
                     id_val = encodeURIComponent(v);
@@ -328,9 +310,10 @@ module.exports = function createFetcherClient (options) {
                     }
                 }
             });
-            _.forEach(context.context, function (v, k) {
+
+            _.forEach(this.context, function (v, k) {
                 // do not include crumb key, if crumb_for_get is false
-                if (k !== 'crumb' || context.config.crumbForGET) {
+                if (k !== 'crumb' || config.crumbForGET) {
                     query.push(k + '=' + encodeURIComponent(jsonifyComplexType(v)));
                 }
             });
@@ -340,6 +323,20 @@ module.exports = function createFetcherClient (options) {
             if (matrix.length > 0) {
                 final_uri += ';' + matrix.sort().join(';');
             }
+            if (query.length > 0) {
+                final_uri += '?' + query.sort().join('&');
+            }
+            return final_uri;
+        },
+        /**
+         * @method _constructGroupUri
+         * @private
+         */
+        _constructGroupUri: function (uri) {
+            var query = [], final_uri = uri;
+            _.forEach(this.context, function (v, k) {
+                query.push(k + '=' + encodeURIComponent(v));
+            });
             if (query.length > 0) {
                 final_uri += '?' + query.sort().join('&');
             }
@@ -367,7 +364,7 @@ module.exports = function createFetcherClient (options) {
          *                           carried in query and matrix parameters in typical REST API
          * @param {Object} request.body      The JSON object that contains the resource data that is being updated. Not used
          *                           for read and delete operations.
-         * @param {Object} request.context The context object.  It can contain "config" for per-request config data.
+         * @param {Object} request.config    The "config" object for per-request config data.
          * @param {Function} request.callback callback convention is the same as Node.js
          * @protected
          * @static
@@ -377,23 +374,24 @@ module.exports = function createFetcherClient (options) {
                 return;
             }
 
-            var context = request.context,
+            var context = this.context,
+                config = request.config,
                 callback = request.callback || _.noop,
                 use_post,
                 allow_retry_post,
-                uri = (context.config && (context.config.uri || context.config.xhr)) || Fetcher.pathPrefix,
+                uri = config.uri || config.xhr || Fetcher.pathPrefix,
                 get_uri,
                 requests,
                 data;
 
-            if (OP_READ !== request.operation && this._isCrumbEnabled() && (!context.context || !context.context.crumb)) {
+            if (OP_READ !== request.operation && (this._isCrumbEnabled() && !this.context.crumb)) {
                 clientFDebug('missing crumb');
                 return callback({statusCode: 400, statusText: 'missing crumb'});
             }
 
-            use_post = request.operation !== OP_READ || (context.config && context.config.post_for_read);
+            use_post = request.operation !== OP_READ || config.post_for_read;
             if (!use_post) {
-                get_uri = this._constructGetUri(uri, request.resource, request.params, context);
+                get_uri = this._constructGetUri(uri, request.resource, request.params, config);
                 if (get_uri.length <= MAX_URI_LEN) {
                     uri = get_uri;
                 } else {
@@ -402,7 +400,7 @@ module.exports = function createFetcherClient (options) {
             }
 
             if (!use_post) {
-                REST.get(uri, {}, context.config, function (err, response) {
+                REST.get(uri, {}, config, function (err, response) {
                     if (err) {
                         clientFDebug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info', NAME);
                         return callback(err);
@@ -420,11 +418,11 @@ module.exports = function createFetcherClient (options) {
             }
             data = {
                 requests: requests,
-                context: context
+                context: this.context
             }; // TODO: remove. leave here for now for backward compatibility
-            uri = constructGroupUri(uri, context);
+            uri = this._constructGroupUri(uri);
             allow_retry_post = (request.operation === OP_READ);
-            REST.post(uri, {}, data, _.merge({unsafeAllowRetry: allow_retry_post}, context.config), function (err, response) {
+            REST.post(uri, {}, data, _.merge({unsafeAllowRetry: allow_retry_post}, config), function (err, response) {
                 if (err) {
                     clientFDebug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info', NAME);
                     return callback(err);
@@ -443,7 +441,7 @@ module.exports = function createFetcherClient (options) {
          * batch the requests.
          * @method batch
          * @param {Array} Array of requests objects to be batched. Each request is an object with properties:
-         *                             `resource`, `operation, `params`, `body`, `context`, `callback`.
+         *                             `resource`, `operation, `params`, `body`, `config`, `callback`.
          * @return {Array} the request batches.
          * @protected
          * @static
@@ -458,9 +456,9 @@ module.exports = function createFetcherClient (options) {
 
             _.forEach(requests, function (request) {
                 var uri, batch, group_id;
-                if (request.context && request.context.config) {
-                    uri = request.context.config.uri || request.context.config.xhr || '';
-                    batch = request.context.config.batch;
+                if (request.config) {
+                    uri = request.config.uri || request.config.xhr || '';
+                    batch = request.config.batch;
                 }
                 group_id = 'uri:' + uri;
                 if (batch) {
@@ -483,31 +481,27 @@ module.exports = function createFetcherClient (options) {
          * Execute multiple requests that have been batched together.
          * @method single
          * @param {Array} requests  The request batch.  Each item in this array is a request object with properties:
-         *                             `resource`, `operation, `params`, `body`, `context`, `callback`.
+         *                             `resource`, `operation, `params`, `body`, `config`, `callback`.
          * @protected
          * @static
          */
         multi : function (requests) {
-            var self = this,
-                uri,
+            var uri,
                 data,
                 count = 0,
-                context,
+                config,
                 allow_retry_post = true,
                 request_map = {};
 
             _.some(requests, function (request) {
-                if (request.context && request.context.context) {
-                    context = request.context;
-                    if (self._isCrumbEnabled() && !request.context.context.crumb) {
-                        return false;
-                    }
+                if (request.config) {
+                    config = request.config;
                     return true;
                 }
                 return false;
             }, this);
 
-            if (!context || (self._isCrumbEnabled() && !context.context.crumb)) {
+            if (this._isCrumbEnabled() && !this.context.crumb) {
                 _.forEach(requests, function (request) {
                     clientFDebug('missing crumb');
                     request.callback({statusCode: 400, statusText: 'missing crumb'});
@@ -515,11 +509,11 @@ module.exports = function createFetcherClient (options) {
                 return;
             }
 
-            uri = (context.config && (context.config.uri || context.config.xhr)) || Fetcher.pathPrefix;
+            uri = config.uri || config.xhr || Fetcher.pathPrefix;
 
             data = {
                 requests: {},
-                context: context.context
+                context: this.context
             }; // TODO: remove. leave here for now for backward compatibility
 
             _.forEach(requests, function (request) {
@@ -531,8 +525,8 @@ module.exports = function createFetcherClient (options) {
                 }
             });
 
-            uri = constructGroupUri(uri, context);
-            REST.post(uri, {}, data, _.merge({unsafeAllowRetry: allow_retry_post}, context.config), function (err, response) {
+            uri = this._constructGroupUri(uri);
+            REST.post(uri, {}, data, _.merge({unsafeAllowRetry: allow_retry_post}, config), function (err, response) {
                 if (err) {
                     _.forEach(requests, function (request) {
                         request.callback(err);

@@ -131,20 +131,20 @@ describe('Server Fetcher', function () {
         var resource = mockFetcher.name,
             params = {},
             body = {},
-            context = {};
+            config = {};
 
 
         it('should handle CREATE', function (done) {
-            fetcher.create(resource, params, body, context, done);
+            fetcher.create(resource, params, body, config, done);
         });
         it('should handle READ', function (done) {
-            fetcher.read(resource, params, context, done);
+            fetcher.read(resource, params, config, done);
         });
         it('should handle UPDATE', function (done) {
-            fetcher.update(resource, params, body, context, done);
+            fetcher.update(resource, params, body, config, done);
         });
         it('should handle DELETE', function (done) {
-            fetcher.del(resource, params, context, done);
+            fetcher.del(resource, params, config, done);
         });
     });
 
