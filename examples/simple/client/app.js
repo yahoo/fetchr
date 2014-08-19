@@ -3,7 +3,11 @@
  * Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
  */
 var readFlickr = require('../shared/getFlickrPhotos'),
-    readFlickrClient;
+    readFlickrClient,
+    Fetcher = require('../shared/fetcherClass'),
+    fetcher = new Fetcher({
+        crumb: false
+    });
 
 //client specific callback
 readFlickrClient = function(err, data) {
@@ -20,4 +24,4 @@ readFlickrClient = function(err, data) {
 };
 
 //client-server agnostic call for data
-readFlickr(readFlickrClient);
+readFlickr(fetcher, readFlickrClient);

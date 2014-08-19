@@ -6,17 +6,19 @@ var http = require('http'),
     path = require('path'),
     fs = require('fs'),
     express = require('express'),
-    fetcher = require('../shared/fetcherInstance'),
+    Fetcher = require('../shared/fetcherClass'),
     readFlickr = require('../shared/getFlickrPhotos'),
     readFlickrServer,
     templatePath = path.join(__dirname, '..', 'shared', 'index.html');
 
 var app = express();
 
-app.use(fetcher.middleware());
+app.use(Fetcher.middleware());
 
 
 app.use('/server', function (req, res, next) {
+
+    var fetcher = new Fetcher({req: req});
 
     //client specific callback
     readFlickrServer = function(err, data) {
@@ -40,7 +42,7 @@ app.use('/server', function (req, res, next) {
     };
 
     //client-server agnostic call for data
-    readFlickr(readFlickrServer);
+    readFlickr(fetcher, readFlickrServer);
 
 });
 
@@ -50,7 +52,6 @@ app.use(express.static(path.join(__dirname, '..', 'client', 'build')));
 //For the index.html file
 app.use('/client', function(req, res) {
     var tpl = fs.readFileSync(templatePath, {encoding: 'utf8'});
-    tpl = tpl.replace('<script src="/app.js"></script>', '<script>window.fetcherPathPrefix = "' + fetcher.getPathPrefix() + '";</script><script src="/app.js"></script>');
     res.send(tpl);
 });
 

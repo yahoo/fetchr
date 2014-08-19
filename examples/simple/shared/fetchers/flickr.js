@@ -11,13 +11,13 @@ var request = require('superagent'),
 FlickrFetcher = {
     name: 'flickr',
     //At least one of the CRUD methods is Required
-    read: function(resource, params, context, callback) {
+    read: function(req, resource, params, config, callback) {
         var paramsObj = {
                 api_key: flickr_api_key,
                 method: params.method || 'flickr.photos.getRecent',
                 per_page: parseInt(params.per_page, 10) || 10,
-                format: context.format || 'json',
-                nojsoncallback: context.nojsoncallback || 1
+                format: config.format || 'json',
+                nojsoncallback: config.nojsoncallback || 1
             },
             url = flickr_api_root + '?' + querystring.stringify(paramsObj);
 
@@ -28,9 +28,9 @@ FlickrFetcher = {
         });
     }
     //TODO: other methods
-    //create: function(resource, params, body, context, callback) {},
-    //update: function(resource, params, body, context, callback) {},
-    //del: function(resource, params, context, callback) {}
+    //create: function(req, resource, params, body, config, callback) {},
+    //update: function(req, resource, params, body, config, callback) {},
+    //del: function(req, resource, params, config, callback) {}
 
 };
 
