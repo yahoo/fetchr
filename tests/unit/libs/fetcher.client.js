@@ -87,7 +87,7 @@ describe('Client Fetcher', function () {
             fetchr = require('../../../libs/fetcher.client');
             Fetcher = fetchr();
             fetcher = new Fetcher({
-                crumb: true,
+                requireCrumb: true,
                 context: context
             });
         });

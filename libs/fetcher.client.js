@@ -164,7 +164,7 @@ module.exports = function createFetcherClient (options) {
      * @param {object} options congiguration options for Fetcher
      * @param {Object} [options.context] The context object.  It can contain current-session/context data.
      * @param {String} [options.context.crumb] The crumb for current session
-     * @param {Boolean} [options.crumb = false]  Is crumb enabled for current session
+     * @param {Boolean} [options.requireCrumb = false]  require crumb for current session?
      */
 
     function Fetcher (options) {
@@ -313,7 +313,7 @@ module.exports = function createFetcherClient (options) {
 
             _.forEach(this.context, function (v, k) {
                 // do not include crumb key, if crumb_for_get is false
-                if (k !== 'crumb' || config.crumbForGET) {
+                if (k !== 'crumb' || config.requireCrumbForGET) {
                     query.push(k + '=' + encodeURIComponent(jsonifyComplexType(v)));
                 }
             });
@@ -343,11 +343,11 @@ module.exports = function createFetcherClient (options) {
             return final_uri;
         },
         /**
-         * @method _isCrumbEnabled
+         * @method _isCrumbRequired
          * @private
          */
-        _isCrumbEnabled: function () {
-            return !!this.options.crumb;
+        _isCrumbRequired: function () {
+            return !!this.options.requireCrumb;
         },
 
         // ------------------------------------------------------------------
@@ -384,7 +384,8 @@ module.exports = function createFetcherClient (options) {
                 requests,
                 data;
 
-            if (OP_READ !== request.operation && (this._isCrumbEnabled() && !this.context.crumb)) {
+            if (OP_READ !== request.operation && (this._isCrumbRequired() && !this.context.crumb)) {
+                //Crumb is required but not provided
                 clientFDebug('missing crumb');
                 return callback({statusCode: 400, statusText: 'missing crumb'});
             }
@@ -501,7 +502,8 @@ module.exports = function createFetcherClient (options) {
                 return false;
             }, this);
 
-            if (this._isCrumbEnabled() && !this.context.crumb) {
+            if (this._isCrumbRequired() && !this.context.crumb) {
+                //Crumb is required but not provided
                 _.forEach(requests, function (request) {
                     clientFDebug('missing crumb');
                     request.callback({statusCode: 400, statusText: 'missing crumb'});

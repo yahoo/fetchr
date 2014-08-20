@@ -126,7 +126,7 @@ var fetchr = require('fetchr'),
         pathPrefix: '/myCustomAPIEndpoint'
     }),
     fetcher = new Fetcher({
-        crumb: false, // if crumbs should be enabled, default: false
+        requireCrumb: false, // if crumbs should be required for each request, default: false
         context: {
             crumb: 'Ax89D94j', //optional crumb string to send back to server with each request. Validation should happen on server.
         }
