@@ -6,7 +6,7 @@ var readFlickr = require('../shared/getFlickrPhotos'),
     readFlickrClient,
     Fetcher = require('../shared/fetcherClass'),
     fetcher = new Fetcher({
-        crumb: false
+        requireCrumb: false
     });
 
 //client specific callback
