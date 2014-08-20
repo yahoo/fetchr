@@ -12,6 +12,7 @@ var Fetcher = {
     /**
      * read operation (read as in CRUD).
      * @method read
+     * @param {Object} req  The request object from connect/express
      * @param {String} resource  The resource name
      * @param {Object} params    The parameters identify the resource, and along with information
      *                           carried in query and matrix parameters in typical REST API
@@ -19,7 +20,7 @@ var Fetcher = {
      * @param {Function} callback callback convention is the same as Node.js
      * @static
      */
-    read: function (resource, params, context, callback) {
+    read: function (req, resource, params, context, callback) {
         callback(null, {
             read: 'success',
             args: {
@@ -32,6 +33,7 @@ var Fetcher = {
     /**
      * create operation (create as in CRUD).
      * @method create
+     * @param {Object} req  The request object from connect/express
      * @param {String} resource  The resource name
      * @param {Object} params    The parameters identify the resource, and along with information
      *                           carried in query and matrix parameters in typical REST API
@@ -40,7 +42,7 @@ var Fetcher = {
      * @param {Function} callback callback convention is the same as Node.js
      * @static
      */
-    create: function (resource, params, body, context, callback) {
+    create: function (req, resource, params, body, context, callback) {
         callback(null, {
             create: 'success',
             args: {
@@ -53,6 +55,7 @@ var Fetcher = {
     /**
      * update operation (update as in CRUD).
      * @method update
+     * @param {Object} req  The request object from connect/express
      * @param {String} resource  The resource name
      * @param {Object} params    The parameters identify the resource, and along with information
      *                           carried in query and matrix parameters in typical REST API
@@ -61,7 +64,7 @@ var Fetcher = {
      * @param {Function} callback callback convention is the same as Node.js
      * @static
      */
-    update: function (resource, params, body, context, callback) {
+    update: function (req, resource, params, body, context, callback) {
         callback(null, {
             update: 'success',
             args: {
@@ -74,6 +77,7 @@ var Fetcher = {
     /**
      * delete operation (delete as in CRUD).
      * @method del
+     * @param {Object} req  The request object from connect/express
      * @param {String} resource  The resource name
      * @param {Object} params    The parameters identify the resource, and along with information
      *                           carried in query and matrix parameters in typical REST API
@@ -81,7 +85,7 @@ var Fetcher = {
      * @param {Function} callback callback convention is the same as Node.js
      * @static
      */
-    del: function (resource, params, context, callback) {
+    del: function (req, resource, params, context, callback) {
         callback(null, {
             del: 'success',
             args: {

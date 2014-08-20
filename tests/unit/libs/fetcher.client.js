@@ -8,6 +8,8 @@
 
 var expect = require('chai').expect,
     mockery = require('mockery'),
+    fetchr,
+    Fetcher,
     fetcher;
 
 describe('Client Fetcher', function () {
@@ -21,11 +23,9 @@ describe('Client Fetcher', function () {
             },
             body = { stuff: 'is'},
             context = {
-                context: {
-                    crumb: 'stuff'
-                },
-                config: {}
+                crumb: 'stuff'
             },
+            config = {},
             callback = function(operation, done) {
                 return function(err, data) {
                     if (err){
@@ -66,7 +66,7 @@ describe('Client Fetcher', function () {
                     expect(url).to.not.be.empty;
                     expect(callback).to.exist;
                     expect(body).to.exist;
-                    expect(url).to.equal('/api?crumb='+context.context.crumb);
+                    expect(url).to.equal('/api?crumb='+context.crumb);
 
                     var req = body.requests.g0,
                         res = {
@@ -84,7 +84,12 @@ describe('Client Fetcher', function () {
                 useCleanCache: true,
                 warnOnUnregistered: false
             });
-            fetcher = new (require('../../../libs/fetcher.client'))();
+            fetchr = require('../../../libs/fetcher.client');
+            Fetcher = fetchr();
+            fetcher = new Fetcher({
+                requireCrumb: true,
+                context: context
+            });
         });
 
         after(function(){
@@ -94,19 +99,19 @@ describe('Client Fetcher', function () {
 
         it('should handle CREATE', function (done) {
             var operation = 'create';
-            fetcher[operation](resource, params, body, context, callback(operation, done));
+            fetcher[operation](resource, params, body, config, callback(operation, done));
         });
         it('should handle READ', function (done) {
             var operation = 'read';
-            fetcher[operation](resource, params, context, done);
+            fetcher[operation](resource, params, config, done);
         });
         it('should handle UPDATE', function (done) {
             var operation = 'update';
-            fetcher[operation](resource, params, body, context, callback(operation, done));
+            fetcher[operation](resource, params, body, config, callback(operation, done));
         });
         it('should handle DELETE', function (done) {
             var operation = 'del';
-            fetcher[operation](resource, params, context, callback('delete', done));
+            fetcher[operation](resource, params, config, callback('delete', done));
         });
     });
 
