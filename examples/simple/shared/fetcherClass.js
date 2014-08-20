@@ -1,9 +1,6 @@
-var fetchr = require('../../../index'),
+var fetchr = require('../../../libs/fetcher.js'),
     Fetcher = fetchr({
         pathPrefix: '/myapi'
-    }),
-    flickrFetcher = require('./fetchers/flickr');
-
-Fetcher.addFetcher(flickrFetcher);
+    });
 
 module.exports = Fetcher;

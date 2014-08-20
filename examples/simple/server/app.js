@@ -8,8 +8,11 @@ var http = require('http'),
     express = require('express'),
     Fetcher = require('../shared/fetcherClass'),
     readFlickr = require('../shared/getFlickrPhotos'),
+    flickrFetcher = require('./fetchers/flickr'),
     readFlickrServer,
     templatePath = path.join(__dirname, '..', 'shared', 'index.html');
+
+Fetcher.addFetcher(flickrFetcher);
 
 var app = express();
 
