@@ -162,7 +162,14 @@ module.exports = function createFetcherClass (options) {
             body = request.body,
             config = request.config,
             callback = request.callback,
-            args = [req, resource, params, config, callback];
+            args;
+
+        if (typeof config === 'function') {
+            callback = config;
+            config = {};
+        }
+
+        args = [req, resource, params, config, callback];
 
         if ((op === OP_CREATE) || (op === OP_UPDATE)) {
             args.splice(3, 0, body);

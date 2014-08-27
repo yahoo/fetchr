@@ -253,6 +253,11 @@ module.exports = function createFetcherClient (options) {
          * @private
          */
         _sync: function (resource, operation, params, body, config, callback) {
+            if (typeof config === 'function') {
+                callback = config;
+                config = {};
+            }
+
             config = config || {};
             config.xhr = Fetcher.pathPrefix;
 
