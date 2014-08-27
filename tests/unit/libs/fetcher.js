@@ -19,8 +19,6 @@ var expect = chai.expect,
     qs = require('querystring');
 
 describe('Server Fetcher', function () {
-//    var Fetcher = fetchr(),
-//        fetcher = new Fetcher();
 
     it('should register fetchers', function () {
         var fn = Fetcher.getFetcher.bind(fetcher, mockFetcher.name);
@@ -40,8 +38,11 @@ describe('Server Fetcher', function () {
                     json: function () {
                         console.log('Not Expected: middleware responded with json');
                     },
-                    send: function (code) {
+                    status: function (code) {
                         console.log('Not Expected: middleware responded with', code);
+                    },
+                    send: function () {
+                        console.log('Not Expected: middleware responded with');
                     }
                 },
                 next = function () {
@@ -133,18 +134,29 @@ describe('Server Fetcher', function () {
             body = {},
             config = {};
 
-
         it('should handle CREATE', function (done) {
             fetcher.create(resource, params, body, config, done);
+        });
+        it('should handle CREATE w/ no config', function (done) {
+            fetcher.create(resource, params, body, done);
         });
         it('should handle READ', function (done) {
             fetcher.read(resource, params, config, done);
         });
+        it('should handle READ w/ no config', function (done) {
+            fetcher.read(resource, params, done);
+        });
         it('should handle UPDATE', function (done) {
             fetcher.update(resource, params, body, config, done);
         });
+        it('should handle UPDATE w/ no config', function (done) {
+            fetcher.update(resource, params, body, done);
+        });
         it('should handle DELETE', function (done) {
             fetcher.del(resource, params, config, done);
+        });
+        it('should handle DELETE w/ no config', function (done) {
+            fetcher.del(resource, params, done);
         });
     });
 
