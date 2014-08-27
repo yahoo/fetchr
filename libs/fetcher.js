@@ -87,6 +87,7 @@ module.exports = function createFetcherClass (options) {
                 var defaultPath = Fetcher.pathPrefix + '/resource/',
                     path = req.path.substr(defaultPath.length).split(';');
                 request = {
+                    req: req,
                     resource: path.shift(),
                     operation: OP_READ,
                     params: qs.parse(path.join('&')),
@@ -102,7 +103,7 @@ module.exports = function createFetcherClass (options) {
                 var requests = req.body.requests;
 
                 if (!requests || requests.length === 0) {
-                    res.send(204);
+                    res.status(204).end();
                 }
 
                 var DEFAULT_GUID = 'g0',
@@ -116,7 +117,7 @@ module.exports = function createFetcherClass (options) {
                     config: singleRequest.config,
                     callback: function(err, data) {
                         if(err) {
-                            res.send('400', 'request failed');
+                            res.status(400).send('request failed');
                         }
                         var responseObj = {};
                         responseObj[DEFAULT_GUID] = {data: data};
