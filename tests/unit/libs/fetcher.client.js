@@ -101,17 +101,33 @@ describe('Client Fetcher', function () {
             var operation = 'create';
             fetcher[operation](resource, params, body, config, callback(operation, done));
         });
+        it('should handle CREATE w/ no config', function (done) {
+            var operation = 'create';
+            fetcher[operation](resource, params, body, callback(operation, done));
+        });
         it('should handle READ', function (done) {
             var operation = 'read';
             fetcher[operation](resource, params, config, done);
+        });
+        it('should handle READ w/ no config', function (done) {
+            var operation = 'read';
+            fetcher[operation](resource, params, done);
         });
         it('should handle UPDATE', function (done) {
             var operation = 'update';
             fetcher[operation](resource, params, body, config, callback(operation, done));
         });
+        it('should handle UPDATE w/ no config', function (done) {
+            var operation = 'update';
+            fetcher[operation](resource, params, body, callback(operation, done));
+        });
         it('should handle DELETE', function (done) {
             var operation = 'del';
             fetcher[operation](resource, params, config, callback('delete', done));
+        });
+        it('should handle DELETE w/ no config', function (done) {
+            var operation = 'del';
+            fetcher[operation](resource, params, callback('delete', done));
         });
     });
 
