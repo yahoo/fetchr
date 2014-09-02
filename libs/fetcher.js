@@ -94,7 +94,7 @@ module.exports = function createFetcherClass (options) {
                     config: {},
                     callback: function (err, data) {
                         if (err) {
-                            res.send('400', 'request failed');
+                            res.status('400').send('request failed');
                         }
                         res.json(data);
                     }
