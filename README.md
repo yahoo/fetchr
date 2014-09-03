@@ -137,21 +137,6 @@ var fetchr = require('fetchr'),
 //...
 ```
 
-
-## 5. Swap Fetchr <=> Fetchr.client
-
-Fetchr relies on a build process that swaps out `lib/fetchr.js` with `lib/fetchr.client.js` in the bundle that is generated for client side use. Usually the bundle is generated using tools like [webpack](http://webpack.github.io/) or [browserify](http://browserify.org/).
-
-```
-//webpack config
-plugins: [
-    //...
-    //Replace fetcher lib with client side fetcher lib
-    new webpack.NormalModuleReplacementPlugin(/^fetchr$/, require.resolve('fetchr/libs/fetcher.client.js'))
-    //...
-]
-```
-
 # Usage Examples
 
 See the [simple example](https://github.com/yahoo/fetchr/tree/master/examples/simple)
