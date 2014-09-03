@@ -43,6 +43,9 @@
     "mockery": "^1.4.0",
     "precommit-hook": "^1.0.2"
   },
+  "browser": {
+    "./libs/fetcher.js": "./libs/fetcher.client.js"
+  },
   "jshintConfig": {
     "node": true
   },
