@@ -3,6 +3,7 @@
   "version": "0.2.2",
   "description": "Fetchr augments Flux applications by allowing Flux stores to be used on server and client to fetch data",
   "main": "index.js",
+  "browser": "./libs/fetcher.client.js",
   "scripts": {
     "cover": "node node_modules/istanbul/lib/cli.js cover --dir artifacts -- ./node_modules/mocha/bin/_mocha tests/unit/ --recursive --reporter spec",
     "lint": "./node_modules/.bin/jshint libs tests",
@@ -42,9 +43,6 @@
     "mocha": "^1.20.0",
     "mockery": "^1.4.0",
     "precommit-hook": "^1.0.2"
-  },
-  "browser": {
-    "./libs/fetcher.js": "./libs/fetcher.client.js"
   },
   "jshintConfig": {
     "node": true
