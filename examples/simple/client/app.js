@@ -4,8 +4,10 @@
  */
 var readFlickr = require('../shared/getFlickrPhotos'),
     readFlickrClient,
-    Fetcher = require('../shared/fetcherClass'),
+    config = require('../shared/config'),
+    Fetcher = require('../../../libs/fetcher.client.js'),
     fetcher = new Fetcher({
+        xhrPath: config.xhrPath,
         requireCrumb: false
     });
 
