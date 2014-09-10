@@ -34,9 +34,14 @@ app.use('/myCustomAPIEndpoint', Fetcher.middleware());
 
 ## 2. API xhrPath
 
-`xhrPath` config option needs to be passed in when instantiating the Fetchr class on the client side.
+`xhrPath` config option when instantiating the Fetchr class is optional. Defaults to `/api`.
 
-It is necessary for this xhrPath on the client side fetcher (`fetchr.client.js`) to match the API endpoint path the middleware was mounted on in the previous step.
+On the clientside, the xhrPath will be used for XHR requests.
+
+On the serverside, the xhrPath isn't needed and is ignored.
+
+Note: Even though this config is optional, it is necessary for xhrPath on the clientside fetcher to match the path where the middleware was mounted on in the previous step.
+
 ```js
 //...
 var Fetcher = require('fetchr'),
