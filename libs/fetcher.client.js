@@ -12,8 +12,7 @@
  * @module Fetcher
  */
 var REST = require('./util/http.client'),
-    debug = require('debug'),
-    clientFDebug = debug('FetchrClient'),
+    debug = require('debug')('FetchrClient'),
     _ = {
         forEach :     require('lodash.foreach'),
         values :      require('lodash.values'),
@@ -39,7 +38,7 @@ function parseResponse(response) {
         try {
             return JSON.parse(response.responseText);
         } catch (e) {
-            clientFDebug('json parse failed:' + e, 'error', NAME);
+            debug('json parse failed:' + e, 'error', NAME);
             return null;
         }
     }
@@ -302,7 +301,7 @@ Queue.prototype = {
                     try {
                         matrix.push(k + '=' + encodeURIComponent(jsonifyComplexType(v)));
                     } catch (err) {
-                        clientFDebug('jsonifyComplexType failed: ' + err, 'info', NAME);
+                        debug('jsonifyComplexType failed: ' + err, 'info', NAME);
                     }
                 }
             });
@@ -382,7 +381,7 @@ Queue.prototype = {
 
             if (OP_READ !== request.operation && (this._isCrumbRequired() && !this.context.crumb)) {
                 //Crumb is required but not provided
-                clientFDebug('missing crumb');
+                debug('missing crumb');
                 return callback({statusCode: 400, statusText: 'missing crumb'});
             }
 
@@ -399,7 +398,7 @@ Queue.prototype = {
             if (!use_post) {
                 REST.get(uri, {}, config, function (err, response) {
                     if (err) {
-                        clientFDebug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info', NAME);
+                        debug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info', NAME);
                         return callback(err);
                     }
                     callback(null, parseResponse(response));
@@ -421,7 +420,7 @@ Queue.prototype = {
             allow_retry_post = (request.operation === OP_READ);
             REST.post(uri, {}, data, _.merge({unsafeAllowRetry: allow_retry_post}, config), function (err, response) {
                 if (err) {
-                    clientFDebug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info', NAME);
+                    debug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info', NAME);
                     return callback(err);
                 }
                 var result = parseResponse(response);
@@ -443,7 +442,7 @@ Queue.prototype = {
          * @protected
          * @static
          */
-        batch : function (requests) {
+        batch : /* istanbul ignore next */ function (requests) {
             if (!_.isArray(requests) || requests.length <= 1) {
                 return requests;
             }
@@ -469,7 +468,7 @@ Queue.prototype = {
             batched = _.values(groups);
 
             if (batched.length < requests.length) {
-                clientFDebug(requests.length + ' requests batched into ' + batched.length, 'info', NAME);
+                debug(requests.length + ' requests batched into ' + batched.length, 'info', NAME);
             }
             return batched;
         },
@@ -482,7 +481,7 @@ Queue.prototype = {
          * @protected
          * @static
          */
-        multi : function (requests) {
+        multi : /* istanbul ignore next */ function (requests) {
             var uri,
                 data,
                 count = 0,
@@ -501,7 +500,7 @@ Queue.prototype = {
             if (this._isCrumbRequired() && !this.context.crumb) {
                 //Crumb is required but not provided
                 _.forEach(requests, function (request) {
-                    clientFDebug('missing crumb');
+                    debug('missing crumb');
                     request.callback({statusCode: 400, statusText: 'missing crumb'});
                 });
                 return;
