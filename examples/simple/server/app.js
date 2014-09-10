@@ -13,7 +13,7 @@ var http = require('http'),
     readFlickrServer,
     templatePath = path.join(__dirname, '..', 'shared', 'index.html');
 
-Fetcher.addFetcher(flickrFetcher);
+Fetcher.registerFetcher(flickrFetcher);
 
 var app = express();
 

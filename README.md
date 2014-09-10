@@ -59,7 +59,7 @@ var Fetcher = require('fetchr'),
 var Fetcher = require('fetchr'),
     myDataFetcher = require('./dataFetcher');
 
-Fetcher.addFetcher(myDataFetcher);
+Fetcher.registerFetcher(myDataFetcher);
 //...
 ```
 
@@ -97,7 +97,7 @@ var express = require('express'),
     app = express(),
     myDataFetcher = require('./dataFetcher');
 
-Fetcher.addFetcher(myDataFetcher);
+Fetcher.registerFetcher(myDataFetcher);
 
 app.use('/myCustomAPIEndpoint', Fetcher.middleware());
 

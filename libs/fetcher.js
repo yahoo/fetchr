@@ -33,10 +33,10 @@ var OP_READ = 'read',
     Fetcher.fetchers = {};
 
     /**
-     * @method addFetcher
+     * @method registerFetcher
      * @param {Function} fetcher
      */
-    Fetcher.addFetcher = function (fetcher) {
+    Fetcher.registerFetcher = function (fetcher) {
         var name = fetcher.name || null;
         //Store fetcher by name
         if (!(fetcher && name)) {

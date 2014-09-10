@@ -23,7 +23,7 @@ describe('Server Fetcher', function () {
         var fn = Fetcher.getFetcher.bind(fetcher, mockFetcher.name);
         expect(_.size(Fetcher.fetchers)).to.equal(0);
         expect(fn).to.throw(Error, 'Fetcher could not be found');
-        Fetcher.addFetcher(mockFetcher);
+        Fetcher.registerFetcher(mockFetcher);
         expect(_.size(Fetcher.fetchers)).to.equal(1);
         expect(fn()).to.deep.equal(mockFetcher);
     });
