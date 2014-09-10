@@ -33,7 +33,6 @@ describe('Server Fetcher', function () {
             var operation = 'read',
                 req = {
                     method: 'POST',
-                    baseUrl: '/api',
                     path: '/resource/' + mockFetcher.name,
                     body: {
                         requests: {
@@ -82,7 +81,6 @@ describe('Server Fetcher', function () {
                 },
                 req = {
                     method: 'GET',
-                    baseUrl: '/api',
                     path: '/resource/' + mockFetcher.name + ';' + qs.stringify(params, ';')
                 },
                 res = {

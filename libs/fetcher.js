@@ -73,8 +73,7 @@ var OP_READ = 'read',
             var request;
 
             if (req.method === GET) {
-                var defaultPath = req.baseUrl + '/resource/',
-                    path = (req.baseUrl + req.path).substr(defaultPath.length).split(';');
+                var path = req.path.substr('/resource/'.length).split(';');
                 request = {
                     req: req,
                     resource: path.shift(),
