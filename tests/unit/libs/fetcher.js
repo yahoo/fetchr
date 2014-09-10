@@ -9,8 +9,7 @@
 var chai = require('chai');
 chai.config.includeStack = true;
 var expect = chai.expect,
-    fetchr = require('../../../libs/fetcher'),
-    Fetcher = fetchr(),
+    Fetcher = require('../../../libs/fetcher'),
     fetcher = new Fetcher({
         req: {}
     }),
@@ -30,33 +29,12 @@ describe('Server Fetcher', function () {
     });
 
     describe('#middleware', function () {
-        it('should skip non Fetchr requests', function (done) {
-            var req = {
-                    path: '/somerandomapi/'+mockFetcher.name
-                },
-                res = {
-                    json: function () {
-                        console.log('Not Expected: middleware responded with json');
-                    },
-                    status: function (code) {
-                        console.log('Not Expected: middleware responded with', code);
-                    },
-                    send: function () {
-                        console.log('Not Expected: middleware responded with');
-                    }
-                },
-                next = function () {
-                    done();
-                },
-                middleware = Fetcher.middleware();
-
-            middleware(req, res, next);
-        });
         it('should respond to POST api request', function (done) {
             var operation = 'read',
                 req = {
                     method: 'POST',
-                    path: '/api/resource/' + mockFetcher.name,
+                    baseUrl: '/api',
+                    path: '/resource/' + mockFetcher.name,
                     body: {
                         requests: {
                             g0: {
@@ -104,7 +82,8 @@ describe('Server Fetcher', function () {
                 },
                 req = {
                     method: 'GET',
-                    path: '/api/resource/' + mockFetcher.name + ';' + qs.stringify(params, ';')
+                    baseUrl: '/api',
+                    path: '/resource/' + mockFetcher.name + ';' + qs.stringify(params, ';')
                 },
                 res = {
                     json: function(response) {
