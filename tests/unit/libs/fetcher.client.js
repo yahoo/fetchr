@@ -8,7 +8,6 @@
 
 var expect = require('chai').expect,
     mockery = require('mockery'),
-    fetchr,
     Fetcher,
     fetcher;
 
@@ -84,8 +83,7 @@ describe('Client Fetcher', function () {
                 useCleanCache: true,
                 warnOnUnregistered: false
             });
-            fetchr = require('../../../libs/fetcher.client');
-            Fetcher = fetchr();
+            Fetcher = require('../../../libs/fetcher.client');
             fetcher = new Fetcher({
                 requireCrumb: true,
                 context: context

@@ -6,17 +6,18 @@ var http = require('http'),
     path = require('path'),
     fs = require('fs'),
     express = require('express'),
-    Fetcher = require('../shared/fetcherClass'),
+    config = require('../shared/config'),
+    Fetcher = require('../../../libs/fetcher.js'),
     readFlickr = require('../shared/getFlickrPhotos'),
     flickrFetcher = require('./fetchers/flickr'),
     readFlickrServer,
     templatePath = path.join(__dirname, '..', 'shared', 'index.html');
 
-Fetcher.addFetcher(flickrFetcher);
+Fetcher.registerFetcher(flickrFetcher);
 
 var app = express();
 
-app.use(Fetcher.middleware());
+app.use(config.xhrPath, Fetcher.middleware());
 
 
 app.use('/server', function (req, res, next) {

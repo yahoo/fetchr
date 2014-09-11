@@ -9,8 +9,7 @@
 var chai = require('chai');
 chai.config.includeStack = true;
 var expect = chai.expect,
-    fetchr = require('../../../libs/fetcher'),
-    Fetcher = fetchr(),
+    Fetcher = require('../../../libs/fetcher'),
     fetcher = new Fetcher({
         req: {}
     }),
@@ -24,39 +23,17 @@ describe('Server Fetcher', function () {
         var fn = Fetcher.getFetcher.bind(fetcher, mockFetcher.name);
         expect(_.size(Fetcher.fetchers)).to.equal(0);
         expect(fn).to.throw(Error, 'Fetcher could not be found');
-        Fetcher.addFetcher(mockFetcher);
+        Fetcher.registerFetcher(mockFetcher);
         expect(_.size(Fetcher.fetchers)).to.equal(1);
         expect(fn()).to.deep.equal(mockFetcher);
     });
 
     describe('#middleware', function () {
-        it('should skip non Fetchr requests', function (done) {
-            var req = {
-                    path: '/somerandomapi/'+mockFetcher.name
-                },
-                res = {
-                    json: function () {
-                        console.log('Not Expected: middleware responded with json');
-                    },
-                    status: function (code) {
-                        console.log('Not Expected: middleware responded with', code);
-                    },
-                    send: function () {
-                        console.log('Not Expected: middleware responded with');
-                    }
-                },
-                next = function () {
-                    done();
-                },
-                middleware = Fetcher.middleware();
-
-            middleware(req, res, next);
-        });
         it('should respond to POST api request', function (done) {
             var operation = 'read',
                 req = {
                     method: 'POST',
-                    path: '/api/resource/' + mockFetcher.name,
+                    path: '/resource/' + mockFetcher.name,
                     body: {
                         requests: {
                             g0: {
@@ -104,7 +81,7 @@ describe('Server Fetcher', function () {
                 },
                 req = {
                     method: 'GET',
-                    path: '/api/resource/' + mockFetcher.name + ';' + qs.stringify(params, ';')
+                    path: '/resource/' + mockFetcher.name + ';' + qs.stringify(params, ';')
                 },
                 res = {
                     json: function(response) {

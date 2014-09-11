@@ -9,17 +9,12 @@ var OP_READ = 'read',
     OP_CREATE = 'create',
     OP_UPDATE = 'update',
     GET = 'GET',
-    qs = require('querystring'),
-    DEFAULT_PATH_PREFIX = '/api';
+    qs = require('querystring');
 
 /**
  * @module createFetcherClass
  * @param {object} options
- * @param {string} [options.pathPrefix="/api"] The path for XHR requests
  */
-
-module.exports = function createFetcherClass (options) {
-    options = options || {};
 
     var debug = require('debug')('Fetchr');
 
@@ -27,6 +22,7 @@ module.exports = function createFetcherClass (options) {
      * @class Fetcher
      * @param {Object} options congiguration options for Fetcher
      * @param {Object} [options.req] The request object.  It can contain per-request/context data.
+     * @param {string} [options.xhrPath="/api"] The path for XHR requests. Will be ignored serverside.
      * @constructor
      */
     function Fetcher(options) {
@@ -34,14 +30,13 @@ module.exports = function createFetcherClass (options) {
         this.req = this.options.req || {};
     }
 
-    Fetcher.pathPrefix = options.pathPrefix || DEFAULT_PATH_PREFIX;
     Fetcher.fetchers = {};
 
     /**
-     * @method addFetcher
+     * @method registerFetcher
      * @param {Function} fetcher
      */
-    Fetcher.addFetcher = function (fetcher) {
+    Fetcher.registerFetcher = function (fetcher) {
         var name = fetcher.name || null;
         //Store fetcher by name
         if (!(fetcher && name)) {
@@ -77,15 +72,8 @@ module.exports = function createFetcherClass (options) {
         return function (req, res, next) {
             var request;
 
-            if (req.path.indexOf(Fetcher.pathPrefix) !== 0) {
-                //Skip non fetchr requests
-                next();
-                return;
-            }
-
             if (req.method === GET) {
-                var defaultPath = Fetcher.pathPrefix + '/resource/',
-                    path = req.path.substr(defaultPath.length).split(';');
+                var path = req.path.substr('/resource/'.length).split(';');
                 request = {
                     req: req,
                     resource: path.shift(),
@@ -272,5 +260,4 @@ module.exports = function createFetcherClass (options) {
         Fetcher.single(request);
     };
 
-    return Fetcher;
-};
+    module.exports = Fetcher;

@@ -20,32 +20,34 @@ Fetchr needs delicate set up to work properly.
 
 ## 1. Middleware
 
-On the server side, add the fetchr middleware into your express app.
+On the server side, add the fetchr middleware into your express app at a custom API endpoint.
 
 ```js
 //...
 var express = require('express'),
-    fetchr = require('fetchr'),
-    Fetcher = fetchr({
-        pathPrefix: '/myCustomAPIEndpoint'
-    }),
+    Fetcher = require('fetchr'),
     app = express();
 
-app.use(Fetcher.middleware());
+app.use('/myCustomAPIEndpoint', Fetcher.middleware());
 //...
 ```
 
-## 2. API pathPrefix
+## 2. API xhrPath
 
-`pathPrefix` config option for the middleware is optional. Defaults to `/api`.
+`xhrPath` config option when instantiating the Fetchr class is optional. Defaults to `/api`.
 
-It is necessary to define this prefix on the client side fetcher (`fetchr.client.js`) just as on the server side.
+On the clientside, the xhrPath will be used for XHR requests.
+
+On the serverside, the xhrPath isn't needed and is ignored.
+
+Note: Even though this config is optional, it is necessary for xhrPath on the clientside fetcher to match the path where the middleware was mounted on in the previous step.
+
 ```js
 //...
-var fetchr = require('fetchr'),
-    Fetcher = fetchr({
-        pathPrefix: '/myCustomAPIEndpoint'
-    });
+var Fetcher = require('fetchr'),
+    fetcher = new Fetcher({
+        xhrPath: '/myCustomAPIEndpoint'
+    })
 //...
 ```
 
@@ -54,13 +56,10 @@ var fetchr = require('fetchr'),
 ```js
 //app.js
 //...
-var fetchr = require('fetchr'),
-    Fetcher = fetchr({
-        pathPrefix: '/myCustomAPIEndpoint'
-    }),
+var Fetcher = require('fetchr'),
     myDataFetcher = require('./dataFetcher');
 
-Fetcher.addFetcher(myDataFetcher);
+Fetcher.registerFetcher(myDataFetcher);
 //...
 ```
 
@@ -94,20 +93,20 @@ On the clientside, this only needs to happen on page load.
 //app.js - server
 //...
 var express = require('express'),
-    fetchr = require('fetchr'),
-    Fetcher = fetchr({
-        pathPrefix: '/myCustomAPIEndpoint'
-    }),
+    Fetcher = require('fetchr'),
     app = express(),
     myDataFetcher = require('./dataFetcher');
 
-Fetcher.addFetcher(myDataFetcher);
+Fetcher.registerFetcher(myDataFetcher);
 
-app.use(Fetcher.middleware());
+app.use('/myCustomAPIEndpoint', Fetcher.middleware());
 
 app.use(function(req, res, next) {
     //instantiated fetcher with access to req object
-    var fetcher = new Fetcher({req: req});
+    var fetcher = new Fetcher({
+        xhrPath: '/myCustomAPIEndpoint', //xhrPath will be ignored on the serverside fetcher instantiation
+        req: req
+    });
 
     fetcher.read('data_api_fetcher', {id: ###}, {}, function (err, data) {
         //handle err and/or data returned from data fetcher in this callback
@@ -121,11 +120,9 @@ app.use(function(req, res, next) {
 ```js
 //app.js - client
 //...
-var fetchr = require('fetchr'),
-    Fetcher = fetchr({
-        pathPrefix: '/myCustomAPIEndpoint'
-    }),
+var Fetcher = require('fetchr'),
     fetcher = new Fetcher({
+        xhrPath: '/myCustomAPIEndpoint', //xhrPath is REQUIRED on the clientside fetcher instantiation
         requireCrumb: false, // if crumbs should be required for each request, default: false
         context: {
             crumb: 'Ax89D94j', //optional crumb string to send back to server with each request. Validation should happen on server.

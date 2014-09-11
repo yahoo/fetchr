@@ -12,8 +12,7 @@
  * @module Fetcher
  */
 var REST = require('./util/http.client'),
-    debug = require('debug'),
-    clientFDebug = debug('FetchrClient'),
+    debug = require('debug')('FetchrClient'),
     _ = {
         forEach :     require('lodash.foreach'),
         values :      require('lodash.values'),
@@ -27,7 +26,7 @@ var REST = require('./util/http.client'),
     },
     CORE_REQUEST_FIELDS = ['resource', 'operation', 'params', 'body'],
     DEFAULT_GUID = 'g0',
-    DEFAULT_PATH_PREFIX = '/api',
+    DEFAULT_XHR_PATH = '/api',
     // By default, wait for 20ms to trigger sweep of the queue, after an item is added to the queue.
     DEFAULT_BATCH_WINDOW = 20,
     MAX_URI_LEN = 2048,
@@ -39,7 +38,7 @@ function parseResponse(response) {
         try {
             return JSON.parse(response.responseText);
         } catch (e) {
-            clientFDebug('json parse failed:' + e, 'error', NAME);
+            debug('json parse failed:' + e, 'error', NAME);
             return null;
         }
     }
@@ -129,16 +128,6 @@ Queue.prototype = {
     }
 };
 
-/**
- * @module createFetcherClient
- * @param {object} options
- * @param {string} [options.pathPrefix="/api"] The path for XHR requests
- * @param {integer} [options.batchWindow=20] Number of milliseconds to wait to batch requests
- */
-
-module.exports = function createFetcherClient (options) {
-    options = options || {};
-
     /**
      * Requests that are initiated within a time window are batched and sent to xhr endpoint.
      * The received responses are split and routed back to the callback function assigned by initiator
@@ -162,6 +151,8 @@ module.exports = function createFetcherClient (options) {
      *
      * @class FetcherClient
      * @param {object} options congiguration options for Fetcher
+     * @param {string} [options.xhrPath="/api"] The path for XHR requests
+     * @param {integer} [options.batchWindow=20] Number of milliseconds to wait to batch requests
      * @param {Object} [options.context] The context object.  It can contain current-session/context data.
      * @param {String} [options.context.crumb] The crumb for current session
      * @param {Boolean} [options.requireCrumb = false]  require crumb for current session?
@@ -169,11 +160,10 @@ module.exports = function createFetcherClient (options) {
 
     function Fetcher (options) {
         this.options = options || {};
+        this.xhrPath = options.xhrPath || DEFAULT_XHR_PATH;
+        this.batchWindow = options.batchWindow || DEFAULT_BATCH_WINDOW;
         this.context = this.options.context || {};
     }
-
-    Fetcher.pathPrefix = options.pathPrefix || DEFAULT_PATH_PREFIX;
-    Fetcher.batchWindow = options.batchWindow || DEFAULT_BATCH_WINDOW;
 
     Fetcher.prototype = {
         // ------------------------------------------------------------------
@@ -259,7 +249,7 @@ module.exports = function createFetcherClient (options) {
             }
 
             config = config || {};
-            config.xhr = Fetcher.pathPrefix;
+            config.xhr = this.xhrPrefix;
 
             var self = this,
                 request = {
@@ -311,7 +301,7 @@ module.exports = function createFetcherClient (options) {
                     try {
                         matrix.push(k + '=' + encodeURIComponent(jsonifyComplexType(v)));
                     } catch (err) {
-                        clientFDebug('jsonifyComplexType failed: ' + err, 'info', NAME);
+                        debug('jsonifyComplexType failed: ' + err, 'info', NAME);
                     }
                 }
             });
@@ -384,14 +374,14 @@ module.exports = function createFetcherClient (options) {
                 callback = request.callback || _.noop,
                 use_post,
                 allow_retry_post,
-                uri = config.uri || config.xhr || Fetcher.pathPrefix,
+                uri = config.uri || config.xhr || this.xhrPath,
                 get_uri,
                 requests,
                 data;
 
             if (OP_READ !== request.operation && (this._isCrumbRequired() && !this.context.crumb)) {
                 //Crumb is required but not provided
-                clientFDebug('missing crumb');
+                debug('missing crumb');
                 return callback({statusCode: 400, statusText: 'missing crumb'});
             }
 
@@ -408,7 +398,7 @@ module.exports = function createFetcherClient (options) {
             if (!use_post) {
                 REST.get(uri, {}, config, function (err, response) {
                     if (err) {
-                        clientFDebug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info', NAME);
+                        debug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info', NAME);
                         return callback(err);
                     }
                     callback(null, parseResponse(response));
@@ -430,7 +420,7 @@ module.exports = function createFetcherClient (options) {
             allow_retry_post = (request.operation === OP_READ);
             REST.post(uri, {}, data, _.merge({unsafeAllowRetry: allow_retry_post}, config), function (err, response) {
                 if (err) {
-                    clientFDebug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info', NAME);
+                    debug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info', NAME);
                     return callback(err);
                 }
                 var result = parseResponse(response);
@@ -452,7 +442,7 @@ module.exports = function createFetcherClient (options) {
          * @protected
          * @static
          */
-        batch : function (requests) {
+        batch : /* istanbul ignore next */ function (requests) {
             if (!_.isArray(requests) || requests.length <= 1) {
                 return requests;
             }
@@ -478,7 +468,7 @@ module.exports = function createFetcherClient (options) {
             batched = _.values(groups);
 
             if (batched.length < requests.length) {
-                clientFDebug(requests.length + ' requests batched into ' + batched.length, 'info', NAME);
+                debug(requests.length + ' requests batched into ' + batched.length, 'info', NAME);
             }
             return batched;
         },
@@ -491,7 +481,7 @@ module.exports = function createFetcherClient (options) {
          * @protected
          * @static
          */
-        multi : function (requests) {
+        multi : /* istanbul ignore next */ function (requests) {
             var uri,
                 data,
                 count = 0,
@@ -510,13 +500,13 @@ module.exports = function createFetcherClient (options) {
             if (this._isCrumbRequired() && !this.context.crumb) {
                 //Crumb is required but not provided
                 _.forEach(requests, function (request) {
-                    clientFDebug('missing crumb');
+                    debug('missing crumb');
                     request.callback({statusCode: 400, statusText: 'missing crumb'});
                 });
                 return;
             }
 
-            uri = config.uri || config.xhr || Fetcher.pathPrefix;
+            uri = config.uri || config.xhr || this.xhrPath;
 
             data = {
                 requests: {},
@@ -552,5 +542,4 @@ module.exports = function createFetcherClient (options) {
         }
     };
 
-    return Fetcher;
-};
+    module.exports = Fetcher;
