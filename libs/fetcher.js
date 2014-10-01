@@ -82,7 +82,7 @@ var OP_READ = 'read',
                     config: {},
                     callback: function (err, data) {
                         if (err) {
-                            res.status('400').send(err.message || 'request failed');
+                            res.status(400).send(err.message || 'request failed');
                             return;
                         }
                         res.json(data);
@@ -106,7 +106,8 @@ var OP_READ = 'read',
                     config: singleRequest.config,
                     callback: function(err, data) {
                         if(err) {
-                            res.status(400).send('request failed');
+                            res.status(400).send(err.message || 'request failed');
+                            return;
                         }
                         var responseObj = {};
                         responseObj[DEFAULT_GUID] = {data: data};
