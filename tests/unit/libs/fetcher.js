@@ -29,6 +29,36 @@ describe('Server Fetcher', function () {
     });
 
     describe('#middleware', function () {
+        it('should 404 to POST request with no req.body.requests object', function (done) {
+            var operation = 'read',
+                req = {
+                    method: 'POST',
+                    path: '/resource/' + mockFetcher.name,
+                    body: {
+                        requests: {},
+                        context: {
+                            site: '',
+                            devide: ''
+                        }
+                    }
+                },
+                res = {
+                    status: function (code) {
+                        expect(code).to.equal(400);
+                        return this;
+                    },
+                    end: function () {
+                        done();
+                    }
+                },
+                next = function () {
+                    console.log('Not Expected: middleware skipped request');
+                },
+                middleware = Fetcher.middleware();
+
+            middleware(req, res, next);
+        });
+
         it('should respond to POST api request', function (done) {
             var operation = 'read',
                 req = {
@@ -56,8 +86,8 @@ describe('Server Fetcher', function () {
                         expect(response).to.exist;
                         expect(response).to.not.be.empty;
                         var data = response.g0.data;
-                        expect(data).to.contain.keys(operation, 'args');
-                        expect(data[operation]).to.equal('success');
+                        expect(data).to.contain.keys('operation', 'args');
+                        expect(data.operation).to.equal(operation);
                         expect(data.args).to.contain.keys('params');
                         expect(data.args.params).to.equal(req.body.requests.g0.params);
                         done();
@@ -87,8 +117,8 @@ describe('Server Fetcher', function () {
                     json: function(response) {
                         expect(response).to.exist;
                         expect(response).to.not.be.empty;
-                        expect(response).to.contain.keys(operation, 'args');
-                        expect(response[operation]).to.equal('success');
+                        expect(response).to.contain.keys('operation', 'args');
+                        expect(response.operation).to.equal(operation);
                         expect(response.args).to.contain.keys('params');
                         expect(response.args.params).to.deep.equal(params);
                         done();
@@ -130,11 +160,11 @@ describe('Server Fetcher', function () {
         });
         it('should handle READ', function (done) {
             var operation = 'read';
-            fetcher[operation](resource, params, config, done);
+            fetcher[operation](resource, params, config, callback(operation, done));
         });
         it('should handle READ w/ no config', function (done) {
             var operation = 'read';
-            fetcher[operation](resource, params, done);
+            fetcher[operation](resource, params, callback(operation, done));
         });
         it('should handle UPDATE', function (done) {
             var operation = 'update';
@@ -146,11 +176,11 @@ describe('Server Fetcher', function () {
         });
         it('should handle DELETE', function (done) {
             var operation = 'del';
-            fetcher[operation](resource, params, config, callback('del', done));
+            fetcher[operation](resource, params, config, callback(operation, done));
         });
         it('should handle DELETE w/ no config', function (done) {
             var operation = 'del';
-            fetcher[operation](resource, params, callback('del', done));
+            fetcher[operation](resource, params, callback(operation, done));
         });
     });
 
