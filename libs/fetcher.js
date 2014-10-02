@@ -106,14 +106,15 @@ var OP_READ = 'read',
                     params: singleRequest.params,
                     body: singleRequest.body || {},
                     config: singleRequest.config,
-                    callback: function(err, data) {
+                    callback: function(err, data, meta) {
                         if(err) {
                             res.status(err.statusCode || 400).send(err.message || 'request failed');
                             return;
                         }
+                        meta = meta || {};
                         var responseObj = {};
                         responseObj[DEFAULT_GUID] = {data: data};
-                        res.json(responseObj);
+                        res.status(meta.statusCode || 200).json(responseObj);
                     }
                 };
             }

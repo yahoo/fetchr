@@ -34,7 +34,7 @@ describe('Server Fetcher', function () {
     describe('#middleware', function () {
         describe('#POST', function() {
             it('should 404 to POST request with no req.body.requests object', function (done) {
-                var operation = 'read',
+                var operation = 'create',
                     req = {
                         method: 'POST',
                         path: '/resource/' + mockFetcher.name,
@@ -65,6 +65,7 @@ describe('Server Fetcher', function () {
 
             it('should respond to POST api request', function (done) {
                 var operation = 'create',
+                    statusCodeSet = false,
                     req = {
                         method: 'POST',
                         path: '/resource/' + mockFetcher.name,
@@ -96,6 +97,11 @@ describe('Server Fetcher', function () {
                             expect(data.args.params).to.equal(req.body.requests.g0.params);
                             done();
                         },
+                        status: function(code) {
+                            expect(code).to.equal(200);
+                            statusCodeSet = true;
+                            return this;
+                        },
                         send: function (code) {
                             console.log('Not Expected: middleware responded with', code);
                         }
@@ -106,11 +112,66 @@ describe('Server Fetcher', function () {
                     middleware = Fetcher.middleware();
 
                 middleware(req, res, next);
+                expect(statusCodeSet).to.be.true;
+            });
+
+            it('should respond to POST api request with custom status code', function (done) {
+                var operation = 'create',
+                    statusCodeSet = false,
+                    req = {
+                        method: 'POST',
+                        path: '/resource/' + mockFetcher.name,
+                        body: {
+                            requests: {
+                                g0: {
+                                    resource: mockFetcher.name,
+                                    operation: operation,
+                                    params: {
+                                        uuids: ['cd7240d6-aeed-3fed-b63c-d7e99e21ca17', 'cd7240d6-aeed-3fed-b63c-d7e99e21ca17'],
+                                        id: 'asdf',
+                                        'meta.statusCode': '201'
+                                    }
+                                }
+                            },
+                            context: {
+                                site: '',
+                                devide: ''
+                            }
+                        }
+                    },
+                    res = {
+                        json: function(response) {
+                            expect(response).to.exist;
+                            expect(response).to.not.be.empty;
+                            var data = response.g0.data;
+                            expect(data).to.contain.keys('operation', 'args');
+                            expect(data.operation).to.equal('create');
+                            expect(data.args).to.contain.keys('params');
+                            expect(data.args.params).to.equal(req.body.requests.g0.params);
+                            done();
+                        },
+                        status: function(code) {
+                            // It's only a string because the qs.stringify call above turns into one normally this would be an integer
+                            expect(code).to.equal('201');
+                            statusCodeSet = true;
+                            return this;
+                        },
+                        send: function (code) {
+                            console.log('Not Expected: middleware responded with', code);
+                        }
+                    },
+                    next = function () {
+                        console.log('Not Expected: middleware skipped request');
+                    },
+                    middleware = Fetcher.middleware({pathPrefix: '/api'});
+                middleware(req, res, next);
+                expect(statusCodeSet).to.be.true;
             });
 
             var makePostApiErrorTest = function(params, expStatusCode, expMessage) {
                 return function(done) {
                     var operation = 'create',
+                        statusCodeSet = false,
                         req = {
                             method: 'POST',
                             path: '/resource/' + mockErrorFetcher.name,
@@ -134,6 +195,7 @@ describe('Server Fetcher', function () {
                             },
                             status: function(code) {
                                 expect(code).to.equal(expStatusCode);
+                                statusCodeSet = true;
                                 return this;
                             },
                             send: function (data) {
@@ -146,6 +208,7 @@ describe('Server Fetcher', function () {
                         },
                         middleware = Fetcher.middleware({pathPrefix: '/api'});
                     middleware(req, res, next);
+                    expect(statusCodeSet).to.be.true;
                 };
             };
 
@@ -214,8 +277,8 @@ describe('Server Fetcher', function () {
                         json: function(response) {
                             expect(response).to.exist;
                             expect(response).to.not.be.empty;
-                            expect(response).to.contain.keys(operation, 'args');
-                            expect(response[operation]).to.equal('success');
+                            expect(response).to.contain.keys('operation', 'args');
+                            expect(response.operation).to.equal('read');
                             expect(response.args).to.contain.keys('params');
                             expect(response.args.params).to.deep.equal(params);
                             done();
