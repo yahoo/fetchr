@@ -22,7 +22,7 @@ var Fetcher = {
      */
     read: function (req, resource, params, context, callback) {
         callback(null, {
-            read: 'success',
+            operation: 'read',
             args: {
                 resource: resource,
                 params: params,
@@ -44,7 +44,7 @@ var Fetcher = {
      */
     create: function (req, resource, params, body, context, callback) {
         callback(null, {
-            create: 'success',
+            operation: 'create',
             args: {
                 resource: resource,
                 params: params,
@@ -66,7 +66,7 @@ var Fetcher = {
      */
     update: function (req, resource, params, body, context, callback) {
         callback(null, {
-            update: 'success',
+            operation: 'update',
             args: {
                 resource: resource,
                 params: params,
@@ -87,7 +87,7 @@ var Fetcher = {
      */
     del: function (req, resource, params, context, callback) {
         callback(null, {
-            del: 'success',
+            operation: 'del',
             args: {
                 resource: resource,
                 params: params,

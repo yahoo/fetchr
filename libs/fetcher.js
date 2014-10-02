@@ -91,8 +91,9 @@ var OP_READ = 'read',
             } else {
                 var requests = req.body.requests;
 
-                if (!requests || requests.length === 0) {
-                    res.status(204).end();
+                if (!requests || Object.keys(requests).length === 0) {
+                    res.status(400).end();
+                    return;
                 }
 
                 var DEFAULT_GUID = 'g0',
