@@ -80,12 +80,13 @@ var OP_READ = 'read',
                     operation: OP_READ,
                     params: qs.parse(path.join('&')),
                     config: {},
-                    callback: function (err, data) {
+                    callback: function (err, data, meta) {
                         if (err) {
                             res.status(err.statusCode || 400).send(err.message || 'request failed');
                             return;
                         }
-                        res.json(data);
+                        meta = meta || {};
+                        res.status(meta.statusCode || 200).json(data);
                     }
                 };
             } else {

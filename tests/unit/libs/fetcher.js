@@ -162,9 +162,10 @@ describe('Server Fetcher', function () {
         describe('#GET', function() {
             it('should respond to GET api request', function (done) {
                 var operation = 'read',
+                    statusCodeSet = false,
                     params = {
                         uuids: ['cd7240d6-aeed-3fed-b63c-d7e99e21ca17', 'cd7240d6-aeed-3fed-b63c-d7e99e21ca17'],
-                        id: 'asdf'
+                        id: 'asdf',
                     },
                     req = {
                         method: 'GET',
@@ -180,6 +181,11 @@ describe('Server Fetcher', function () {
                             expect(response.args.params).to.deep.equal(params);
                             done();
                         },
+                        status: function(code) {
+                            expect(code).to.equal(200);
+                            statusCodeSet = true;
+                            return this;
+                        },
                         send: function (code) {
                             console.log('Not Expected: middleware responded with', code);
                         }
@@ -189,11 +195,53 @@ describe('Server Fetcher', function () {
                     },
                     middleware = Fetcher.middleware({pathPrefix: '/api'});
                 middleware(req, res, next);
+                expect(statusCodeSet).to.be.true;
+            });
+
+            it('should respond to GET api request with custom status code', function (done) {
+                var operation = 'read',
+                    statusCodeSet = false,
+                    params = {
+                        uuids: ['cd7240d6-aeed-3fed-b63c-d7e99e21ca17', 'cd7240d6-aeed-3fed-b63c-d7e99e21ca17'],
+                        id: 'asdf',
+                        'meta.statusCode': '201'
+                    },
+                    req = {
+                        method: 'GET',
+                        path: '/resource/' + mockFetcher.name + ';' + qs.stringify(params, ';')
+                    },
+                    res = {
+                        json: function(response) {
+                            expect(response).to.exist;
+                            expect(response).to.not.be.empty;
+                            expect(response).to.contain.keys(operation, 'args');
+                            expect(response[operation]).to.equal('success');
+                            expect(response.args).to.contain.keys('params');
+                            expect(response.args.params).to.deep.equal(params);
+                            done();
+                        },
+                        status: function(code) {
+                            // It's only a string because the qs.stringify call above turns into one normally this would be an integer
+                            expect(code).to.equal('201');
+                            statusCodeSet = true;
+                            return this;
+                        },
+                        send: function (code) {
+                            console.log('Not Expected: middleware responded with', code);
+                        }
+                    },
+                    next = function () {
+                        console.log('Not Expected: middleware skipped request');
+                    },
+                    middleware = Fetcher.middleware({pathPrefix: '/api'});
+                middleware(req, res, next);
+                expect(statusCodeSet).to.be.true;
             });
 
             var makeGetApiErrorTest = function(params, expStatusCode, expMessage) {
                 return function(done) {
                     var operation = 'read',
+                        statusCodeSet = false,
                         req = {
                             method: 'GET',
                             path: '/resource/' + mockErrorFetcher.name + ';' + qs.stringify(params, ';')
@@ -204,6 +252,7 @@ describe('Server Fetcher', function () {
                             },
                             status: function(code) {
                                 expect(code).to.equal(expStatusCode);
+                                statusCodeSet = true;
                                 return this;
                             },
                             send: function (data) {
@@ -216,6 +265,7 @@ describe('Server Fetcher', function () {
                         },
                         middleware = Fetcher.middleware({pathPrefix: '/api'});
                     middleware(req, res, next);
+                    expect(statusCodeSet).to.be.true;
                 };
             };
 
