@@ -109,31 +109,48 @@ describe('Server Fetcher', function () {
         var resource = mockFetcher.name,
             params = {},
             body = {},
-            config = {};
+            config = {},
+            callback = function(operation, done) {
+                return function(err, data) {
+                    if (err){
+                        done(err);
+                    }
+                    expect(data.operation).to.equal(operation);
+                    done();
+                };
+            };
 
         it('should handle CREATE', function (done) {
-            fetcher.create(resource, params, body, config, done);
+            var operation = 'create';
+            fetcher[operation](resource, params, body, config, callback(operation, done));
         });
         it('should handle CREATE w/ no config', function (done) {
-            fetcher.create(resource, params, body, done);
+            var operation = 'create';
+            fetcher[operation](resource, params, body, callback(operation, done));
         });
         it('should handle READ', function (done) {
-            fetcher.read(resource, params, config, done);
+            var operation = 'read';
+            fetcher[operation](resource, params, config, done);
         });
         it('should handle READ w/ no config', function (done) {
-            fetcher.read(resource, params, done);
+            var operation = 'read';
+            fetcher[operation](resource, params, done);
         });
         it('should handle UPDATE', function (done) {
-            fetcher.update(resource, params, body, config, done);
+            var operation = 'update';
+            fetcher[operation](resource, params, body, config, callback(operation, done));
         });
         it('should handle UPDATE w/ no config', function (done) {
-            fetcher.update(resource, params, body, done);
+            var operation = 'update';
+            fetcher[operation](resource, params, body, callback(operation, done));
         });
         it('should handle DELETE', function (done) {
-            fetcher.del(resource, params, config, done);
+            var operation = 'del';
+            fetcher[operation](resource, params, config, callback('del', done));
         });
         it('should handle DELETE w/ no config', function (done) {
-            fetcher.del(resource, params, done);
+            var operation = 'del';
+            fetcher[operation](resource, params, callback('del', done));
         });
     });
 
