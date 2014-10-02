@@ -14,6 +14,7 @@ var expect = chai.expect,
         req: {}
     }),
     mockFetcher = require('../../mock/fakeFetcher'),
+    mockErrorFetcher = require('../../mock/fakeErrorFetcher'),
     _ = require('lodash'),
     qs = require('querystring');
 
@@ -26,6 +27,8 @@ describe('Server Fetcher', function () {
         Fetcher.registerFetcher(mockFetcher);
         expect(_.size(Fetcher.fetchers)).to.equal(1);
         expect(fn()).to.deep.equal(mockFetcher);
+        Fetcher.registerFetcher(mockErrorFetcher);
+        expect(_.size(Fetcher.fetchers)).to.equal(2);
     });
 
     describe('#middleware', function () {
@@ -103,6 +106,7 @@ describe('Server Fetcher', function () {
 
             middleware(req, res, next);
         });
+
         it('should respond to GET api request', function (done) {
             var operation = 'read',
                 params = {
@@ -133,6 +137,43 @@ describe('Server Fetcher', function () {
                 middleware = Fetcher.middleware({pathPrefix: '/api'});
             middleware(req, res, next);
         });
+
+        var makeGetApiErrorTest = function(params, expStatusCode, expMessage) {
+            return function(done) {
+                var operation = 'read',
+                    req = {
+                        method: 'GET',
+                        path: '/resource/' + mockErrorFetcher.name + ';' + qs.stringify(params, ';')
+                    },
+                    res = {
+                        json: function(response) {
+                            console.log('Not Expected: middleware responded with', response);
+                        },
+                        status: function(code) {
+                            expect(code).to.equal(expStatusCode);
+                            return this;
+                        },
+                        send: function (data) {
+                            expect(data).to.equal(expMessage);
+                            done();
+                        }
+                    },
+                    next = function () {
+                        console.log('Not Expected: middleware skipped request');
+                    },
+                    middleware = Fetcher.middleware({pathPrefix: '/api'});
+                middleware(req, res, next);
+            };
+        };
+
+        it('should respond to GET api request with default error details',
+           makeGetApiErrorTest({}, 400, 'request failed'));
+
+        it('should respond to GET api request with custom error status code',
+           makeGetApiErrorTest({statusCode: 500}, 500, 'request failed'));
+
+        it('should respond to GET api request with custom error message',
+           makeGetApiErrorTest({message: 'Error message...'}, 400, 'Error message...'));
     });
 
     describe('#CRUD', function () {
