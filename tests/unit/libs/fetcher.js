@@ -35,6 +35,7 @@ describe('Server Fetcher', function () {
         describe('#POST', function() {
             it('should 404 to POST request with no req.body.requests object', function (done) {
                 var operation = 'create',
+                    statusCodeSet = false,
                     req = {
                         method: 'POST',
                         path: '/resource/' + mockFetcher.name,
@@ -49,6 +50,7 @@ describe('Server Fetcher', function () {
                     res = {
                         status: function (code) {
                             expect(code).to.equal(400);
+                            statusCodeSet = true;
                             return this;
                         },
                         end: function () {
@@ -61,6 +63,7 @@ describe('Server Fetcher', function () {
                     middleware = Fetcher.middleware();
 
                 middleware(req, res, next);
+                expect(statusCodeSet).to.be.true;
             });
 
             it('should respond to POST api request', function (done) {
