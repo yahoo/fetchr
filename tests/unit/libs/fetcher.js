@@ -120,6 +120,7 @@ describe('Server Fetcher', function () {
 
             it('should respond to POST api request with custom status code', function (done) {
                 var operation = 'create',
+                    statusCode = 201,
                     statusCodeSet = false,
                     req = {
                         method: 'POST',
@@ -132,7 +133,6 @@ describe('Server Fetcher', function () {
                                     params: {
                                         uuids: ['cd7240d6-aeed-3fed-b63c-d7e99e21ca17', 'cd7240d6-aeed-3fed-b63c-d7e99e21ca17'],
                                         id: 'asdf',
-                                        'meta.statusCode': '201'
                                     }
                                 }
                             },
@@ -154,8 +154,7 @@ describe('Server Fetcher', function () {
                             done();
                         },
                         status: function(code) {
-                            // It's only a string because the qs.stringify call above turns into one normally this would be an integer
-                            expect(code).to.equal('201');
+                            expect(code).to.equal(statusCode);
                             statusCodeSet = true;
                             return this;
                         },
@@ -167,6 +166,11 @@ describe('Server Fetcher', function () {
                         console.log('Not Expected: middleware skipped request');
                     },
                     middleware = Fetcher.middleware({pathPrefix: '/api'});
+
+                mockFetcher.meta = {
+                    statusCode: statusCode
+                };
+
                 middleware(req, res, next);
                 expect(statusCodeSet).to.be.true;
             });
@@ -267,10 +271,10 @@ describe('Server Fetcher', function () {
             it('should respond to GET api request with custom status code', function (done) {
                 var operation = 'read',
                     statusCodeSet = false,
+                    statusCode = 201,
                     params = {
                         uuids: ['cd7240d6-aeed-3fed-b63c-d7e99e21ca17', 'cd7240d6-aeed-3fed-b63c-d7e99e21ca17'],
                         id: 'asdf',
-                        'meta.statusCode': '201'
                     },
                     req = {
                         method: 'GET',
@@ -287,8 +291,7 @@ describe('Server Fetcher', function () {
                             done();
                         },
                         status: function(code) {
-                            // It's only a string because the qs.stringify call above turns into one normally this would be an integer
-                            expect(code).to.equal('201');
+                            expect(code).to.equal(statusCode);
                             statusCodeSet = true;
                             return this;
                         },
@@ -300,6 +303,10 @@ describe('Server Fetcher', function () {
                         console.log('Not Expected: middleware skipped request');
                     },
                     middleware = Fetcher.middleware({pathPrefix: '/api'});
+
+                mockFetcher.meta = {
+                    statusCode: statusCode
+                };
                 middleware(req, res, next);
                 expect(statusCodeSet).to.be.true;
             });

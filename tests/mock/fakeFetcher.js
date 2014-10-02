@@ -2,28 +2,6 @@
  * Copyright 2014, Yahoo! Inc.
  * Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
  */
-
-var _ = require('lodash');
-
-function extractMetaData(params) {
-    return _.chain(params)
-        .pairs()
-        .filter(function(pair) {
-            return /^meta\./.test(pair[0]);
-        })
-        .map(function(pair) {
-            return [
-                pair[0].substring(5),
-                pair[1]
-            ];
-        })
-        .reduce(function(meta, pair) {
-            meta[pair[0]] = pair[1];
-            return meta;
-        }, {})
-        .value();
-}
-
 var Fetcher = {
     name: 'fake_fetcher',
 
@@ -50,7 +28,8 @@ var Fetcher = {
                 params: params,
                 context: context
             }
-        }, extractMetaData(params));
+        }, this.meta);
+        this.meta = null;
     },
     /**
      * create operation (create as in CRUD).
@@ -72,7 +51,8 @@ var Fetcher = {
                 params: params,
                 context: context
             }
-        }, extractMetaData(params));
+        }, this.meta);
+        this.meta = null;
     },
     /**
      * update operation (update as in CRUD).
@@ -94,7 +74,8 @@ var Fetcher = {
                 params: params,
                 context: context
             }
-        }, extractMetaData(params));
+        }, this.meta);
+        this.meta = null;
     },
     /**
      * delete operation (delete as in CRUD).
@@ -115,7 +96,8 @@ var Fetcher = {
                 params: params,
                 context: context
             }
-        }, extractMetaData(params));
+        }, this.meta);
+        this.meta = null;
     }
 
 };
