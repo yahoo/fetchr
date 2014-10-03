@@ -2,6 +2,7 @@
  * Copyright 2014, Yahoo! Inc.
  * Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
  */
+
 /**
  * list of registered fetchers
  */
@@ -11,7 +12,7 @@ var OP_READ = 'read',
     GET = 'GET',
     qs = require('querystring');
 
-/**
+/*
  * @module createFetcherClass
  * @param {object} options
  */
@@ -34,6 +35,7 @@ var OP_READ = 'read',
 
     /**
      * @method registerFetcher
+     * @memberof Fetcher
      * @param {Function} fetcher
      */
     Fetcher.registerFetcher = function (fetcher) {
@@ -50,6 +52,7 @@ var OP_READ = 'read',
 
     /**
      * @method getFetcher
+     * @memberof Fetcher
      * @param {String} name
      * @returns {Function} fetcher
      */
@@ -63,6 +66,7 @@ var OP_READ = 'read',
 
     /**
      * @method middleware
+     * @memberof Fetcher
      * @returns {Function} middleware
      *     @param {Object} req
      *     @param {Object} res
@@ -80,12 +84,13 @@ var OP_READ = 'read',
                     operation: OP_READ,
                     params: qs.parse(path.join('&')),
                     config: {},
-                    callback: function (err, data) {
+                    callback: function (err, data, meta) {
                         if (err) {
-                            res.status(400).send(err.message || 'request failed');
+                            res.status(err.statusCode || 400).send(err.message || 'request failed');
                             return;
                         }
-                        res.json(data);
+                        meta = meta || {};
+                        res.status(meta.statusCode || 200).json(data);
                     }
                 };
             } else {
@@ -105,14 +110,15 @@ var OP_READ = 'read',
                     params: singleRequest.params,
                     body: singleRequest.body || {},
                     config: singleRequest.config,
-                    callback: function(err, data) {
+                    callback: function(err, data, meta) {
                         if(err) {
-                            res.status(400).send(err.message || 'request failed');
+                            res.status(err.statusCode || 400).send(err.message || 'request failed');
                             return;
                         }
+                        meta = meta || {};
                         var responseObj = {};
                         responseObj[DEFAULT_GUID] = {data: data};
-                        res.json(responseObj);
+                        res.status(meta.statusCode || 200).json(responseObj);
                     }
                 };
             }
@@ -130,16 +136,17 @@ var OP_READ = 'read',
     /**
      * Execute a single request.
      * @method single
+     * @memberof Fetcher
      * @param {Object} request
      * @param {String} request.req       The req object from express/connect
      * @param {String} request.resource  The resource name
      * @param {String} request.operation The CRUD operation name: 'create|read|update|delete'.
      * @param {Object} request.params    The parameters identify the resource, and along with information
-     *                           carried in query and matrix parameters in typical REST API
+     *                                   carried in query and matrix parameters in typical REST API
      * @param {Object} request.body      The JSON object that contains the resource data that is being updated. Not used
-     *                           for read and delete operations.
-     * @param {Object} request.config The config object.  It can contain "config" for per-request config data.
-     * @param {Function} request.callback callback convention is the same as Node.js
+     *                                   for read and delete operations.
+     * @param {Object} request.config    The config object.  It can contain "config" for per-request config data.
+     * @param {Fetcher~fetcherCallback} request.callback callback invoked when fetcher is complete.
      * @protected
      * @static
      */
@@ -177,11 +184,12 @@ var OP_READ = 'read',
     /**
      * read operation (read as in CRUD).
      * @method read
+     * @memberof Fetcher.prototype
      * @param {String} resource  The resource name
      * @param {Object} params    The parameters identify the resource, and along with information
      *                           carried in query and matrix parameters in typical REST API
      * @param {Object} [config={}] The config object.  It can contain "config" for per-request config data.
-     * @param {Function} callback callback convention is the same as Node.js
+     * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
      * @static
      */
     Fetcher.prototype.read = function (resource, params, config, callback) {
@@ -198,12 +206,13 @@ var OP_READ = 'read',
     /**
      * create operation (create as in CRUD).
      * @method create
+     * @memberof Fetcher.prototype
      * @param {String} resource  The resource name
      * @param {Object} params    The parameters identify the resource, and along with information
      *                           carried in query and matrix parameters in typical REST API
      * @param {Object} body      The JSON object that contains the resource data that is being created
      * @param {Object} [config={}] The config object.  It can contain "config" for per-request config data.
-     * @param {Function} callback callback convention is the same as Node.js
+     * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
      * @static
      */
     Fetcher.prototype.create = function (resource, params, body, config, callback) {
@@ -221,12 +230,13 @@ var OP_READ = 'read',
     /**
      * update operation (update as in CRUD).
      * @method update
+     * @memberof Fetcher.prototype
      * @param {String} resource  The resource name
      * @param {Object} params    The parameters identify the resource, and along with information
      *                           carried in query and matrix parameters in typical REST API
      * @param {Object} body      The JSON object that contains the resource data that is being updated
      * @param {Object} [config={}] The config object.  It can contain "config" for per-request config data.
-     * @param {Function} callback callback convention is the same as Node.js
+     * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
      * @static
      */
     Fetcher.prototype.update = function (resource, params, body, config, callback) {
@@ -244,11 +254,12 @@ var OP_READ = 'read',
     /**
      * delete operation (delete as in CRUD).
      * @method del
+     * @memberof Fetcher.prototype
      * @param {String} resource  The resource name
      * @param {Object} params    The parameters identify the resource, and along with information
      *                           carried in query and matrix parameters in typical REST API
      * @param {Object} [config={}] The config object.  It can contain "config" for per-request config data.
-     * @param {Function} callback callback convention is the same as Node.js
+     * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
      * @static
      */
     Fetcher.prototype.del = function (resource, params, config, callback) {
@@ -264,3 +275,14 @@ var OP_READ = 'read',
     };
 
     module.exports = Fetcher;
+
+/**
+ * @callback Fetcher~fetcherCallback
+ * @param {Object} err  The request error, pass null if there was no error. The data and meta parameters will be ignored if this parameter is not null.
+ * @param {number} [err.statusCode=400] http status code to return
+ * @param {string} [err.message=request failed] http response body
+ * @param {Object} data request result
+ * @param {Object} [meta] request meta-data
+ * @param {number} [meta.statusCode=200] http status code to return
+ */
+

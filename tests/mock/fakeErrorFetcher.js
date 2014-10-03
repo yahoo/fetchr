@@ -3,7 +3,7 @@
  * Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
  */
 var Fetcher = {
-    name: 'fake_fetcher',
+    name: 'fake_error_fetcher',
 
     // ------------------------------------------------------------------
     // CRUD Methods
@@ -21,15 +21,11 @@ var Fetcher = {
      * @static
      */
     read: function (req, resource, params, context, callback) {
-        callback(null, {
-            operation: 'read',
-            args: {
-                resource: resource,
-                params: params,
-                context: context
-            }
-        }, this.meta);
-        this.meta = null;
+        callback({
+            statusCode: parseInt(params.statusCode),
+            message: params.message,
+            read: 'error'
+        }, null);
     },
     /**
      * create operation (create as in CRUD).
@@ -44,15 +40,11 @@ var Fetcher = {
      * @static
      */
     create: function (req, resource, params, body, context, callback) {
-        callback(null, {
-            operation: 'create',
-            args: {
-                resource: resource,
-                params: params,
-                context: context
-            }
-        }, this.meta);
-        this.meta = null;
+        callback({
+            statusCode: parseInt(params.statusCode),
+            message: params.message,
+            create: 'error'
+        }, null);
     },
     /**
      * update operation (update as in CRUD).
@@ -67,15 +59,11 @@ var Fetcher = {
      * @static
      */
     update: function (req, resource, params, body, context, callback) {
-        callback(null, {
-            operation: 'update',
-            args: {
-                resource: resource,
-                params: params,
-                context: context
-            }
-        }, this.meta);
-        this.meta = null;
+        callback({
+            statusCode: parseInt(params.statusCode),
+            message: params.message,
+            update: 'error'
+        }, null);
     },
     /**
      * delete operation (delete as in CRUD).
@@ -89,15 +77,11 @@ var Fetcher = {
      * @static
      */
     del: function (req, resource, params, context, callback) {
-        callback(null, {
-            operation: 'del',
-            args: {
-                resource: resource,
-                params: params,
-                context: context
-            }
-        }, this.meta);
-        this.meta = null;
+        callback({
+            statusCode: parseInt(params.statusCode),
+            message: params.message,
+            del: 'error'
+        }, null);
     }
 
 };

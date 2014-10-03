@@ -108,7 +108,7 @@ app.use(function(req, res, next) {
         req: req
     });
 
-    fetcher.read('data_api_fetcher', {id: ###}, {}, function (err, data) {
+    fetcher.read('data_api_fetcher', {id: ###}, {}, function (err, data, meta) {
         //handle err and/or data returned from data fetcher in this callback
     })
 });
@@ -128,7 +128,7 @@ var Fetcher = require('fetchr'),
             crumb: 'Ax89D94j', //optional crumb string to send back to server with each request. Validation should happen on server.
         }
     });
-    fetcher.read('data_api_fetcher', {id: ###}, {}, function (err, data) {
+    fetcher.read('data_api_fetcher', {id: ###}, {}, function (err, data, meta) {
         //handle err and/or data returned from data fetcher in this callback
     })
 //...
