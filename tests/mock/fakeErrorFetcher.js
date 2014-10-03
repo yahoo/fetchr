@@ -17,7 +17,7 @@ var Fetcher = {
      * @param {Object} params    The parameters identify the resource, and along with information
      *                           carried in query and matrix parameters in typical REST API
      * @param {Object} [context={}] The context object.  It can contain "config" for per-request config data.
-     * @param {Function} callback callback convention is the same as Node.js
+     * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
      * @static
      */
     read: function (req, resource, params, context, callback) {
@@ -36,7 +36,7 @@ var Fetcher = {
      *                           carried in query and matrix parameters in typical REST API
      * @param {Object} body      The JSON object that contains the resource data that is being created
      * @param {Object} [context={}] The context object.  It can contain "config" for per-request config data.
-     * @param {Function} callback callback convention is the same as Node.js
+     * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
      * @static
      */
     create: function (req, resource, params, body, context, callback) {
@@ -55,7 +55,7 @@ var Fetcher = {
      *                           carried in query and matrix parameters in typical REST API
      * @param {Object} body      The JSON object that contains the resource data that is being updated
      * @param {Object} [context={}] The context object.  It can contain "config" for per-request config data.
-     * @param {Function} callback callback convention is the same as Node.js
+     * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
      * @static
      */
     update: function (req, resource, params, body, context, callback) {
@@ -73,7 +73,7 @@ var Fetcher = {
      * @param {Object} params    The parameters identify the resource, and along with information
      *                           carried in query and matrix parameters in typical REST API
      * @param {Object} [context={}] The context object.  It can contain "config" for per-request config data.
-     * @param {Function} callback callback convention is the same as Node.js
+     * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
      * @static
      */
     del: function (req, resource, params, context, callback) {
