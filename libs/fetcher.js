@@ -273,6 +273,7 @@ var OP_READ = 'read',
         };
         Fetcher.single(request);
     };
+    Fetcher.prototype.del = Fetcher.prototype['delete'];
 
     module.exports = Fetcher;
 

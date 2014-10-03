@@ -402,6 +402,10 @@ describe('Server Fetcher', function () {
             var operation = 'delete';
             fetcher[operation](resource, params, config, callback(operation, done));
         });
+        it('should handle DELETE w/ backwards compatibility', function (done) {
+            var operation = 'delete';
+            fetcher.del(resource, params, config, callback(operation, done));
+        });
         it('should handle DELETE w/ no config', function (done) {
             var operation = 'delete';
             fetcher[operation](resource, params, callback(operation, done));
