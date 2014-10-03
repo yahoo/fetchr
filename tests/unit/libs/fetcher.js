@@ -95,7 +95,8 @@ describe('Server Fetcher', function () {
                             expect(response).to.not.be.empty;
                             var data = response.g0.data;
                             expect(data).to.contain.keys('operation', 'args');
-                            expect(data.operation).to.equal('create');
+                            expect(data.operation.name).to.equal(operation);
+                            expect(data.operation.success).to.be.true;
                             expect(data.args).to.contain.keys('params');
                             expect(data.args.params).to.equal(req.body.requests.g0.params);
                             done();
@@ -148,7 +149,8 @@ describe('Server Fetcher', function () {
                             expect(response).to.not.be.empty;
                             var data = response.g0.data;
                             expect(data).to.contain.keys('operation', 'args');
-                            expect(data.operation).to.equal('create');
+                            expect(data.operation.name).to.equal(operation);
+                            expect(data.operation.success).to.be.true;
                             expect(data.args).to.contain.keys('params');
                             expect(data.args.params).to.equal(req.body.requests.g0.params);
                             done();
@@ -246,7 +248,8 @@ describe('Server Fetcher', function () {
                             expect(response).to.exist;
                             expect(response).to.not.be.empty;
                             expect(response).to.contain.keys('operation', 'args');
-                            expect(response.operation).to.equal('read');
+                            expect(response.operation.name).to.equal(operation);
+                            expect(response.operation.success).to.be.true;
                             expect(response.args).to.contain.keys('params');
                             expect(response.args.params).to.deep.equal(params);
                             done();
@@ -285,7 +288,8 @@ describe('Server Fetcher', function () {
                             expect(response).to.exist;
                             expect(response).to.not.be.empty;
                             expect(response).to.contain.keys('operation', 'args');
-                            expect(response.operation).to.equal('read');
+                            expect(response.operation.name).to.equal(operation);
+                            expect(response.operation.success).to.be.true;
                             expect(response.args).to.contain.keys('params');
                             expect(response.args.params).to.deep.equal(params);
                             done();
@@ -363,7 +367,9 @@ describe('Server Fetcher', function () {
                     if (err){
                         done(err);
                     }
-                    expect(data.operation).to.equal(operation);
+                    expect(data.operation).to.exist;
+                    expect(data.operation.name).to.equal(operation);
+                    expect(data.operation.success).to.be.true;
                     done();
                 };
             };
@@ -393,11 +399,11 @@ describe('Server Fetcher', function () {
             fetcher[operation](resource, params, body, callback(operation, done));
         });
         it('should handle DELETE', function (done) {
-            var operation = 'del';
+            var operation = 'delete';
             fetcher[operation](resource, params, config, callback(operation, done));
         });
         it('should handle DELETE w/ no config', function (done) {
-            var operation = 'del';
+            var operation = 'delete';
             fetcher[operation](resource, params, callback(operation, done));
         });
     });

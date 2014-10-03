@@ -120,11 +120,11 @@ describe('Client Fetcher', function () {
             fetcher[operation](resource, params, body, callback(operation, done));
         });
         it('should handle DELETE', function (done) {
-            var operation = 'del';
+            var operation = 'delete';
             fetcher[operation](resource, params, config, callback('delete', done));
         });
         it('should handle DELETE w/ no config', function (done) {
-            var operation = 'del';
+            var operation = 'delete';
             fetcher[operation](resource, params, callback('delete', done));
         });
     });

@@ -22,7 +22,10 @@ var Fetcher = {
      */
     read: function (req, resource, params, context, callback) {
         callback(null, {
-            operation: 'read',
+            operation: {
+                name: 'read',
+                success: true
+            },
             args: {
                 resource: resource,
                 params: params,
@@ -45,7 +48,10 @@ var Fetcher = {
      */
     create: function (req, resource, params, body, context, callback) {
         callback(null, {
-            operation: 'create',
+            operation: {
+                name: 'create',
+                success: true
+            },
             args: {
                 resource: resource,
                 params: params,
@@ -68,7 +74,10 @@ var Fetcher = {
      */
     update: function (req, resource, params, body, context, callback) {
         callback(null, {
-            operation: 'update',
+            operation: {
+                name: 'update',
+                success: true
+            },
             args: {
                 resource: resource,
                 params: params,
@@ -88,9 +97,12 @@ var Fetcher = {
      * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
      * @static
      */
-    del: function (req, resource, params, context, callback) {
+    'delete': function (req, resource, params, context, callback) {
         callback(null, {
-            operation: 'del',
+            operation: {
+                name: 'delete',
+                success: true
+            },
             args: {
                 resource: resource,
                 params: params,
