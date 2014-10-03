@@ -124,7 +124,7 @@ var OP_READ = 'read',
             }
 
             Fetcher.single(request);
-            //TODO: Batching and multi requests
+            // TODO: Batching and multi requests
         };
     };
 
