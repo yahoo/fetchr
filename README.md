@@ -75,7 +75,7 @@ module.exports = {
     //other methods
     //create: function(req, resource, params, body, config, callback) {},
     //update: function(req, resource, params, body, config, callback) {},
-    //del: function(req, resource, params, config, callback) {}
+    //delete: function(req, resource, params, config, callback) {}
 }
 
 ```
