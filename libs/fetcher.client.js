@@ -218,7 +218,7 @@ Queue.prototype = {
 
         /**
          * delete operation (delete as in CRUD).
-         * @method del
+         * @method delete
          * @param {String} resource  The resource name
          * @param {Object} params    The parameters identify the resource, and along with information
          *                           carried in query and matrix parameters in typical REST API
@@ -226,8 +226,11 @@ Queue.prototype = {
          * @param {Function} callback callback convention is the same as Node.js
          * @static
          */
-        del: function (resource, params, config, callback) {
+        'delete': function (resource, params, config, callback) {
             this._sync(resource, 'delete', params, undefined, config, callback);
+        },
+        del: function () {
+            this['delete'].apply(this, arguments);
         },
 
         /**

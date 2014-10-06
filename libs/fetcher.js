@@ -253,7 +253,7 @@ var OP_READ = 'read',
     };
     /**
      * delete operation (delete as in CRUD).
-     * @method del
+     * @method delete
      * @memberof Fetcher.prototype
      * @param {String} resource  The resource name
      * @param {Object} params    The parameters identify the resource, and along with information
@@ -262,17 +262,18 @@ var OP_READ = 'read',
      * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
      * @static
      */
-    Fetcher.prototype.del = function (resource, params, config, callback) {
+    Fetcher.prototype['delete'] = function (resource, params, config, callback) {
         var request = {
             req: this.req,
             resource: resource,
-            operation: 'del',
+            operation: 'delete',
             params: params,
             config: config,
             callback: callback
         };
         Fetcher.single(request);
     };
+    Fetcher.prototype.del = Fetcher.prototype['delete'];
 
     module.exports = Fetcher;
 
