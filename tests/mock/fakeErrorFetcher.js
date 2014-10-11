@@ -67,7 +67,7 @@ var Fetcher = {
     },
     /**
      * delete operation (delete as in CRUD).
-     * @method del
+     * @method delete
      * @param {Object} req  The request object from connect/express
      * @param {String} resource  The resource name
      * @param {Object} params    The parameters identify the resource, and along with information
@@ -76,11 +76,11 @@ var Fetcher = {
      * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
      * @static
      */
-    del: function (req, resource, params, context, callback) {
+    delete: function (req, resource, params, context, callback) {
         callback({
             statusCode: parseInt(params.statusCode),
             message: params.message,
-            del: 'error'
+            delete: 'error'
         }, null);
     }
 
