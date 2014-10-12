@@ -228,7 +228,7 @@ Queue.prototype = {
          */
         'delete': function (resource, params, config, callback) {
             this._sync(resource, 'delete', params, undefined, config, callback);
-        }
+        },
         /**
          * Sync data with remote API.
          * @method _sync
