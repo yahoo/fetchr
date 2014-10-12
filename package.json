@@ -21,7 +21,7 @@
     }
   ],
   "dependencies": {
-    "debug": "^1.0.2",
+    "debug": "^2.0.0",
     "lodash.foreach": "^2.4.1",
     "lodash.isarray": "^2.4.1",
     "lodash.isfunction": "^2.4.1",
