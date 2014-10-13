@@ -254,7 +254,7 @@ module.exports = {
      * @param {Number} [config.retry.max_retries=2]   Nmber of max retries.
      * @param {Function} callback The callback funciton, with two params (error, response)
      */
-    delete : function (url, headers, config, callback) {
+    'delete' : function (url, headers, config, callback) {
         doXhr(METHOD_DELETE, url, headers, NULL, config, callback);
     }
 };
