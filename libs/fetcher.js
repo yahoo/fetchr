@@ -273,7 +273,6 @@ var OP_READ = 'read',
         };
         Fetcher.single(request);
     };
-    Fetcher.prototype.del = Fetcher.prototype['delete'];
 
     module.exports = Fetcher;
 
@@ -286,4 +285,3 @@ var OP_READ = 'read',
  * @param {Object} [meta] request meta-data
  * @param {number} [meta.statusCode=200] http status code to return
  */
-

@@ -88,7 +88,7 @@ var Fetcher = {
     },
     /**
      * delete operation (delete as in CRUD).
-     * @method del
+     * @method delete
      * @param {Object} req  The request object from connect/express
      * @param {String} resource  The resource name
      * @param {Object} params    The parameters identify the resource, and along with information
