@@ -6,6 +6,7 @@ var http = require('http'),
     path = require('path'),
     fs = require('fs'),
     express = require('express'),
+    bodyParser = require('body-parser'),
     config = require('../shared/config'),
     Fetcher = require('../../../libs/fetcher.js'),
     readFlickr = require('../shared/getFlickrPhotos'),
@@ -16,6 +17,8 @@ var http = require('http'),
 Fetcher.registerFetcher(flickrFetcher);
 
 var app = express();
+
+app.use(bodyParser.json());
 
 app.use(config.xhrPath, Fetcher.middleware());
 
