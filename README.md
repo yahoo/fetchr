@@ -22,11 +22,17 @@ Fetchr needs delicate set up to work properly.
 
 On the server side, add the fetchr middleware into your express app at a custom API endpoint.
 
+Fetcher middleware expects that you're using the [`body-parser`](https://github.com/expressjs/body-parser) middleware (or an alternative middleware that populates `req.body`) before you use fetcher middleware.
+
 ```js
 //...
 var express = require('express'),
     Fetcher = require('fetchr'),
+    bodyParser = require('body-parser'),
     app = express();
+
+// you need to use body-parser middleware before fetcher middleware
+app.use(bodyParser.json());
 
 app.use('/myCustomAPIEndpoint', Fetcher.middleware());
 //...
