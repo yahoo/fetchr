@@ -21,7 +21,7 @@ var OP_READ = 'read',
 
     /**
      * @class Fetcher
-     * @param {Object} options congiguration options for Fetcher
+     * @param {Object} options configuration options for Fetcher
      * @param {Object} [options.req] The request object.  It can contain per-request/context data.
      * @param {string} [options.xhrPath="/api"] The path for XHR requests. Will be ignored serverside.
      * @constructor
