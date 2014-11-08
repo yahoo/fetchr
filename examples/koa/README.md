@@ -1,4 +1,4 @@
-#Simple Fetcher Example
+#Koa Fetcher Example
 
 ##Start server
 

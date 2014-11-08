@@ -1,5 +1,5 @@
 {
-  "name": "fetchr-simple-example",
+  "name": "fetchr-koa-example",
   "version": "0.0.0",
   "description": "",
   "main": "server/app.js",
