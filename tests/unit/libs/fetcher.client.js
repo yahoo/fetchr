@@ -6,6 +6,7 @@
 /*globals before,after,describe,it */
 "use strict";
 
+var libUrl = require('url');
 var expect = require('chai').expect,
     mockery = require('mockery'),
     Fetcher,
@@ -22,7 +23,7 @@ describe('Client Fetcher', function () {
             },
             body = { stuff: 'is'},
             context = {
-                crumb: 'stuff'
+                _csrf: 'stuff'
             },
             config = {},
             callback = function(operation, done) {
@@ -38,16 +39,13 @@ describe('Client Fetcher', function () {
         before(function(){
             mockery.registerMock('./util/http.client', {
                 get: function (url, headers, config, done) {
-                    var urlBase = '/api/resource/',
-                        urlParams,
-                        pair;
-                    expect(url).to.have.string(urlBase);
-                    urlParams = url.substr(urlBase.length);
-                    urlParams = decodeURIComponent(urlParams);
-                    urlParams = urlParams.split(';');
-                    expect(urlParams.shift()).to.equal(resource);
-                    while(!!(pair = urlParams.shift())) {
-                        pair = pair.split('=');
+                    var urlObj = libUrl.parse(url);
+                    var pathname = urlObj.pathname;
+                    pathname = decodeURIComponent(pathname);
+                    pathname = pathname.split(';');
+                    expect(pathname.shift()).to.equal('/api/resource/' + resource);
+                    while(!!(pair = pathname.shift())) {
+                        var pair = pair.split('=');
 
                         var k = pair[0],
                             v = pair[1];
@@ -65,7 +63,7 @@ describe('Client Fetcher', function () {
                     expect(url).to.not.be.empty;
                     expect(callback).to.exist;
                     expect(body).to.exist;
-                    expect(url).to.equal('/api?crumb='+context.crumb);
+                    expect(url).to.equal('/api?_csrf='+context._csrf);
 
                     var req = body.requests.g0,
                         res = {
@@ -85,7 +83,6 @@ describe('Client Fetcher', function () {
             });
             Fetcher = require('../../../libs/fetcher.client');
             fetcher = new Fetcher({
-                requireCrumb: true,
                 context: context
             });
         });

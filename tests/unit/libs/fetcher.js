@@ -43,7 +43,7 @@ describe('Server Fetcher', function () {
                             requests: {},
                             context: {
                                 site: '',
-                                devide: ''
+                                device: ''
                             }
                         }
                     },
@@ -85,7 +85,7 @@ describe('Server Fetcher', function () {
                             },
                             context: {
                                 site: '',
-                                devide: ''
+                                device: ''
                             }
                         }
                     },
@@ -133,13 +133,13 @@ describe('Server Fetcher', function () {
                                     operation: operation,
                                     params: {
                                         uuids: ['cd7240d6-aeed-3fed-b63c-d7e99e21ca17', 'cd7240d6-aeed-3fed-b63c-d7e99e21ca17'],
-                                        id: 'asdf',
+                                        id: 'asdf'
                                     }
                                 }
                             },
                             context: {
                                 site: '',
-                                devide: ''
+                                device: ''
                             }
                         }
                     },
@@ -194,7 +194,7 @@ describe('Server Fetcher', function () {
                                 },
                                 context: {
                                     site: '',
-                                    devide: ''
+                                    device: ''
                                 }
                             }
                         },

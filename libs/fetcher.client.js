@@ -66,7 +66,7 @@ function jsonifyComplexType(value) {
  * @param {Function} sweepFn The function to be called when queue is sweeped.
  * @param {Array} sweepFn.items The current items in the queue.
  * @param {Function} callback The function to be used to process a given item in the queue.
- * @param {Obj} callback.item The obj that was popped from the queue.
+ * @param {Object} callback.item The obj that was popped from the queue.
  */
 function Queue(id, config, sweepFn, callback) {
     this.id = id;
@@ -135,36 +135,33 @@ Queue.prototype = {
      * The received responses are split and routed back to the callback function assigned by initiator
      * of each request.
      *
-     * All requests go out from this store is via HTTP POST.  Therefore, crumb is required in the context
-     * param being passed to each CRUD call.  Typical structore of the context param is:
+     * All requests go out from this store is via HTTP POST. Typical structure of the context param is:
      * <pre>
      * {
      *   config: {
      *     uri : '/api'
      *   },
      *   context: {
-     *     crumb : '5YFuDK6R',
+     *     _csrf : '5YFuDK6R',
      *     lang : 'en-US',
-     *     site : 'my',
      *     ...
      *   }
      * }
      * </pre>
      *
      * @class FetcherClient
-     * @param {object} options congiguration options for Fetcher
+     * @param {object} options configuration options for Fetcher
      * @param {string} [options.xhrPath="/api"] The path for XHR requests
-     * @param {integer} [options.batchWindow=20] Number of milliseconds to wait to batch requests
-     * @param {Object} [options.context] The context object.  It can contain current-session/context data.
-     * @param {String} [options.context.crumb] The crumb for current session
-     * @param {Boolean} [options.requireCrumb = false]  require crumb for current session?
+     * @param {number} [options.batchWindow=20] Number of milliseconds to wait to batch requests
+     * @param {Object} [options.context] The context object that is propagated to all outgoing
+     *      requests as query params.  It can contain current-session/context data that should
+     *      persist to all requests.
      */
 
     function Fetcher (options) {
-        this.options = options || {};
         this.xhrPath = options.xhrPath || DEFAULT_XHR_PATH;
         this.batchWindow = options.batchWindow || DEFAULT_BATCH_WINDOW;
-        this.context = this.options.context || {};
+        this.context = options.context || {};
     }
 
     Fetcher.prototype = {
@@ -250,7 +247,7 @@ Queue.prototype = {
             }
 
             config = config || {};
-            config.xhr = this.xhrPrefix;
+            config.xhr = this.xhrPath;
 
             var self = this,
                 request = {
@@ -308,10 +305,7 @@ Queue.prototype = {
             });
 
             _.forEach(this.context, function (v, k) {
-                // do not include crumb key, if crumb_for_get is false
-                if (k !== 'crumb' || config.requireCrumbForGET) {
-                    query.push(k + '=' + encodeURIComponent(jsonifyComplexType(v)));
-                }
+                query.push(k + '=' + encodeURIComponent(jsonifyComplexType(v)));
             });
             if (id_val) {
                 final_uri += '/' + id_param + '/' + id_val;
@@ -338,13 +332,6 @@ Queue.prototype = {
             }
             return final_uri;
         },
-        /**
-         * @method _isCrumbRequired
-         * @private
-         */
-        _isCrumbRequired: function () {
-            return !!this.options.requireCrumb;
-        },
 
         // ------------------------------------------------------------------
         // Actual Data Access Methods
@@ -370,8 +357,7 @@ Queue.prototype = {
                 return;
             }
 
-            var context = this.context,
-                config = request.config,
+            var config = request.config,
                 callback = request.callback || _.noop,
                 use_post,
                 allow_retry_post,
@@ -379,12 +365,6 @@ Queue.prototype = {
                 get_uri,
                 requests,
                 data;
-
-            if (OP_READ !== request.operation && (this._isCrumbRequired() && !this.context.crumb)) {
-                //Crumb is required but not provided
-                debug('missing crumb');
-                return callback({statusCode: 400, statusText: 'missing crumb'});
-            }
 
             use_post = request.operation !== OP_READ || config.post_for_read;
             if (!use_post) {
@@ -437,7 +417,7 @@ Queue.prototype = {
         /**
          * batch the requests.
          * @method batch
-         * @param {Array} Array of requests objects to be batched. Each request is an object with properties:
+         * @param {Array} requests Array of requests objects to be batched. Each request is an object with properties:
          *                             `resource`, `operation, `params`, `body`, `config`, `callback`.
          * @return {Array} the request batches.
          * @protected
@@ -497,15 +477,6 @@ Queue.prototype = {
                 }
                 return false;
             }, this);
-
-            if (this._isCrumbRequired() && !this.context.crumb) {
-                //Crumb is required but not provided
-                _.forEach(requests, function (request) {
-                    debug('missing crumb');
-                    request.callback({statusCode: 400, statusText: 'missing crumb'});
-                });
-                return;
-            }
 
             uri = config.uri || config.xhr || this.xhrPath;
 
