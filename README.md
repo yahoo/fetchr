@@ -14,17 +14,17 @@ On the client, however, stores can NOT call the database in the same way. Instea
 
 Fetchr provides an appropriate abstraction so that you can fetch (CRUD) your data in your stores using the same exact syntax on server and client side.
 
-# Install
+## Install
 
 ```
 npm install fetchr
 ```
 
-# Setup
+## Setup
 
 Fetchr needs delicate set up to work properly.
 
-## 1. Middleware
+### 1. Middleware
 
 On the server side, add the fetchr middleware into your express app at a custom API endpoint.
 
@@ -44,7 +44,7 @@ app.use('/myCustomAPIEndpoint', Fetcher.middleware());
 //...
 ```
 
-## 2. API xhrPath
+### 2. API xhrPath
 
 `xhrPath` config option when instantiating the Fetchr class is optional. Defaults to `/api`.
 
@@ -63,7 +63,7 @@ var Fetcher = require('fetchr'),
 //...
 ```
 
-## 3. Register data fetchers for API and/or DB access
+### 3. Register data fetchers for API and/or DB access
 
 ```js
 //app.js
@@ -92,7 +92,7 @@ module.exports = {
 
 ```
 
-## 4. Instantiating the Fetchr Class
+### 4. Instantiating the Fetchr Class
 
 Data fetchers might need access to each individual request, for example, to get the current logged in user's session. For this reason, Fetcher will have to be instantiated once per request.
 
@@ -135,9 +135,8 @@ app.use(function(req, res, next) {
 var Fetcher = require('fetchr'),
     fetcher = new Fetcher({
         xhrPath: '/myCustomAPIEndpoint', //xhrPath is REQUIRED on the clientside fetcher instantiation
-        requireCrumb: false, // if crumbs should be required for each request, default: false
-        context: {
-            crumb: 'Ax89D94j', //optional crumb string to send back to server with each request. Validation should happen on server.
+        context: { // These context values are persisted with XHR calls as query params
+            _csrf: 'Ax89D94j'
         }
     });
     fetcher.read('data_api_fetcher', {id: ###}, {}, function (err, data, meta) {
@@ -146,11 +145,32 @@ var Fetcher = require('fetchr'),
 //...
 ```
 
-# Usage Examples
+## Usage Examples
 
 See the [simple example](https://github.com/yahoo/fetchr/tree/master/examples/simple)
 
-# License
+## CSRF Protection
+
+You can protect your XHR paths from CSRF attacks by adding a middleware in front of the fetchr middleware:
+
+`app.use('/myCustomAPIEndpoint', csrf(), Fetcher.middleware());`
+
+You could use https://github.com/expressjs/csurf for this as an example.
+
+Next you need to make sure that the CSRF token is being sent with our XHR requests so that they can be validated. To do this, pass the token in as a key in the `options.context` object on the client:
+
+```js
+new Fetcher({
+        xhrPath: '/myCustomAPIEndpoint', //xhrPath is REQUIRED on the clientside fetcher instantiation
+        context: { // These context values are persisted with XHR calls as query params
+            _csrf: 'Ax89D94j'
+        }
+    })
+```
+
+This `_csrf` will be sent in all XHR requests as a query parameter so that it can be validated on the server.
+
+## License
 
 This software is free to use under the Yahoo! Inc. BSD license.
 See the [LICENSE file][] for license text and copyright information.
