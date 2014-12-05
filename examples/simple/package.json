@@ -8,6 +8,7 @@
     "start": "webpack && node server/app.js"
   },
   "dependencies": {
+    "body-parser": "^1.10.0",
     "express": "^4.4.3",
     "superagent": "^0.18.0"
   },
