@@ -77,7 +77,7 @@ var OP_READ = 'read',
             var request;
 
             if (req.method === GET) {
-                var path = req.path.substr('/resource/'.length).split(';');
+                var path = req.path.substr(req.path.lastIndexOf('/resource/') + '/resource/'.length).split(';');
                 request = {
                     req: req,
                     resource: path.shift(),
