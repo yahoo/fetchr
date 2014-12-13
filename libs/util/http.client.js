@@ -13,11 +13,7 @@
  *   retry: retry related settings, such as retry interval amount (in ms), max_retries.
  *          Note that only retry only applies on GET.
  */
-var _ = {
-        forEach : require('lodash.foreach'),
-        some : require('lodash.some'),
-        isNumber : require('lodash.isnumber')
-    },
+var _ = require('lodash'),
     DEFAULT_CONFIG = {
         timeout: 3000,
         retry: {
