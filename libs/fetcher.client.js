@@ -15,17 +15,7 @@
  */
 var REST = require('./util/http.client'),
     debug = require('debug')('FetchrClient'),
-    _ = {
-        forEach :     require('lodash.foreach'),
-        values :      require('lodash.values'),
-        some :        require('lodash.some'),
-        merge :       require('lodash.merge'),
-        isFunction :  require('lodash.isfunction'),
-        isArray :     require('lodash.isarray'),
-        isObject :    require('lodash.isobject'),
-        noop :        require('lodash.noop'),
-        pick :        require('lodash.pick')
-    },
+    _ = require('lodash'),
     CORE_REQUEST_FIELDS = ['resource', 'operation', 'params', 'body'],
     DEFAULT_GUID = 'g0',
     DEFAULT_XHR_PATH = '/api',
