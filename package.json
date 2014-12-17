@@ -24,7 +24,7 @@
     "debug": "^2.0.0",
     "lodash": "^2.4.1",
     "object-assign": "^2.0.0",
-    "xhr": "^1.13.0"
+    "xhr": "^2.0.0"
   },
   "devDependencies": {
     "chai": "^1.9.1",
