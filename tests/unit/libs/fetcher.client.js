@@ -72,9 +72,7 @@ describe('Client Fetcher', function () {
                             }
                         };
 
-                    callback(null, {
-                        responseText: JSON.stringify(res)
-                    });
+                    callback(null, JSON.stringify(res));
                 }
             });
             mockery.enable({
