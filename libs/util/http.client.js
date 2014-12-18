@@ -159,7 +159,7 @@ function doXhr(method, url, headers, data, config, callback) {
                     callback(createErrorObj(response, timeout));
                 } else {
                     _.delay(
-                        function retryXHR() { xhr(method, url, headers, data, config, callback); },
+                        function retryXHR() { doXhr(method, url, headers, data, config, callback); },
                         config.retry.interval
                     );
                 }
@@ -179,11 +179,11 @@ function io(url, options) {
         timeout: options.timeout,
         headers: options.headers,
         body: options.data
-    }, function (err, r) {
+    }, function (err, r, body) {
         if (err) {
-            options.on.failure.call(r, null, r);
+            options.on.failure.call(r.rawRequest, err, body);
         } else {
-            options.on.success.call(r, null, r);
+            options.on.success.call(r.rawRequest, null, body);
         }
 
     });
