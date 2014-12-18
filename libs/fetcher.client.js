@@ -377,7 +377,7 @@ Queue.prototype = {
                 return;
             }
 
-            // individual request is also normalized into a request hash to pass to touchdown api
+            // individual request is also normalized into a request hash to pass to api
             requests = {};
             requests[DEFAULT_GUID] = _.pick(request, CORE_REQUEST_FIELDS);
             if (!request.body) {
