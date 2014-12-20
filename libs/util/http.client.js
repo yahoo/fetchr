@@ -179,13 +179,25 @@ function io(url, options) {
         timeout: options.timeout,
         headers: options.headers,
         body: options.data
-    }, function (err, r, body) {
-        if (err) {
-            options.on.failure.call(r.rawRequest, err, body);
-        } else {
-            options.on.success.call(r.rawRequest, null, body);
+    }, function (err, resp, body) {
+        var status = resp.statusCode;
+        var errMessage;
+
+        if (!err && (status === 0 || (status >= 400 && status < 600))) {
+            if (typeof body === 'string') {
+                errMessage = body;
+            } else {
+                errMessage = status ? 'Error ' + status : 'Internal XMLHttpRequest Error';
+            }
+
+            err = new Error(errMessage);
         }
 
+        if (err) {
+            options.on.failure.call(resp.rawRequest, err, body);
+        } else {
+            options.on.success.call(resp.rawRequest, null, body);
+        }
     });
 }
 
