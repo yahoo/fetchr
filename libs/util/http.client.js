@@ -191,6 +191,7 @@ function io(url, options) {
             }
 
             err = new Error(errMessage);
+            err.statusCode = status;
         }
 
         resp.responseText = body;
