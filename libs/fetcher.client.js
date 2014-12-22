@@ -26,11 +26,11 @@ var REST = require('./util/http.client'),
     NAME = 'FetcherClient';
 
 function parseResponse(response) {
-    if (response) {
+    if (response && response.responseText) {
         try {
-            return JSON.parse(response);
+            return JSON.parse(response.responseText);
         } catch (e) {
-            debug('json parse failed:' + e, 'error');
+            debug('json parse failed:' + e, 'error', NAME);
             return null;
         }
     }
