@@ -131,7 +131,7 @@ function doXhr(method, url, headers, data, config, callback) {
                     callback(err);
                 } else {
                     _.delay(
-                        function retryXHR() { xhr(method, url, headers, data, config, callback); },
+                        function retryXHR() { doXhr(method, url, headers, data, config, callback); },
                         config.retry.interval
                     );
                 }
