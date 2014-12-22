@@ -193,6 +193,8 @@ function io(url, options) {
             err = new Error(errMessage);
         }
 
+        resp.responseText = body;
+
         if (err) {
             options.on.failure.call(resp, err, resp);
         } else {
