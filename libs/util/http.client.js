@@ -61,39 +61,12 @@ function shouldRetry(method, config, statusCode) {
     if (!isIdempotent && !config.unsafeAllowRetry) {
         return false;
     }
-    if ((statusCode !== 408 && statusCode !== 999) || config.tmp.retry_counter >= config.retry.max_retries) {
+    if ((statusCode !== 0 && statusCode !== 408 && statusCode !== 999) || config.tmp.retry_counter >= config.retry.max_retries) {
         return false;
     }
     config.tmp.retry_counter++;
     config.retry.interval =  config.retry.interval * 2;
     return true;
-}
-
-function processErrorResponse(response) {
-    // Based on YUI doc, response is supposed to be an object, containing at least status and statusText
-    // In case it is not, log the error as status code 999, and which will be a special status code
-    // that allows retry (other than 408)
-    response = response || {status: 999, statusText: 'null response'};
-    if (response.status === 0 && response.statusText === TIMEOUT) {
-        // client side JS canceled the XHR
-        response.status = 408;
-        response.timeoutBy = 'client';
-    }
-    return response;
-}
-
-function createErrorObj(response, timeout) {
-    // caller already makes sure response is not undefined
-    var errObj = {
-        statusCode: response.status,
-        statusText: response.statusText,
-        responseText: response.responseText
-    };
-    if (errObj.statusCode === 408) {
-        errObj.timeoutBy = response.timeoutBy || '';
-        errObj.timeout = timeout || '';
-    }
-    return errObj;
 }
 
 function mergeConfig(config) {
@@ -150,13 +123,12 @@ function doXhr(method, url, headers, data, config, callback) {
         timeout : timeout,
         headers: headers,
         on : {
-            success : function (id, response) {
+            success : function (err, response) {
                 callback(NULL, response);
             },
-            failure : function (id, response) {
-                response = processErrorResponse(response);
+            failure : function (err, response) {
                 if (!shouldRetry(method, config, response.status)) {
-                    callback(createErrorObj(response, timeout));
+                    callback(err);
                 } else {
                     _.delay(
                         function retryXHR() { xhr(method, url, headers, data, config, callback); },
@@ -192,14 +164,17 @@ function io(url, options) {
 
             err = new Error(errMessage);
             err.statusCode = status;
+            if (408 === status || 0 === status) {
+                err.timeout = options.timeout;
+            }
         }
 
         resp.responseText = body;
 
         if (err) {
-            options.on.failure.call(resp, err, resp);
+            options.on.failure.call(null, err, resp);
         } else {
-            options.on.success.call(resp, null, resp);
+            options.on.success.call(null, null, resp);
         }
     });
 }

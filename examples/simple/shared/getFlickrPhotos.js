@@ -12,7 +12,7 @@ module.exports = function flickrRead (fetcher, callback) {
     },
     function(err, data) {
         if (err) {
-            callback && callback(new Error('failed to fetch data' + err));
+            callback && callback(new Error('failed to fetch data ' + err.message));
         }
         callback && callback(null, data);
     });
