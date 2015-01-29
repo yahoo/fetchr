@@ -170,6 +170,9 @@ new Fetcher({
 
 This `_csrf` will be sent in all XHR requests as a query parameter so that it can be validated on the server.
 
+## API
+
+See [Fetchr API](https://github.com/yahoo/fetchr/blob/master/docs/fetchr.md).
 
 ## License
 
