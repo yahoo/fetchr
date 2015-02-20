@@ -27,7 +27,7 @@
     "xhr": "^2.0.0"
   },
   "devDependencies": {
-    "chai": "^1.9.1",
+    "chai": "^2.0.0",
     "coveralls": "^2.11.1",
     "istanbul": "^0.3.2",
     "jshint": "^2.5.1",
