@@ -22,12 +22,12 @@
   ],
   "dependencies": {
     "debug": "^2.0.0",
-    "lodash": "^2.4.1",
+    "lodash": "^3.3.0",
     "object-assign": "^2.0.0",
     "xhr": "^2.0.0"
   },
   "devDependencies": {
-    "chai": "^1.9.1",
+    "chai": "^2.0.0",
     "coveralls": "^2.11.1",
     "istanbul": "^0.3.2",
     "jshint": "^2.5.1",
