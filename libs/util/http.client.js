@@ -38,19 +38,31 @@ if (!String.prototype.trim) {
   };
 }
 
-function normalizeHeaders(headers) {
+function normalizeHeaders(headers, method) {
     var normalized = {};
+    var needContentType = (method === METHOD_PUT || method === METHOD_POST);
     _.forEach(headers, function (v, field) {
         if (field.toLowerCase() === 'content-type') {
-            normalized[CONTENT_TYPE] = v;
+            if (needContentType) {
+                normalized[CONTENT_TYPE] = v;
+            }
         } else {
             normalized[field] = v;
         }
     });
+
+    if (needContentType && !normalized[CONTENT_TYPE]) {
+        normalized[CONTENT_TYPE] = TYPE_JSON;
+    }
+
     return normalized;
 }
 
 function isContentTypeJSON(headers) {
+    if (!headers[CONTENT_TYPE]) {
+        return false;
+    }
+
     return _.some(headers[CONTENT_TYPE].split(';'), function (part) {
         return part.trim().toLowerCase() === TYPE_JSON;
     });
@@ -112,8 +124,7 @@ function doXhr(method, url, headers, data, config, callback) {
     var options, timeout;
 
     config = mergeConfig(config);
-    headers = normalizeHeaders(headers);
-    headers[CONTENT_TYPE] = headers[CONTENT_TYPE] || TYPE_JSON;
+    headers = normalizeHeaders(headers, method);
     // use config.tmp to store temporary values
     config.tmp = config.tmp || {retry_counter: 0};
 
