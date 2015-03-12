@@ -15,7 +15,17 @@
  */
 var REST = require('./util/http.client'),
     debug = require('debug')('FetchrClient'),
-    _ = require('lodash'),
+    lodash = {
+        isArray: require('lodash/lang/isArray'),
+        isFunction: require('lodash/lang/isFunction'),
+        isObject: require('lodash/lang/isObject'),
+        forEach: require('lodash/collection/forEach'),
+        merge: require('lodash/object/merge'),
+        noop: require('lodash/utility/noop'),
+        pick: require('lodash/object/pick'),
+        some: require('lodash/collection/some'),
+        values: require('lodash/object/values')
+    },
     CORE_REQUEST_FIELDS = ['resource', 'operation', 'params', 'body'],
     DEFAULT_GUID = 'g0',
     DEFAULT_XHR_PATH = '/api',
@@ -38,7 +48,7 @@ function parseResponse(response) {
 }
 
 function jsonifyComplexType(value) {
-    if (_.isArray(value) || _.isObject(value)) {
+    if (lodash.isArray(value) || lodash.isObject(value)) {
         return JSON.stringify(value);
     }
     return value;
@@ -111,7 +121,7 @@ Queue.prototype = {
                 clearTimeout(self._timer);
                 self._timer = null;
                 items = self._sweep(items);
-                _.forEach(items, function (item) {
+                lodash.forEach(items, function (item) {
                     self._cb(item);
                 });
             }, this.config.wait);
@@ -249,7 +259,7 @@ Queue.prototype = {
                     callback: callback
                 };
 
-            if (!_.isFunction(this.batch) || !config.consolidate) {
+            if (!lodash.isFunction(this.batch) || !config.consolidate) {
                 this.single(request);
                 return;
             }
@@ -264,7 +274,7 @@ Queue.prototype = {
                     if (!batched) {
                         return;
                     }
-                    if (!_.isArray(batched)) {
+                    if (!lodash.isArray(batched)) {
                         self.single(batched);
                     } else {
                         self.multi(batched);
@@ -282,7 +292,7 @@ Queue.prototype = {
          */
         _constructGetUri: function (uri, resource, params, config) {
             var query = [], matrix = [], id_param = config.id_param, id_val, final_uri = uri + '/resource/' + resource;
-            _.forEach(params, function (v, k) {
+            lodash.forEach(params, function (v, k) {
                 if (k === id_param) {
                     id_val = encodeURIComponent(v);
                 } else {
@@ -294,7 +304,7 @@ Queue.prototype = {
                 }
             });
 
-            _.forEach(this.context, function (v, k) {
+            lodash.forEach(this.context, function (v, k) {
                 query.push(k + '=' + encodeURIComponent(jsonifyComplexType(v)));
             });
             if (id_val) {
@@ -314,7 +324,7 @@ Queue.prototype = {
          */
         _constructGroupUri: function (uri) {
             var query = [], final_uri = uri;
-            _.forEach(this.context, function (v, k) {
+            lodash.forEach(this.context, function (v, k) {
                 query.push(k + '=' + encodeURIComponent(v));
             });
             if (query.length > 0) {
@@ -348,7 +358,7 @@ Queue.prototype = {
             }
 
             var config = request.config,
-                callback = request.callback || _.noop,
+                callback = request.callback || lodash.noop,
                 use_post,
                 allow_retry_post,
                 uri = config.uri || config.xhr || this.xhrPath,
@@ -379,7 +389,7 @@ Queue.prototype = {
 
             // individual request is also normalized into a request hash to pass to api
             requests = {};
-            requests[DEFAULT_GUID] = _.pick(request, CORE_REQUEST_FIELDS);
+            requests[DEFAULT_GUID] = lodash.pick(request, CORE_REQUEST_FIELDS);
             if (!request.body) {
                 delete requests[DEFAULT_GUID].body;
             }
@@ -389,7 +399,7 @@ Queue.prototype = {
             }; // TODO: remove. leave here for now for backward compatibility
             uri = this._constructGroupUri(uri);
             allow_retry_post = (request.operation === OP_READ);
-            REST.post(uri, {}, data, _.merge({unsafeAllowRetry: allow_retry_post}, config), function (err, response) {
+            REST.post(uri, {}, data, lodash.merge({unsafeAllowRetry: allow_retry_post}, config), function (err, response) {
                 if (err) {
                     debug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info', NAME);
                     return callback(err);
@@ -414,14 +424,14 @@ Queue.prototype = {
          * @static
          */
         batch : /* istanbul ignore next */ function (requests) {
-            if (!_.isArray(requests) || requests.length <= 1) {
+            if (!lodash.isArray(requests) || requests.length <= 1) {
                 return requests;
             }
 
             var batched,
                 groups = {};
 
-            _.forEach(requests, function (request) {
+            lodash.forEach(requests, function (request) {
                 var uri, batch, group_id;
                 if (request.config) {
                     uri = request.config.uri || request.config.xhr || '';
@@ -436,7 +446,7 @@ Queue.prototype = {
                 }
                 groups[group_id].push(request);
             });
-            batched = _.values(groups);
+            batched = lodash.values(groups);
 
             if (batched.length < requests.length) {
                 debug(requests.length + ' requests batched into ' + batched.length, 'info', NAME);
@@ -460,7 +470,7 @@ Queue.prototype = {
                 allow_retry_post = true,
                 request_map = {};
 
-            _.some(requests, function (request) {
+            lodash.some(requests, function (request) {
                 if (request.config) {
                     config = request.config;
                     return true;
@@ -475,9 +485,9 @@ Queue.prototype = {
                 context: this.context
             }; // TODO: remove. leave here for now for backward compatibility
 
-            _.forEach(requests, function (request) {
+            lodash.forEach(requests, function (request) {
                 var guid = 'g' + (count++);
-                data.requests[guid] = _.pick(request, CORE_REQUEST_FIELDS);
+                data.requests[guid] = lodash.pick(request, CORE_REQUEST_FIELDS);
                 request_map[guid] = request;
                 if (request.operation !== OP_READ) {
                     allow_retry_post = false;
@@ -485,16 +495,16 @@ Queue.prototype = {
             });
 
             uri = this._constructGroupUri(uri);
-            REST.post(uri, {}, data, _.merge({unsafeAllowRetry: allow_retry_post}, config), function (err, response) {
+            REST.post(uri, {}, data, lodash.merge({unsafeAllowRetry: allow_retry_post}, config), function (err, response) {
                 if (err) {
-                    _.forEach(requests, function (request) {
+                    lodash.forEach(requests, function (request) {
                         request.callback(err);
                     });
                     return;
                 }
                 var result = parseResponse(response);
                 // split result for requests, so that each request gets back only the data that was originally requested
-                _.forEach(request_map, function (request, guid) {
+                lodash.forEach(request_map, function (request, guid) {
                     var res = (result && result[guid]) || {};
                     if (request.callback) {
                         request.callback(res.err || null, res.data || null);
