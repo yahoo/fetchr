@@ -59,7 +59,7 @@ var OP_READ = 'read',
     Fetcher.getFetcher = function (name) {
         //Access fetcher by name
         if (!name || !Fetcher.fetchers[name]) {
-            throw new Error('Fetcher could not be found');
+            throw new Error('Fetcher "' + name + '" could not be found');
         }
         return Fetcher.fetchers[name];
     };
