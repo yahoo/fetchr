@@ -21,9 +21,11 @@ var expect = chai.expect,
 describe('Server Fetcher', function () {
 
     it('should register fetchers', function () {
-        var fn = Fetcher.getFetcher.bind(fetcher, mockFetcher.name);
+        var fn = Fetcher.getFetcher.bind(fetcher);
+        expect(fn).to.throw(Error, 'Fetcher "undefined" could not be found');
+        fn = Fetcher.getFetcher.bind(fetcher, mockFetcher.name);
         expect(_.size(Fetcher.fetchers)).to.equal(0);
-        expect(fn).to.throw(Error, 'Fetcher could not be found');
+        expect(fn).to.throw(Error, 'Fetcher "' + mockFetcher.name + '" could not be found');
         Fetcher.registerFetcher(mockFetcher);
         expect(_.size(Fetcher.fetchers)).to.equal(1);
         expect(fn()).to.deep.equal(mockFetcher);
