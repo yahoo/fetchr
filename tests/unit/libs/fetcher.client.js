@@ -12,12 +12,20 @@ var expect = require('chai').expect,
     Fetcher,
     fetcher;
 
+var app = require('../../mock/app');
+var supertest = require('supertest');
+
 describe('Client Fetcher', function () {
 
     describe('#CRUD', function () {
-        var resource = 'mock_fetcher',
+        var resource = 'mock_service',
             params = {
                 uuids: [1,2,3,4,5],
+                object: {
+                    nested: {
+                        object: true
+                    }
+                },
                 category: '',
                 selected_filter: 'YPROP:TOPSTORIES'
             },
@@ -31,7 +39,12 @@ describe('Client Fetcher', function () {
                     if (err){
                         done(err);
                     }
-                    expect(data.operation).to.equal(operation);
+                    expect(data.operation).to.exist;
+                    expect(data.operation.name).to.equal(operation);
+                    expect(data.operation.success).to.equal(true);
+                    expect(data.args).to.exist;
+                    expect(data.args.resource).to.equal(resource);
+                    expect(data.args.params).to.eql(params);
                     done();
                 };
             };
@@ -39,42 +52,29 @@ describe('Client Fetcher', function () {
         before(function(){
             mockery.registerMock('./util/http.client', {
                 get: function (url, headers, config, done) {
-                    var urlObj = libUrl.parse(url);
-                    var pathname = urlObj.pathname;
-                    pathname = decodeURIComponent(pathname);
-                    pathname = pathname.split(';');
-                    expect(pathname.shift()).to.equal('/api/resource/' + resource);
-                    while(!!(pair = pathname.shift())) {
-                        var pair = pair.split('=');
-
-                        var k = pair[0],
-                            v = pair[1];
-
-                        //hacky because of array in querystring, but its fine
-                        if(k === 'uuids'){
-                            expect(params[k].toString()).to.equal(v.substr(1,v.length-2));
-                        } else {
-                            expect(params[k]).to.equal(v);
-                        }
-                    }
-                    done();
+                    supertest(app)
+                        .get(url)
+                        .expect(200)
+                        .end(function (err, res) {
+                            done(err, {
+                                responseText: res.text
+                            });
+                        });
                 },
-                post : function (url, headers, body, config, callback) {
+                post : function (url, headers, body, config, done) {
                     expect(url).to.not.be.empty;
+                    expect(url).to.equal('/api?_csrf='+context._csrf);
                     expect(callback).to.exist;
                     expect(body).to.exist;
-                    expect(url).to.equal('/api?_csrf='+context._csrf);
-
-                    var req = body.requests.g0,
-                        res = {
-                            g0: {
-                                data: req
-                            }
-                        };
-
-                    callback(null, {
-                        responseText: JSON.stringify(res)
-                    });
+                    supertest(app)
+                        .post(url)
+                        .send(body)
+                        .expect(200)
+                        .end(function (err, res) {
+                            done(err, {
+                                responseText: res.text
+                            });
+                        });
                 }
             });
             mockery.enable({
@@ -90,6 +90,7 @@ describe('Client Fetcher', function () {
         after(function(){
             mockery.disable();
             mockery.deregisterAll();
+            app.cleanup();
         });
 
         it('should handle CREATE', function (done) {
@@ -102,11 +103,11 @@ describe('Client Fetcher', function () {
         });
         it('should handle READ', function (done) {
             var operation = 'read';
-            fetcher[operation](resource, params, config, done);
+            fetcher[operation](resource, params, config, callback(operation, done));
         });
         it('should handle READ w/ no config', function (done) {
             var operation = 'read';
-            fetcher[operation](resource, params, done);
+            fetcher[operation](resource, params, callback(operation, done));
         });
         it('should handle UPDATE', function (done) {
             var operation = 'update';

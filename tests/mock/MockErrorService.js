@@ -2,8 +2,8 @@
  * Copyright 2014, Yahoo! Inc.
  * Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
  */
-var Fetcher = {
-    name: 'fake_error_fetcher',
+var MockErrorService = {
+    name: 'mock_error_service',
 
     // ------------------------------------------------------------------
     // CRUD Methods
@@ -16,11 +16,11 @@ var Fetcher = {
      * @param {String} resource  The resource name
      * @param {Object} params    The parameters identify the resource, and along with information
      *                           carried in query and matrix parameters in typical REST API
-     * @param {Object} [context={}] The context object.  It can contain "config" for per-request config data.
+     * @param {Object} [config={}] The config object.  It can contain "config" for per-request config data.
      * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
      * @static
      */
-    read: function (req, resource, params, context, callback) {
+    read: function (req, resource, params, config, callback) {
         callback({
             statusCode: parseInt(params.statusCode),
             message: params.message,
@@ -35,11 +35,11 @@ var Fetcher = {
      * @param {Object} params    The parameters identify the resource, and along with information
      *                           carried in query and matrix parameters in typical REST API
      * @param {Object} body      The JSON object that contains the resource data that is being created
-     * @param {Object} [context={}] The context object.  It can contain "config" for per-request config data.
+     * @param {Object} [config={}] The config object.  It can contain "config" for per-request config data.
      * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
      * @static
      */
-    create: function (req, resource, params, body, context, callback) {
+    create: function (req, resource, params, body, config, callback) {
         callback({
             statusCode: parseInt(params.statusCode),
             message: params.message,
@@ -54,11 +54,11 @@ var Fetcher = {
      * @param {Object} params    The parameters identify the resource, and along with information
      *                           carried in query and matrix parameters in typical REST API
      * @param {Object} body      The JSON object that contains the resource data that is being updated
-     * @param {Object} [context={}] The context object.  It can contain "config" for per-request config data.
+     * @param {Object} [config={}] The config object.  It can contain "config" for per-request config data.
      * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
      * @static
      */
-    update: function (req, resource, params, body, context, callback) {
+    update: function (req, resource, params, body, config, callback) {
         callback({
             statusCode: parseInt(params.statusCode),
             message: params.message,
@@ -72,11 +72,11 @@ var Fetcher = {
      * @param {String} resource  The resource name
      * @param {Object} params    The parameters identify the resource, and along with information
      *                           carried in query and matrix parameters in typical REST API
-     * @param {Object} [context={}] The context object.  It can contain "config" for per-request config data.
+     * @param {Object} [config={}] The config object.  It can contain "config" for per-request config data.
      * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
      * @static
      */
-    delete: function (req, resource, params, context, callback) {
+    delete: function (req, resource, params, config, callback) {
         callback({
             statusCode: parseInt(params.statusCode),
             message: params.message,
@@ -86,4 +86,4 @@ var Fetcher = {
 
 };
 
-module.exports = Fetcher;
+module.exports = MockErrorService;

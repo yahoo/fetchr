@@ -13,8 +13,8 @@ var expect = chai.expect,
     fetcher = new Fetcher({
         req: {}
     }),
-    mockFetcher = require('../../mock/fakeFetcher'),
-    mockErrorFetcher = require('../../mock/fakeErrorFetcher'),
+    mockService = require('../../mock/MockService'),
+    mockErrorService = require('../../mock/MockErrorService'),
     _ = require('lodash'),
     qs = require('querystring');
 
@@ -23,13 +23,13 @@ describe('Server Fetcher', function () {
     it('should register fetchers', function () {
         var fn = Fetcher.getFetcher.bind(fetcher);
         expect(fn).to.throw(Error, 'Fetcher "undefined" could not be found');
-        fn = Fetcher.getFetcher.bind(fetcher, mockFetcher.name);
+        fn = Fetcher.getFetcher.bind(fetcher, mockService.name);
         expect(_.size(Fetcher.fetchers)).to.equal(0);
-        expect(fn).to.throw(Error, 'Fetcher "' + mockFetcher.name + '" could not be found');
-        Fetcher.registerFetcher(mockFetcher);
+        expect(fn).to.throw(Error, 'Fetcher "' + mockService.name + '" could not be found');
+        Fetcher.registerFetcher(mockService);
         expect(_.size(Fetcher.fetchers)).to.equal(1);
-        expect(fn()).to.deep.equal(mockFetcher);
-        Fetcher.registerFetcher(mockErrorFetcher);
+        expect(fn()).to.deep.equal(mockService);
+        Fetcher.registerFetcher(mockErrorService);
         expect(_.size(Fetcher.fetchers)).to.equal(2);
     });
 
@@ -40,7 +40,7 @@ describe('Server Fetcher', function () {
                     statusCodeSet = false,
                     req = {
                         method: 'POST',
-                        path: '/resource/' + mockFetcher.name,
+                        path: '/resource/' + mockService.name,
                         body: {
                             requests: {},
                             context: {
@@ -73,11 +73,11 @@ describe('Server Fetcher', function () {
                     statusCodeSet = false,
                     req = {
                         method: 'POST',
-                        path: '/resource/' + mockFetcher.name,
+                        path: '/resource/' + mockService.name,
                         body: {
                             requests: {
                                 g0: {
-                                    resource: mockFetcher.name,
+                                    resource: mockService.name,
                                     operation: operation,
                                     params: {
                                         uuids: ['cd7240d6-aeed-3fed-b63c-d7e99e21ca17', 'cd7240d6-aeed-3fed-b63c-d7e99e21ca17'],
@@ -127,11 +127,11 @@ describe('Server Fetcher', function () {
                     statusCodeSet = false,
                     req = {
                         method: 'POST',
-                        path: '/resource/' + mockFetcher.name,
+                        path: '/resource/' + mockService.name,
                         body: {
                             requests: {
                                 g0: {
-                                    resource: mockFetcher.name,
+                                    resource: mockService.name,
                                     operation: operation,
                                     params: {
                                         uuids: ['cd7240d6-aeed-3fed-b63c-d7e99e21ca17', 'cd7240d6-aeed-3fed-b63c-d7e99e21ca17'],
@@ -171,7 +171,7 @@ describe('Server Fetcher', function () {
                     },
                     middleware = Fetcher.middleware({pathPrefix: '/api'});
 
-                mockFetcher.meta = {
+                mockService.meta = {
                     statusCode: statusCode
                 };
 
@@ -185,11 +185,11 @@ describe('Server Fetcher', function () {
                         statusCodeSet = false,
                         req = {
                             method: 'POST',
-                            path: '/resource/' + mockErrorFetcher.name,
+                            path: '/resource/' + mockErrorService.name,
                             body: {
                                 requests: {
                                     g0: {
-                                        resource: mockErrorFetcher.name,
+                                        resource: mockErrorService.name,
                                         operation: operation,
                                         params: params
                                     }
@@ -243,7 +243,7 @@ describe('Server Fetcher', function () {
                     },
                     req = {
                         method: 'GET',
-                        path: '/resource/' + mockFetcher.name + ';' + qs.stringify(params, ';')
+                        path: '/resource/' + mockService.name + ';' + qs.stringify(params, ';')
                     },
                     res = {
                         json: function(response) {
@@ -283,7 +283,7 @@ describe('Server Fetcher', function () {
                     },
                     req = {
                         method: 'GET',
-                        path: '/resource/' + mockFetcher.name + ';' + qs.stringify(params, ';')
+                        path: '/resource/' + mockService.name + ';' + qs.stringify(params, ';')
                     },
                     res = {
                         json: function(response) {
@@ -310,7 +310,7 @@ describe('Server Fetcher', function () {
                     },
                     middleware = Fetcher.middleware({pathPrefix: '/api'});
 
-                mockFetcher.meta = {
+                mockService.meta = {
                     statusCode: statusCode
                 };
                 middleware(req, res, next);
@@ -323,7 +323,7 @@ describe('Server Fetcher', function () {
                         statusCodeSet = false,
                         req = {
                             method: 'GET',
-                            path: '/resource/' + mockErrorFetcher.name + ';' + qs.stringify(params, ';')
+                            path: '/resource/' + mockErrorService.name + ';' + qs.stringify(params, ';')
                         },
                         res = {
                             json: function(response) {
@@ -360,7 +360,7 @@ describe('Server Fetcher', function () {
     });
 
     describe('#CRUD', function () {
-        var resource = mockFetcher.name,
+        var resource = mockService.name,
             params = {},
             body = {},
             config = {},

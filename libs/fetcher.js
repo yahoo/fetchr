@@ -6,18 +6,34 @@
 /**
  * list of registered fetchers
  */
-var OP_READ = 'read',
-    OP_CREATE = 'create',
-    OP_UPDATE = 'update',
-    GET = 'GET',
-    qs = require('querystring');
+var OP_READ = 'read';
+var OP_CREATE = 'create';
+var OP_UPDATE = 'update';
+var GET = 'GET';
+var qs = require('querystring');
+var debug = require('debug')('Fetchr');
+
+function parseValue(value) {
+    // take care of value of type: array, object
+    try {
+        return JSON.parse(value);
+    } catch (e) {
+        return value;
+    }
+}
+
+function parseParamValues (params) {
+    return Object.keys(params).reduce(function (parsed, curr) {
+        parsed[curr] = parseValue(params[curr]);
+        return parsed;
+    }, {});
+}
 
 /*
  * @module createFetcherClass
  * @param {object} options
  */
 
-    var debug = require('debug')('Fetchr');
 
     /**
      * @class Fetcher
@@ -82,7 +98,7 @@ var OP_READ = 'read',
                     req: req,
                     resource: path.shift(),
                     operation: OP_READ,
-                    params: qs.parse(path.join('&')),
+                    params: parseParamValues(qs.parse(path.join('&'))),
                     config: {},
                     callback: function (err, data, meta) {
                         if (err) {
@@ -151,7 +167,6 @@ var OP_READ = 'read',
      * @static
      */
     Fetcher.single = function (request) {
-        debug(request.resource);
         var fetcher = Fetcher.getFetcher(request.resource.split('.')[0]),
             op = request.operation,
             req = request.req,

@@ -247,7 +247,6 @@ Queue.prototype = {
             }
 
             config = config || {};
-            config.xhr = this.xhrPath;
 
             var self = this,
                 request = {
@@ -361,7 +360,7 @@ Queue.prototype = {
                 callback = request.callback || lodash.noop,
                 use_post,
                 allow_retry_post,
-                uri = config.uri || config.xhr || this.xhrPath,
+                uri = config.uri || this.xhrPath,
                 get_uri,
                 requests,
                 data;
@@ -434,7 +433,7 @@ Queue.prototype = {
             lodash.forEach(requests, function (request) {
                 var uri, batch, group_id;
                 if (request.config) {
-                    uri = request.config.uri || request.config.xhr || '';
+                    uri = request.config.uri || this.xhrPath;
                     batch = request.config.batch;
                 }
                 group_id = 'uri:' + uri;
@@ -478,7 +477,7 @@ Queue.prototype = {
                 return false;
             }, this);
 
-            uri = config.uri || config.xhr || this.xhrPath;
+            uri = config.uri || this.xhrPath;
 
             data = {
                 requests: {},
