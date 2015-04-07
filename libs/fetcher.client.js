@@ -290,7 +290,7 @@ Queue.prototype = {
          * @private
          */
         _constructGetUri: function (uri, resource, params, config) {
-            var query = [], matrix = [], id_param = config.id_param, id_val, final_uri = uri + '/resource/' + resource;
+            var query = [], matrix = [], id_param = config.id_param, id_val, final_uri = uri + '/' + resource;
             lodash.forEach(params, function (v, k) {
                 if (k === id_param) {
                     id_val = encodeURIComponent(v);

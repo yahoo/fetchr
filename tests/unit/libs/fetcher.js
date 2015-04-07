@@ -40,7 +40,7 @@ describe('Server Fetcher', function () {
                     statusCodeSet = false,
                     req = {
                         method: 'POST',
-                        path: '/resource/' + mockService.name,
+                        path: '/' + mockService.name,
                         body: {
                             requests: {},
                             context: {
@@ -73,7 +73,7 @@ describe('Server Fetcher', function () {
                     statusCodeSet = false,
                     req = {
                         method: 'POST',
-                        path: '/resource/' + mockService.name,
+                        path: '/' + mockService.name,
                         body: {
                             requests: {
                                 g0: {
@@ -127,7 +127,7 @@ describe('Server Fetcher', function () {
                     statusCodeSet = false,
                     req = {
                         method: 'POST',
-                        path: '/resource/' + mockService.name,
+                        path: '/' + mockService.name,
                         body: {
                             requests: {
                                 g0: {
@@ -185,7 +185,7 @@ describe('Server Fetcher', function () {
                         statusCodeSet = false,
                         req = {
                             method: 'POST',
-                            path: '/resource/' + mockErrorService.name,
+                            path: '/' + mockErrorService.name,
                             body: {
                                 requests: {
                                     g0: {
@@ -243,7 +243,7 @@ describe('Server Fetcher', function () {
                     },
                     req = {
                         method: 'GET',
-                        path: '/resource/' + mockService.name + ';' + qs.stringify(params, ';')
+                        path: '/' + mockService.name + ';' + qs.stringify(params, ';')
                     },
                     res = {
                         json: function(response) {
@@ -283,7 +283,7 @@ describe('Server Fetcher', function () {
                     },
                     req = {
                         method: 'GET',
-                        path: '/resource/' + mockService.name + ';' + qs.stringify(params, ';')
+                        path: '/' + mockService.name + ';' + qs.stringify(params, ';')
                     },
                     res = {
                         json: function(response) {
@@ -323,7 +323,7 @@ describe('Server Fetcher', function () {
                         statusCodeSet = false,
                         req = {
                             method: 'GET',
-                            path: '/resource/' + mockErrorService.name + ';' + qs.stringify(params, ';')
+                            path: '/' + mockErrorService.name + ';' + qs.stringify(params, ';')
                         },
                         res = {
                             json: function(response) {
