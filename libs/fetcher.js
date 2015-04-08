@@ -93,7 +93,7 @@ function parseParamValues (params) {
             var request;
 
             if (req.method === GET) {
-                var path = req.path.substr(req.path.lastIndexOf('/resource/') + '/resource/'.length).split(';');
+                var path = req.path.substr(1).split(';');
                 request = {
                     req: req,
                     resource: path.shift(),
