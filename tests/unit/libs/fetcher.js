@@ -121,10 +121,12 @@ describe('Server Fetcher', function () {
                 expect(statusCodeSet).to.be.true;
             });
 
-            it('should respond to POST api request with custom status code', function (done) {
+            it('should respond to POST api request with custom status code and custom headers', function (done) {
                 var operation = 'create',
                     statusCode = 201,
                     statusCodeSet = false,
+                    responseHeaders = {'x-foo': 'foo'},
+                    headersSet,
                     req = {
                         method: 'POST',
                         path: '/' + mockService.name,
@@ -162,6 +164,10 @@ describe('Server Fetcher', function () {
                             statusCodeSet = true;
                             return this;
                         },
+                        set: function(headers) {
+                            headersSet = headers;
+                            return this;
+                        },
                         send: function (code) {
                             console.log('Not Expected: middleware responded with', code);
                         }
@@ -172,11 +178,13 @@ describe('Server Fetcher', function () {
                     middleware = Fetcher.middleware({pathPrefix: '/api'});
 
                 mockService.meta = {
+                    headers: responseHeaders,
                     statusCode: statusCode
                 };
 
                 middleware(req, res, next);
                 expect(statusCodeSet).to.be.true;
+                expect(headersSet).to.eql(responseHeaders);
             });
 
             var makePostApiErrorTest = function(params, expStatusCode, expMessage) {
@@ -269,14 +277,17 @@ describe('Server Fetcher', function () {
                         console.log('Not Expected: middleware skipped request');
                     },
                     middleware = Fetcher.middleware({pathPrefix: '/api'});
+
                 middleware(req, res, next);
                 expect(statusCodeSet).to.be.true;
             });
 
-            it('should respond to GET api request with custom status code', function (done) {
+            it('should respond to GET api request with custom status code and custom headers', function (done) {
                 var operation = 'read',
                     statusCodeSet = false,
                     statusCode = 201,
+                    responseHeaders = {'Cache-Control': 'max-age=300'},
+                    headersSet,
                     params = {
                         uuids: ['cd7240d6-aeed-3fed-b63c-d7e99e21ca17', 'cd7240d6-aeed-3fed-b63c-d7e99e21ca17'],
                         id: 'asdf',
@@ -296,6 +307,10 @@ describe('Server Fetcher', function () {
                             expect(response.args.params).to.deep.equal(params);
                             done();
                         },
+                        set: function(headers) {
+                            headersSet = headers;
+                            return this;
+                        },
                         status: function(code) {
                             expect(code).to.equal(statusCode);
                             statusCodeSet = true;
@@ -311,10 +326,12 @@ describe('Server Fetcher', function () {
                     middleware = Fetcher.middleware({pathPrefix: '/api'});
 
                 mockService.meta = {
+                    headers: responseHeaders,
                     statusCode: statusCode
                 };
                 middleware(req, res, next);
                 expect(statusCodeSet).to.be.true;
+                expect(headersSet).to.eql(responseHeaders);
             });
 
             var makeGetApiErrorTest = function(params, expStatusCode, expMessage) {

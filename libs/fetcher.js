@@ -106,6 +106,9 @@ function parseParamValues (params) {
                             return;
                         }
                         meta = meta || {};
+                        if (meta.headers) {
+                            res.set(meta.headers);
+                        }
                         res.status(meta.statusCode || 200).json(data);
                     }
                 };
@@ -134,6 +137,9 @@ function parseParamValues (params) {
                         meta = meta || {};
                         var responseObj = {};
                         responseObj[DEFAULT_GUID] = {data: data};
+                        if (meta.headers) {
+                            res.set(meta.headers);
+                        }
                         res.status(meta.statusCode || 200).json(responseObj);
                     }
                 };
