@@ -62,8 +62,34 @@ var Fetcher = require('fetchr'),
     })
 //...
 ```
+#### 3. API CORS Support
+You can pass the full origin host into `corsPath` and potentially overwrite `constructGetUri`. For example:
 
-### 3. Register data fetchers for API and/or DB access
+```js
+var qs = require('qs');
+function constructGetUri (uri, resource, params, config) {
+	// this refers to the Fetcher object itself that this function
+	// is invoked with.
+	if (config.cors) {
+		return uri + '/' + resource + '?' + qs.stringify(this.context);
+	}
+    // Return `falsy` value will result in `fetcher` using its internal
+    // path construction instead.
+}
+
+var Fetcher = require('fetchr);
+var fetcher = new Fetcher({
+	corsPath: 'http://www.google.com',
+	xhrPath: '/googleProxy'
+});
+fetcher.read('service', { foo: 1 }, {
+    cors: true,
+    constructGetUri: constructGetUri
+}, callbackFn);
+```
+
+
+### 4. Register data fetchers for API and/or DB access
 
 ```js
 //app.js
@@ -92,7 +118,7 @@ module.exports = {
 
 ```
 
-### 4. Instantiating the Fetchr Class
+### 5. Instantiating the Fetchr Class
 
 Data fetchers might need access to each individual request, for example, to get the current logged in user's session. For this reason, Fetcher will have to be instantiated once per request.
 
