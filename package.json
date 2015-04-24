@@ -35,6 +35,8 @@
     "mocha": "^2.0.1",
     "mockery": "^1.4.0",
     "precommit-hook": "^1.0.2",
+    "qs": "^2.4.1",
+    "request": "^2.55.0",
     "supertest": "^0.15.0"
   },
   "jshintConfig": {
