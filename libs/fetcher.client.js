@@ -153,6 +153,7 @@ Queue.prototype = {
      * @param {object} options configuration options for Fetcher
      * @param {string} [options.xhrPath="/api"] The path for XHR requests
      * @param {number} [options.batchWindow=20] Number of milliseconds to wait to batch requests
+     * @param {Boolean} [options.corsPath] Base CORS path in case CORS is enabled
      * @param {Object} [options.context] The context object that is propagated to all outgoing
      *      requests as query params.  It can contain current-session/context data that should
      *      persist to all requests.
@@ -160,6 +161,7 @@ Queue.prototype = {
 
     function Fetcher (options) {
         this.xhrPath = options.xhrPath || DEFAULT_XHR_PATH;
+        this.corsPath = options.corsPath;
         this.batchWindow = options.batchWindow || DEFAULT_BATCH_WINDOW;
         this.context = options.context || {};
     }
@@ -286,10 +288,15 @@ Queue.prototype = {
         // Helper Methods
         // ------------------------------------------------------------------
         /**
-         * @method _constructGetUri
+         * Construct GET URI. You can override this for custom GET URI construction
+         * @method _defaultConstructGetUri
          * @private
+         * @param {String} uri base URI
+         * @param {String} resource Resource name
+         * @param {Object} params Parameters to be serialized
+         * @param {Object} Configuration object
          */
-        _constructGetUri: function (uri, resource, params, config) {
+        _defaultConstructGetUri: function (uri, resource, params, config) {
             var query = [], matrix = [], id_param = config.id_param, id_val, final_uri = uri + '/resource/' + resource;
             lodash.forEach(params, function (v, k) {
                 if (k === id_param) {
@@ -360,14 +367,28 @@ Queue.prototype = {
                 callback = request.callback || lodash.noop,
                 use_post,
                 allow_retry_post,
-                uri = config.uri || this.xhrPath,
+                uri = config.uri,
                 get_uri,
                 requests,
+                params,
                 data;
 
+
+
+            if (!uri) {
+                uri = config.cors ? this.corsPath : this.xhrPath;
+            }
+
             use_post = request.operation !== OP_READ || config.post_for_read;
+
             if (!use_post) {
-                get_uri = this._constructGetUri(uri, request.resource, request.params, config);
+                if (lodash.isFunction(config.constructGetUri)) {
+                    get_uri = config.constructGetUri.call(this, uri, request.resource, request.params, config);
+                }
+
+                if (!get_uri) {
+                    get_uri = this._defaultConstructGetUri(uri, request.resource, request.params, config);
+                }
                 if (get_uri.length <= MAX_URI_LEN) {
                     uri = get_uri;
                 } else {
@@ -376,14 +397,13 @@ Queue.prototype = {
             }
 
             if (!use_post) {
-                REST.get(uri, {}, config, function (err, response) {
+                return REST.get(uri, {}, config, function (err, response) {
                     if (err) {
                         debug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info', NAME);
                         return callback(err);
                     }
                     callback(null, parseResponse(response));
                 });
-                return;
             }
 
             // individual request is also normalized into a request hash to pass to api
@@ -433,7 +453,12 @@ Queue.prototype = {
             lodash.forEach(requests, function (request) {
                 var uri, batch, group_id;
                 if (request.config) {
-                    uri = request.config.uri || this.xhrPath;
+                    uri = request.config.uri;
+
+                    if (!uri) {
+                        uri = config.cors ? this.corsPath : this.xhrPath;
+                    }
+
                     batch = request.config.batch;
                 }
                 group_id = 'uri:' + uri;
@@ -464,7 +489,6 @@ Queue.prototype = {
         multi : /* istanbul ignore next */ function (requests) {
             var uri,
                 data,
-                count = 0,
                 config,
                 allow_retry_post = true,
                 request_map = {};
@@ -484,8 +508,8 @@ Queue.prototype = {
                 context: this.context
             }; // TODO: remove. leave here for now for backward compatibility
 
-            lodash.forEach(requests, function (request) {
-                var guid = 'g' + (count++);
+            lodash.forEach(requests, function (request, i) {
+                var guid = 'g' + i;
                 data.requests[guid] = lodash.pick(request, CORE_REQUEST_FIELDS);
                 request_map[guid] = request;
                 if (request.operation !== OP_READ) {
