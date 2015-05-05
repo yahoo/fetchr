@@ -175,7 +175,11 @@ function io(url, options) {
                 errMessage = status ? 'Error ' + status : 'Internal XMLHttpRequest Error';
             }
 
-            err = new Error(errMessage);
+            try {
+                err = JSON.parse(errMessage);
+            } catch (e) {
+                err = new Error(errMessage);
+            }
             err.statusCode = status;
             if (408 === status || 0 === status) {
                 err.timeout = options.timeout;
