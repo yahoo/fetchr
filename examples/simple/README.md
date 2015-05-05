@@ -4,7 +4,11 @@
 
 ### Install
 
+Start fetchr root:
+
 ```js
+npm install
+cd examples/simple
 npm install
 ```
 
