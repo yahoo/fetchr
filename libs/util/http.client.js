@@ -177,6 +177,7 @@ function io(url, options) {
 
             err = new Error(errMessage);
             err.statusCode = status;
+            err.body = body;
             if (408 === status || 0 === status) {
                 err.timeout = options.timeout;
             }
