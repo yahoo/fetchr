@@ -101,13 +101,13 @@ function parseParamValues (params) {
                     params: parseParamValues(qs.parse(path.join('&'))),
                     config: {},
                     callback: function (err, data, meta) {
-                        if (err) {
-                            res.status(err.statusCode || 400).send(err.message || 'request failed');
-                            return;
-                        }
                         meta = meta || {};
                         if (meta.headers) {
                             res.set(meta.headers);
+                        }
+                        if (err) {
+                            res.status(err.statusCode || 400).send(err.message || 'request failed');
+                            return;
                         }
                         res.status(meta.statusCode || 200).json(data);
                     }
