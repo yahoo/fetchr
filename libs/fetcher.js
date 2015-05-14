@@ -130,16 +130,16 @@ function parseParamValues (params) {
                     body: singleRequest.body || {},
                     config: singleRequest.config,
                     callback: function(err, data, meta) {
+                        meta = meta || {};
+                        if (meta.headers) {
+                            res.set(meta.headers);
+                        }
                         if(err) {
                             res.status(err.statusCode || 400).send(err.message || 'request failed');
                             return;
                         }
-                        meta = meta || {};
                         var responseObj = {};
                         responseObj[DEFAULT_GUID] = {data: data};
-                        if (meta.headers) {
-                            res.set(meta.headers);
-                        }
                         res.status(meta.statusCode || 200).json(responseObj);
                     }
                 };
