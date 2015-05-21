@@ -209,8 +209,9 @@ describe('Server Fetcher', function () {
                             }
                         },
                         res = {
-                            json: function(response) {
-                                console.log('Not Expected: middleware responded with', response);
+                            json: function(data) {
+                                expect(data).to.eql(expMessage);
+                                done();
                             },
                             status: function(code) {
                                 expect(code).to.equal(expStatusCode);
@@ -218,12 +219,11 @@ describe('Server Fetcher', function () {
                                 return this;
                             },
                             send: function (data) {
-                                expect(data).to.equal(expMessage);
-                                done();
+                                console.log('send() not expected: middleware responded with', data);
                             }
                         },
                         next = function () {
-                            console.log('Not Expected: middleware skipped request');
+                            console.log('next() not expected: middleware skipped request');
                         },
                         middleware = Fetcher.middleware({pathPrefix: '/api'});
                     middleware(req, res, next);
@@ -232,13 +232,13 @@ describe('Server Fetcher', function () {
             };
 
             it('should respond to POST api request with default error details',
-               makePostApiErrorTest({}, 400, 'request failed'));
+               makePostApiErrorTest({}, 400, {message: 'request failed'}));
 
             it('should respond to POST api request with custom error status code',
-               makePostApiErrorTest({statusCode: 500}, 500, 'request failed'));
+               makePostApiErrorTest({statusCode: 500}, 500, {message: 'request failed'}));
 
             it('should respond to POST api request with custom error message',
-               makePostApiErrorTest({message: 'Error message...'}, 400, 'Error message...'));
+               makePostApiErrorTest({message: 'Error message...'}, 400, {message: 'Error message...'}));
         });
 
         describe('#GET', function() {
@@ -343,8 +343,9 @@ describe('Server Fetcher', function () {
                             path: '/' + mockErrorService.name + ';' + qs.stringify(params, ';')
                         },
                         res = {
-                            json: function(response) {
-                                console.log('Not Expected: middleware responded with', response);
+                            json: function(data) {
+                                expect(data).to.eql(expMessage);
+                                done();
                             },
                             status: function(code) {
                                 expect(code).to.equal(expStatusCode);
@@ -352,8 +353,7 @@ describe('Server Fetcher', function () {
                                 return this;
                             },
                             send: function (data) {
-                                expect(data).to.equal(expMessage);
-                                done();
+                                console.log('send() not expected: middleware responded with', data);
                             }
                         },
                         next = function () {
@@ -366,13 +366,13 @@ describe('Server Fetcher', function () {
             };
 
             it('should respond to GET api request with default error details',
-               makeGetApiErrorTest({}, 400, 'request failed'));
+               makeGetApiErrorTest({}, 400, {message: 'request failed'}));
 
             it('should respond to GET api request with custom error status code',
-               makeGetApiErrorTest({statusCode: 500}, 500, 'request failed'));
+               makeGetApiErrorTest({statusCode: 500}, 500, {message: 'request failed'}));
 
             it('should respond to GET api request with custom error message',
-               makeGetApiErrorTest({message: 'Error message...'}, 400, 'Error message...'));
+               makeGetApiErrorTest({message: 'Error message...'}, 400, {message: 'Error message...'}));
         });
     });
 
