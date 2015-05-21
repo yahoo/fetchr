@@ -106,7 +106,9 @@ function parseParamValues (params) {
                             res.set(meta.headers);
                         }
                         if (err) {
-                            res.status(err.statusCode || 400).send(err.message || 'request failed');
+                            res.status(err.statusCode || 400).json({
+                                message: err.message || 'request failed'
+                            });
                             return;
                         }
                         res.status(meta.statusCode || 200).json(data);
@@ -135,7 +137,9 @@ function parseParamValues (params) {
                             res.set(meta.headers);
                         }
                         if(err) {
-                            res.status(err.statusCode || 400).send(err.message || 'request failed');
+                            res.status(err.statusCode || 400).json({
+                                message: err.message || 'request failed'
+                            });
                             return;
                         }
                         var responseObj = {};
