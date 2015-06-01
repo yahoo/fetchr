@@ -13,27 +13,27 @@
  * batches requests into one request.
  * @module Fetcher
  */
-var REST = require('./util/http.client'),
-    debug = require('debug')('FetchrClient'),
-    lodash = {
+var REST = require('./util/http.client');
+var debug = require('debug')('FetchrClient');
+var lodash = {
         isArray: require('lodash/lang/isArray'),
         isFunction: require('lodash/lang/isFunction'),
-        isObject: require('lodash/lang/isObject'),
         forEach: require('lodash/collection/forEach'),
         merge: require('lodash/object/merge'),
         noop: require('lodash/utility/noop'),
         pick: require('lodash/object/pick'),
         some: require('lodash/collection/some'),
         values: require('lodash/object/values')
-    },
-    CORE_REQUEST_FIELDS = ['resource', 'operation', 'params', 'body'],
-    DEFAULT_GUID = 'g0',
-    DEFAULT_XHR_PATH = '/api',
-    // By default, wait for 20ms to trigger sweep of the queue, after an item is added to the queue.
-    DEFAULT_BATCH_WINDOW = 20,
-    MAX_URI_LEN = 2048,
-    OP_READ = 'read',
-    NAME = 'FetcherClient';
+    };
+var CORE_REQUEST_FIELDS = ['resource', 'operation', 'params', 'body'];
+var DEFAULT_GUID = 'g0';
+var DEFAULT_XHR_PATH = '/api';
+// By default, wait for 20ms to trigger sweep of the queue, after an item is added to the queue.
+var DEFAULT_BATCH_WINDOW = 20;
+var MAX_URI_LEN = 2048;
+var OP_READ = 'read';
+var NAME = 'FetcherClient';
+var defaultConstructGetUri = require('./util/defaultConstructGetUri');
 
 function parseResponse(response) {
     if (response && response.responseText) {
@@ -45,13 +45,6 @@ function parseResponse(response) {
         }
     }
     return null;
-}
-
-function jsonifyComplexType(value) {
-    if (lodash.isArray(value) || lodash.isObject(value)) {
-        return JSON.stringify(value);
-    }
-    return value;
 }
 
 /**
@@ -115,13 +108,13 @@ Queue.prototype = {
 
         // setup timer
         if (!this._timer) {
-            this._timer = setTimeout(function () {
+            this._timer = setTimeout(function sweepInterval() {
                 var items = self._items;
                 self._items = [];
                 clearTimeout(self._timer);
                 self._timer = null;
                 items = self._sweep(items);
-                lodash.forEach(items, function (item) {
+                lodash.forEach(items, function eachItem(item) {
                     self._cb(item);
                 });
             }, this.config.wait);
@@ -269,9 +262,9 @@ Queue.prototype = {
             if (!this._q) {
                 this._q = new Queue(this.name, {
                     wait: Fetcher.batchWindow
-                }, function (requests) {
+                }, function afterWait(requests) {
                     return self.batch(requests);
-                }, function (batched) {
+                }, function afterBatch(batched) {
                     if (!batched) {
                         return;
                     }
@@ -296,41 +289,14 @@ Queue.prototype = {
          * @param {Object} params Parameters to be serialized
          * @param {Object} Configuration object
          */
-        _defaultConstructGetUri: function (uri, resource, params, config) {
-            var query = [], matrix = [], id_param = config.id_param, id_val, final_uri = uri + '/' + resource;
-            lodash.forEach(params, function (v, k) {
-                if (k === id_param) {
-                    id_val = encodeURIComponent(v);
-                } else {
-                    try {
-                        matrix.push(k + '=' + encodeURIComponent(jsonifyComplexType(v)));
-                    } catch (err) {
-                        debug('jsonifyComplexType failed: ' + err, 'info', NAME);
-                    }
-                }
-            });
-
-            lodash.forEach(this.context, function (v, k) {
-                query.push(k + '=' + encodeURIComponent(jsonifyComplexType(v)));
-            });
-            if (id_val) {
-                final_uri += '/' + id_param + '/' + id_val;
-            }
-            if (matrix.length > 0) {
-                final_uri += ';' + matrix.sort().join(';');
-            }
-            if (query.length > 0) {
-                final_uri += '?' + query.sort().join('&');
-            }
-            return final_uri;
-        },
+        _defaultConstructGetUri: defaultConstructGetUri,
         /**
          * @method _constructGroupUri
          * @private
          */
         _constructGroupUri: function (uri) {
             var query = [], final_uri = uri;
-            lodash.forEach(this.context, function (v, k) {
+            lodash.forEach(this.context, function eachContext(v, k) {
                 query.push(k + '=' + encodeURIComponent(v));
             });
             if (query.length > 0) {
@@ -363,17 +329,14 @@ Queue.prototype = {
                 return;
             }
 
-            var config = request.config,
-                callback = request.callback || lodash.noop,
-                use_post,
-                allow_retry_post,
-                uri = config.uri,
-                get_uri,
-                requests,
-                params,
-                data;
-
-
+            var config = request.config;
+            var callback = request.callback || lodash.noop;
+            var use_post;
+            var allow_retry_post;
+            var uri = config.uri;
+            var requests;
+            var params;
+            var data;
 
             if (!uri) {
                 uri = config.cors ? this.corsPath : this.xhrPath;
@@ -382,13 +345,8 @@ Queue.prototype = {
             use_post = request.operation !== OP_READ || config.post_for_read;
 
             if (!use_post) {
-                if (lodash.isFunction(config.constructGetUri)) {
-                    get_uri = config.constructGetUri.call(this, uri, request.resource, request.params, config);
-                }
-
-                if (!get_uri) {
-                    get_uri = this._defaultConstructGetUri(uri, request.resource, request.params, config);
-                }
+                var getUriFn = lodash.isFunction(config.constructGetUri) ? config.constructGetUri : defaultConstructGetUri;
+                var get_uri = getUriFn.call(this, uri, request.resource, request.params, config, this.context);
                 if (get_uri.length <= MAX_URI_LEN) {
                     uri = get_uri;
                 } else {
@@ -397,7 +355,7 @@ Queue.prototype = {
             }
 
             if (!use_post) {
-                return REST.get(uri, {}, config, function (err, response) {
+                return REST.get(uri, {}, config, function getDone(err, response) {
                     if (err) {
                         debug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info', NAME);
                         return callback(err);
@@ -418,7 +376,7 @@ Queue.prototype = {
             }; // TODO: remove. leave here for now for backward compatibility
             uri = this._constructGroupUri(uri);
             allow_retry_post = (request.operation === OP_READ);
-            REST.post(uri, {}, data, lodash.merge({unsafeAllowRetry: allow_retry_post}, config), function (err, response) {
+            REST.post(uri, {}, data, lodash.merge({unsafeAllowRetry: allow_retry_post}, config), function postDone(err, response) {
                 if (err) {
                     debug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info', NAME);
                     return callback(err);
@@ -450,7 +408,7 @@ Queue.prototype = {
             var batched,
                 groups = {};
 
-            lodash.forEach(requests, function (request) {
+            lodash.forEach(requests, function eachRequest(request) {
                 var uri, batch, group_id;
                 if (request.config) {
                     uri = request.config.uri;
@@ -493,7 +451,7 @@ Queue.prototype = {
                 allow_retry_post = true,
                 request_map = {};
 
-            lodash.some(requests, function (request) {
+            lodash.some(requests, function findConfig(request) {
                 if (request.config) {
                     config = request.config;
                     return true;
@@ -508,7 +466,7 @@ Queue.prototype = {
                 context: this.context
             }; // TODO: remove. leave here for now for backward compatibility
 
-            lodash.forEach(requests, function (request, i) {
+            lodash.forEach(requests, function eachRequest(request, i) {
                 var guid = 'g' + i;
                 data.requests[guid] = lodash.pick(request, CORE_REQUEST_FIELDS);
                 request_map[guid] = request;
@@ -518,16 +476,16 @@ Queue.prototype = {
             });
 
             uri = this._constructGroupUri(uri);
-            REST.post(uri, {}, data, lodash.merge({unsafeAllowRetry: allow_retry_post}, config), function (err, response) {
+            REST.post(uri, {}, data, lodash.merge({unsafeAllowRetry: allow_retry_post}, config), function postDone(err, response) {
                 if (err) {
-                    lodash.forEach(requests, function (request) {
+                    lodash.forEach(requests, function passErrorToEachRequest(request) {
                         request.callback(err);
                     });
                     return;
                 }
                 var result = parseResponse(response);
                 // split result for requests, so that each request gets back only the data that was originally requested
-                lodash.forEach(request_map, function (request, guid) {
+                lodash.forEach(request_map, function passREsultToEachRequest(request, guid) {
                     var res = (result && result[guid]) || {};
                     if (request.callback) {
                         request.callback(res.err || null, res.data || null);
