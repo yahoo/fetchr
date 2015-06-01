@@ -18,7 +18,7 @@ var _ = require('lodash'),
         timeout: 3000,
         retry: {
             interval: 200,
-            max_retries: 2
+            max_retries: 0
         }
     },
     CONTENT_TYPE = 'Content-Type',
@@ -39,7 +39,9 @@ if (!String.prototype.trim) {
 }
 
 function normalizeHeaders(headers, method) {
-    var normalized = {};
+    var normalized = {
+        'X-Requested-With': 'XMLHttpRequest'
+    };
     var needContentType = (method === METHOD_PUT || method === METHOD_POST);
     _.forEach(headers, function (v, field) {
         if (field.toLowerCase() === 'content-type') {
@@ -139,7 +141,7 @@ function doXhr(method, url, headers, data, config, callback) {
                 callback(NULL, response);
             },
             failure : function (err, response) {
-                if (!shouldRetry(method, config, response.status)) {
+                if (!shouldRetry(method, config, response.statusCode)) {
                     callback(err);
                 } else {
                     _.delay(
