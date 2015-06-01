@@ -33,9 +33,9 @@ var _ = require('lodash'),
 
 //trim polyfill, maybe pull from npm later
 if (!String.prototype.trim) {
-  String.prototype.trim = function () {
-    return this.replace(/^\s+|\s+$/g, '');
-  };
+    String.prototype.trim = function () {
+        return this.replace(/^\s+|\s+$/g, '');
+    };
 }
 
 function normalizeHeaders(headers, method) {
