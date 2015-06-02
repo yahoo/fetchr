@@ -174,7 +174,7 @@ function io(url, options) {
             if (typeof body === 'string') {
                 errMessage = body;
             } else {
-                errMessage = status ? 'Error ' + status : 'Internal XMLHttpRequest Error';
+                errMessage = status ? 'Error ' + status : 'Internal Fetchr XMLHttpRequest Error';
             }
 
             err = new Error(errMessage);
@@ -188,6 +188,9 @@ function io(url, options) {
         resp.responseText = body;
 
         if (err) {
+            // getting detail info from xhr module 
+            err.rawRequest = resp.rawRequest;
+            err.url = resp.url;
             options.on.failure.call(null, err, resp);
         } else {
             options.on.success.call(null, null, resp);
