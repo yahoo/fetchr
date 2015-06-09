@@ -196,6 +196,29 @@ new Fetcher({
 
 This `_csrf` will be sent in all XHR requests as a query parameter so that it can be validated on the server.
 
+## Service Call Config
+When calling a Fetcher service you can pass an optional config object.
+
+When this call is made from the client the config object is used to define XHR request options and can be used to override default options:
+
+```js
+//app.js - client
+//...
+var config = {
+    timeout: 6000, // Timeout (in ms) for each request
+    retry: {
+        interval: 100, // The start interval unit (in ms)
+        max_retries: 2 // Number of max retries
+    },
+    unsafeAllowRetry: false // for POST requests, whether to allow retrying this post
+};
+
+fetcher.read('data_api_fetcher', {id: ###}, config, function (err, data, meta) {
+    //handle err and/or data returned from data fetcher in this callback
+});
+```
+
+For requests from the server, the config object is simply passed into the service being called.
 
 ## API
 

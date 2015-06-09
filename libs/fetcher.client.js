@@ -167,81 +167,81 @@ Queue.prototype = {
         /**
          * create operation (create as in CRUD).
          * @method create
-         * @param {String} resource  The resource name
-         * @param {Object} params    The parameters identify the resource, and along with information
-         *                           carried in query and matrix parameters in typical REST API
-         * @param {Object} body      The JSON object that contains the resource data that is being created
-         * @param {Object} config    The "config" object for per-request config data.
-         * @param {Function} callback callback convention is the same as Node.js
+         * @param {String} resource     The resource name
+         * @param {Object} params       The parameters identify the resource, and along with information
+         *                              carried in query and matrix parameters in typical REST API
+         * @param {Object} body         The JSON object that contains the resource data that is being created
+         * @param {Object} clientConfig The "config" object for per-request config data.
+         * @param {Function} callback   callback convention is the same as Node.js
          * @static
          */
-        create: function (resource, params, body, config, callback) {
-            this._sync(resource, 'create', params, body, config, callback);
+        create: function (resource, params, body, clientConfig, callback) {
+            this._sync(resource, 'create', params, body, clientConfig, callback);
         },
 
         /**
          * read operation (read as in CRUD).
          * @method read
-         * @param {String} resource  The resource name
-         * @param {Object} params    The parameters identify the resource, and along with information
-         *                           carried in query and matrix parameters in typical REST API
-         * @param {Object} config    The "config" object for per-request config data.
-         * @param {Function} callback callback convention is the same as Node.js
+         * @param {String} resource     The resource name
+         * @param {Object} params       The parameters identify the resource, and along with information
+         *                              carried in query and matrix parameters in typical REST API
+         * @param {Object} clientConfig The "config" object for per-request config data.
+         * @param {Function} callback   callback convention is the same as Node.js
          * @static
          */
-        read: function (resource, params, config, callback) {
-            this._sync(resource, 'read', params, undefined, config, callback);
+        read: function (resource, params, clientConfig, callback) {
+            this._sync(resource, 'read', params, undefined, clientConfig, callback);
         },
 
         /**
          * update operation (update as in CRUD).
          * @method update
-         * @param {String} resource  The resource name
-         * @param {Object} params    The parameters identify the resource, and along with information
-         *                           carried in query and matrix parameters in typical REST API
-         * @param {Object} body      The JSON object that contains the resource data that is being updated
-         * @param {Object} config    The "config" object for per-request config data.
-         * @param {Function} callback callback convention is the same as Node.js
+         * @param {String} resource     The resource name
+         * @param {Object} params       The parameters identify the resource, and along with information
+         *                              carried in query and matrix parameters in typical REST API
+         * @param {Object} body         The JSON object that contains the resource data that is being updated
+         * @param {Object} clientConfig The "config" object for per-request config data.
+         * @param {Function} callback   callback convention is the same as Node.js
          * @static
          */
-        update: function (resource, params, body, config, callback) {
-            this._sync(resource, 'update', params, body, config, callback);
+        update: function (resource, params, body, clientConfig, callback) {
+            this._sync(resource, 'update', params, body, clientConfig, callback);
         },
 
         /**
          * delete operation (delete as in CRUD).
          * @method delete
-         * @param {String} resource  The resource name
-         * @param {Object} params    The parameters identify the resource, and along with information
-         *                           carried in query and matrix parameters in typical REST API
-         * @param {Object} config    The "config" object for per-request config data.
-         * @param {Function} callback callback convention is the same as Node.js
+         * @param {String} resource     The resource name
+         * @param {Object} params       The parameters identify the resource, and along with information
+         *                              carried in query and matrix parameters in typical REST API
+         * @param {Object} clientConfig The "config" object for per-request config data.
+         * @param {Function} callback   callback convention is the same as Node.js
          * @static
          */
-        'delete': function (resource, params, config, callback) {
-            this._sync(resource, 'delete', params, undefined, config, callback);
+        'delete': function (resource, params, clientConfig, callback) {
+            this._sync(resource, 'delete', params, undefined, clientConfig, callback);
         },
         /**
          * Sync data with remote API.
          * @method _sync
-         * @param {String} resource  The resource name
-         * @param {String} operation The CRUD operation name: 'create|read|update|delete'.
-         * @param {Object} params    The parameters identify the resource, and along with information
-         *                           carried in query and matrix parameters in typical REST API
-         * @param {Object} body      The JSON object that contains the resource data that is being updated. Not used
-         *                           for read and delete operations.
-         * @param {Object} config    The "config" object for per-request config data.
-         * @param {Function} callback callback convention is the same as Node.js
+         * @param {String} resource     The resource name
+         * @param {String} operation    The CRUD operation name: 'create|read|update|delete'.
+         * @param {Object} params       The parameters identify the resource, and along with information
+         *                              carried in query and matrix parameters in typical REST API
+         * @param {Object} body         The JSON object that contains the resource data that is being updated. Not used
+         *                              for read and delete operations.
+         * @param {Object} clientConfig The "config" object for per-request config data.
+         * @param {Function} callback   callback convention is the same as Node.js
          * @static
          * @private
          */
-        _sync: function (resource, operation, params, body, config, callback) {
-            if (typeof config === 'function') {
-                callback = config;
-                config = {};
+        _sync: function (resource, operation, params, body, clientConfig, callback) {
+            if (typeof clientConfig === 'function') {
+                callback = clientConfig;
+                clientConfig = {};
             }
 
-            config = config || {};
+            clientConfig = clientConfig || {};
 
             var self = this,
                 request = {
@@ -249,11 +249,11 @@ Queue.prototype = {
                     operation: operation,
                     params: params,
                     body: body,
-                    config: config,
+                    clientConfig: clientConfig,
                     callback: callback
                 };
 
-            if (!lodash.isFunction(this.batch) || !config.consolidate) {
+            if (!lodash.isFunction(this.batch) || !clientConfig.consolidate) {
                 this.single(request);
                 return;
             }
@@ -313,13 +313,13 @@ Queue.prototype = {
          * Execute a single request.
          * @method single
          * @param {Object} request
-         * @param {String} request.resource  The resource name
-         * @param {String} request.operation The CRUD operation name: 'create|read|update|delete'.
-         * @param {Object} request.params    The parameters identify the resource, and along with information
-         *                           carried in query and matrix parameters in typical REST API
-         * @param {Object} request.body      The JSON object that contains the resource data that is being updated. Not used
-         *                           for read and delete operations.
-         * @param {Object} request.config    The "config" object for per-request config data.
+         * @param {String} request.resource     The resource name
+         * @param {String} request.operation    The CRUD operation name: 'create|read|update|delete'.
+         * @param {Object} request.params       The parameters identify the resource, and along with information
+         *                                      carried in query and matrix parameters in typical REST API
+         * @param {Object} request.body         The JSON object that contains the resource data that is being updated. Not used
+         *                                      for read and delete operations.
+         * @param {Object} request.clientConfig The "config" object for per-request config data.
          * @param {Function} request.callback callback convention is the same as Node.js
          * @protected
          * @static
@@ -329,24 +329,24 @@ Queue.prototype = {
                 return;
             }
 
-            var config = request.config;
+            var clientConfig = request.clientConfig;
             var callback = request.callback || lodash.noop;
             var use_post;
             var allow_retry_post;
-            var uri = config.uri;
+            var uri = clientConfig.uri;
             var requests;
             var params;
             var data;
 
             if (!uri) {
-                uri = config.cors ? this.corsPath : this.xhrPath;
+                uri = clientConfig.cors ? this.corsPath : this.xhrPath;
             }
 
-            use_post = request.operation !== OP_READ || config.post_for_read;
+            use_post = request.operation !== OP_READ || clientConfig.post_for_read;
 
             if (!use_post) {
-                var getUriFn = lodash.isFunction(config.constructGetUri) ? config.constructGetUri : defaultConstructGetUri;
-                var get_uri = getUriFn.call(this, uri, request.resource, request.params, config, this.context);
+                var getUriFn = lodash.isFunction(clientConfig.constructGetUri) ? clientConfig.constructGetUri : defaultConstructGetUri;
+                var get_uri = getUriFn.call(this, uri, request.resource, request.params, clientConfig, this.context);
                 if (get_uri.length <= MAX_URI_LEN) {
                     uri = get_uri;
                 } else {
@@ -355,7 +355,7 @@ Queue.prototype = {
             }
 
             if (!use_post) {
-                return REST.get(uri, {}, config, function getDone(err, response) {
+                return REST.get(uri, {}, clientConfig, function getDone(err, response) {
                     if (err) {
                         debug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info', NAME);
                         return callback(err);
@@ -376,7 +376,7 @@ Queue.prototype = {
             }; // TODO: remove. leave here for now for backward compatibility
             uri = this._constructGroupUri(uri);
             allow_retry_post = (request.operation === OP_READ);
-            REST.post(uri, {}, data, lodash.merge({unsafeAllowRetry: allow_retry_post}, config), function postDone(err, response) {
+            REST.post(uri, {}, data, lodash.merge({unsafeAllowRetry: allow_retry_post}, clientConfig), function postDone(err, response) {
                 if (err) {
                     debug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info', NAME);
                     return callback(err);
@@ -395,7 +395,7 @@ Queue.prototype = {
          * batch the requests.
          * @method batch
          * @param {Array} requests Array of requests objects to be batched. Each request is an object with properties:
-         *                             `resource`, `operation, `params`, `body`, `config`, `callback`.
+         *                             `resource`, `operation, `params`, `body`, `clientConfig`, `callback`.
          * @return {Array} the request batches.
          * @protected
          * @static
@@ -410,14 +410,14 @@ Queue.prototype = {
 
             lodash.forEach(requests, function eachRequest(request) {
                 var uri, batch, group_id;
-                if (request.config) {
-                    uri = request.config.uri;
+                if (request.clientConfig) {
+                    uri = request.clientConfig.uri;
 
                     if (!uri) {
-                        uri = config.cors ? this.corsPath : this.xhrPath;
+                        uri = clientConfig.cors ? this.corsPath : this.xhrPath;
                     }
 
-                    batch = request.config.batch;
+                    batch = request.clientConfig.batch;
                 }
                 group_id = 'uri:' + uri;
                 if (batch) {
@@ -440,26 +440,26 @@ Queue.prototype = {
          * Execute multiple requests that have been batched together.
          * @method single
          * @param {Array} requests  The request batch.  Each item in this array is a request object with properties:
-         *                             `resource`, `operation, `params`, `body`, `config`, `callback`.
+         *                             `resource`, `operation, `params`, `body`, `clientConfig`, `callback`.
          * @protected
          * @static
          */
         multi : /* istanbul ignore next */ function (requests) {
             var uri,
                 data,
-                config,
+                clientConfig,
                 allow_retry_post = true,
                 request_map = {};
 
             lodash.some(requests, function findConfig(request) {
-                if (request.config) {
-                    config = request.config;
+                if (request.clientConfig) {
+                    clientConfig = request.clientConfig;
                     return true;
                 }
                 return false;
             }, this);
 
-            uri = config.uri || this.xhrPath;
+            uri = clientConfig.uri || this.xhrPath;
 
             data = {
                 requests: {},
@@ -476,7 +476,7 @@ Queue.prototype = {
             });
 
             uri = this._constructGroupUri(uri);
-            REST.post(uri, {}, data, lodash.merge({unsafeAllowRetry: allow_retry_post}, config), function postDone(err, response) {
+            REST.post(uri, {}, data, lodash.merge({unsafeAllowRetry: allow_retry_post}, clientConfig), function postDone(err, response) {
                 if (err) {
                     lodash.forEach(requests, function passErrorToEachRequest(request) {
                         request.callback(err);
