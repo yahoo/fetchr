@@ -130,7 +130,7 @@ function parseParamValues (params) {
                     operation: singleRequest.operation,
                     params: singleRequest.params,
                     body: singleRequest.body || {},
-                    config: singleRequest.config,
+                    config: {},
                     callback: function(err, data, meta) {
                         meta = meta || {};
                         if (meta.headers) {
