@@ -211,9 +211,9 @@ module.exports = {
      * @param {Number} [config.timeout=3000] Timeout (in ms) for each request
      * @param {Object} config.retry   Retry config object.
      * @param {Number} [config.retry.interval=200]  The start interval unit (in ms).
-     * @param {Number} [config.retry.max_retries=2]   Nmber of max retries.
+     * @param {Number} [config.retry.max_retries=2]   Number of max retries.
      * @param {Boolean} [config.cors] Whether to enable CORS & use XDR on IE8/9.
-     * @param {Function} callback The callback funciton, with two params (error, response)
+     * @param {Function} callback The callback function, with two params (error, response)
      */
     get : function (url, headers, config, callback) {
         doXhr(METHOD_GET, url, headers, NULL, config, callback);
@@ -227,9 +227,9 @@ module.exports = {
      * @param {Object} config  The config object. No retries for PUT.
      * @param {Number} [config.timeout=3000] Timeout (in ms) for each request
      * @param {Number} [config.retry.interval=200]  The start interval unit (in ms).
-     * @param {Number} [config.retry.max_retries=2]   Nmber of max retries.
+     * @param {Number} [config.retry.max_retries=2]   Number of max retries.
      * @param {Boolean} [config.cors] Whether to enable CORS & use XDR on IE8/9.
-     * @param {Function} callback The callback funciton, with two params (error, response)
+     * @param {Function} callback The callback function, with two params (error, response)
      */
     put : function (url, headers, data, config, callback) {
         doXhr(METHOD_PUT, url, headers, data, config, callback);
@@ -244,9 +244,9 @@ module.exports = {
      * @param {Number} [config.timeout=3000] Timeout (in ms) for each request
      * @param {Boolean} [config.unsafeAllowRetry=false] Whether to allow retrying this post.
      * @param {Number} [config.retry.interval=200]  The start interval unit (in ms).
-     * @param {Number} [config.retry.max_retries=2]   Nmber of max retries.
+     * @param {Number} [config.retry.max_retries=2]   Number of max retries.
      * @param {Boolean} [config.cors] Whether to enable CORS & use XDR on IE8/9.
-     * @param {Function} callback The callback funciton, with two params (error, response)
+     * @param {Function} callback The callback function, with two params (error, response)
      */
     post : function (url, headers, data, config, callback) {
         doXhr(METHOD_POST, url, headers, data, config, callback);
@@ -259,9 +259,9 @@ module.exports = {
      * @param {Object} config  The config object. No retries for DELETE.
      * @param {Number} [config.timeout=3000] Timeout (in ms) for each request
      * @param {Number} [config.retry.interval=200]  The start interval unit (in ms).
-     * @param {Number} [config.retry.max_retries=2]   Nmber of max retries.
+     * @param {Number} [config.retry.max_retries=2]   Number of max retries.
      * @param {Boolean} [config.cors] Whether to enable CORS & use XDR on IE8/9.
-     * @param {Function} callback The callback funciton, with two params (error, response)
+     * @param {Function} callback The callback function, with two params (error, response)
      */
     'delete' : function (url, headers, config, callback) {
         doXhr(METHOD_DELETE, url, headers, NULL, config, callback);

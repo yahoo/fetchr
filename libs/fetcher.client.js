@@ -48,15 +48,15 @@ function parseResponse(response) {
 }
 
 /**
- * The queue sweeps and processs items in the queue when there are items in the queue.
- * When a item is pushed into the queue, a timeout is set to guarantee the item will be processd soon.
- * If there are any item in the queue before a item, this item can be processd sooner than its timeout.
+ * The queue sweeps and processes items in the queue when there are items in the queue.
+ * When a item is pushed into the queue, a timeout is set to guarantee the item will be processed soon.
+ * If there are any item in the queue before a item, this item can be processed sooner than its timeout.
  *
  * @class Queue
  * @constructor
  * @param {String} id         ID for the queue.
  * @param {Object} config    The configuration object.
- * @param {Function} sweepFn The function to be called when queue is sweeped.
+ * @param {Function} sweepFn The function to be called when queue is swept.
  * @param {Array} sweepFn.items The current items in the queue.
  * @param {Function} callback The function to be used to process a given item in the queue.
  * @param {Object} callback.item The obj that was popped from the queue.
@@ -76,7 +76,7 @@ function Queue(id, config, sweepFn, callback) {
  * @type String
  */
 /**
- * The configuraiton object for this queue.
+ * The configuration object for this queue.
  * @property config
  * @type Object
  */
@@ -86,7 +86,7 @@ Queue.prototype = {
      * Once an item is pushed to the queue,
      * a timer will be set up immediate to sweep and process the items.  The time of the
      * timeout depends on queue's config (20ms by default).  If it is set to a number <= 0,
-     * the queue will be sweeped and processed right away.
+     * the queue will be swept and processed right away.
      * @method push
      * @param {Object} item   The item object to be pushed to the queue
      * @chainable
