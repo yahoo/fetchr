@@ -11,6 +11,7 @@ var mockery = require('mockery');
 var http;
 var xhrOptions;
 var mockResponse;
+var mockBody = '';
 
 describe('Client HTTP', function () {
 
@@ -19,15 +20,17 @@ describe('Client HTTP', function () {
             useCleanCache: true,
             warnOnUnregistered: false
         });
-            mockery.resetCache();
-            mockery.registerMock('xhr', function mockXhr(options, callback) {
-                xhrOptions.push(options);
-                callback(null, mockResponse, 'BODY');
-            });
-            http = require('../../../../libs/util/http.client.js');
+        mockery.resetCache();
+        mockBody = '';
+        mockery.registerMock('xhr', function mockXhr(options, callback) {
+            xhrOptions.push(options);
+            callback(null, mockResponse, mockBody);
+        });
+        http = require('../../../../libs/util/http.client.js');
     });
 
     after(function() {
+        mockBody = '';
         mockery.deregisterAll();
     });
 
@@ -36,6 +39,7 @@ describe('Client HTTP', function () {
             mockResponse = {
                 statusCode: 200
             };
+            mockBody = 'BODY';
             xhrOptions = [];
         });
 
@@ -97,9 +101,78 @@ describe('Client HTTP', function () {
         });
     });
 
+    describe('#400 requests', function () {
+        beforeEach(function () {
+            xhrOptions = [];
+            mockResponse = {
+                statusCode: 400
+            };
+        });
+
+        it('GET with no response', function (done) {
+            mockBody = undefined;
+            http.get('/url', {'X-Foo': 'foo'}, {}, function (err, response, body) {
+                expect(err.message).to.equal('Error 400');
+                expect(err.statusCode).to.equal(400);
+                expect(err.body).to.equal(undefined);
+                done();
+            });
+        });
+
+        it('GET with empty response', function (done) {
+            mockBody = '';
+            http.get('/url', {'X-Foo': 'foo'}, {}, function (err, response, body) {
+                expect(err.message).to.equal('');
+                expect(err.statusCode).to.equal(400);
+                expect(err.body).to.equal('');
+                done();
+            });
+        });
+
+        it('GET with JSON response containing message attribute', function (done) {
+            mockBody = '{"message":"some body content"}';
+            http.get('/url', {'X-Foo': 'foo'}, {}, function (err, response, body) {
+                expect(err.message).to.equal('some body content');
+                expect(err.statusCode).to.equal(400);
+                expect(err.body).to.deep.equal({
+                    message: 'some body content'
+                });
+                done();
+            });
+        });
+
+        it('GET with JSON response not containing message attribute', function (done) {
+            mockBody = '{"other":"some body content"}';
+            http.get('/url', {'X-Foo': 'foo'}, {}, function (err, response, body) {
+                expect(err.message).to.equal(mockBody);
+                expect(err.statusCode).to.equal(400);
+                expect(err.body).to.deep.equal({
+                    other: "some body content"
+                });
+                done();
+            });
+        });
+
+        // Need to test plain text response
+        // as some servers (e.g. node running in IIS) 
+        // may remove body content
+        // and replace it with 'Bad Request'
+        // if not configured to allow content throughput
+        it('GET with plain text', function (done) {
+            mockBody = 'Bad Request';
+            http.get('/url', {'X-Foo': 'foo'}, {}, function (err, response, body) {
+                expect(err.message).to.equal(mockBody);
+                expect(err.statusCode).to.equal(400);
+                expect(err.body).to.equal(mockBody);
+                done();
+            });
+        });
+    });
+
     describe('#408 requests', function () {
         beforeEach(function () {
             xhrOptions = [];
+            mockBody = 'BODY';
             mockResponse = {
                 statusCode: 408
             };
