@@ -77,7 +77,7 @@ function constructGetUri (uri, resource, params, config) {
     // path construction instead.
 }
 
-var Fetcher = require('fetchr);
+var Fetcher = require('fetchr');
 var fetcher = new Fetcher({
 	corsPath: 'http://www.google.com',
 	xhrPath: '/googleProxy'
