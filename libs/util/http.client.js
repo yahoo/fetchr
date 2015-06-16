@@ -173,18 +173,27 @@ function io(url, options) {
         useXDR: options.cors
     }, function (err, resp, body) {
         var status = resp.statusCode;
-        var errMessage;
+        var errMessage, errBody;
 
         if (!err && (status === 0 || (status >= 400 && status < 600))) {
             if (typeof body === 'string') {
-                errMessage = body;
+                try {
+                    errBody = JSON.parse(body);
+                    if (errBody.message) {
+                        errMessage = errBody.message;
+                    } else {
+                        errMessage = body;
+                    }
+                } catch(e) {
+                    errMessage = body;
+                }
             } else {
                 errMessage = status ? 'Error ' + status : 'Internal Fetchr XMLHttpRequest Error';
             }
 
             err = new Error(errMessage);
             err.statusCode = status;
-            err.body = body;
+            err.body = errBody || body;
             if (408 === status || 0 === status) {
                 err.timeout = options.timeout;
             }
