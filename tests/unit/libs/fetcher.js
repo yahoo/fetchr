@@ -35,39 +35,6 @@ describe('Server Fetcher', function () {
 
     describe('#middleware', function () {
         describe('#POST', function() {
-            it('should 404 to POST request with no req.body.requests object', function (done) {
-                var operation = 'create',
-                    statusCodeSet = false,
-                    req = {
-                        method: 'POST',
-                        path: '/' + mockService.name,
-                        body: {
-                            requests: {},
-                            context: {
-                                site: '',
-                                device: ''
-                            }
-                        }
-                    },
-                    res = {
-                        status: function (code) {
-                            expect(code).to.equal(400);
-                            statusCodeSet = true;
-                            return this;
-                        },
-                        end: function () {
-                            done();
-                        }
-                    },
-                    next = function () {
-                        console.log('Not Expected: middleware skipped request');
-                    },
-                    middleware = Fetcher.middleware();
-
-                middleware(req, res, next);
-                expect(statusCodeSet).to.be.true;
-            });
-
             it('should respond to POST api request', function (done) {
                 var operation = 'create',
                     statusCodeSet = false,
@@ -101,6 +68,7 @@ describe('Server Fetcher', function () {
                             expect(data.operation.success).to.be.true;
                             expect(data.args).to.contain.keys('params');
                             expect(data.args.params).to.equal(req.body.requests.g0.params);
+                            expect(statusCodeSet).to.be.true;
                             done();
                         },
                         status: function(code) {
@@ -118,7 +86,6 @@ describe('Server Fetcher', function () {
                     middleware = Fetcher.middleware();
 
                 middleware(req, res, next);
-                expect(statusCodeSet).to.be.true;
             });
 
             it('should respond to POST api request with custom status code and custom headers', function (done) {
@@ -157,6 +124,8 @@ describe('Server Fetcher', function () {
                             expect(data.operation.success).to.be.true;
                             expect(data.args).to.contain.keys('params');
                             expect(data.args.params).to.equal(req.body.requests.g0.params);
+                            expect(headersSet).to.eql(responseHeaders);
+                            expect(statusCodeSet).to.be.true;
                             done();
                         },
                         status: function(code) {
@@ -183,8 +152,6 @@ describe('Server Fetcher', function () {
                 };
 
                 middleware(req, res, next);
-                expect(statusCodeSet).to.be.true;
-                expect(headersSet).to.eql(responseHeaders);
             });
 
             var makePostApiErrorTest = function(params, expStatusCode, expMessage) {
@@ -211,6 +178,7 @@ describe('Server Fetcher', function () {
                         res = {
                             json: function(data) {
                                 expect(data).to.eql(expMessage);
+                                expect(statusCodeSet).to.be.true;
                                 done();
                             },
                             status: function(code) {
@@ -227,7 +195,6 @@ describe('Server Fetcher', function () {
                         },
                         middleware = Fetcher.middleware({pathPrefix: '/api'});
                     middleware(req, res, next);
-                    expect(statusCodeSet).to.be.true;
                 };
             };
 
@@ -262,6 +229,7 @@ describe('Server Fetcher', function () {
                             expect(response.operation.success).to.be.true;
                             expect(response.args).to.contain.keys('params');
                             expect(response.args.params).to.deep.equal(params);
+                            expect(statusCodeSet).to.be.true;
                             done();
                         },
                         status: function(code) {
@@ -279,7 +247,6 @@ describe('Server Fetcher', function () {
                     middleware = Fetcher.middleware({pathPrefix: '/api'});
 
                 middleware(req, res, next);
-                expect(statusCodeSet).to.be.true;
             });
 
             it('should respond to GET api request with custom status code and custom headers', function (done) {
@@ -305,6 +272,8 @@ describe('Server Fetcher', function () {
                             expect(response.operation.success).to.be.true;
                             expect(response.args).to.contain.keys('params');
                             expect(response.args.params).to.deep.equal(params);
+                            expect(statusCodeSet).to.be.true;
+                            expect(headersSet).to.eql(responseHeaders);
                             done();
                         },
                         set: function(headers) {
@@ -330,8 +299,6 @@ describe('Server Fetcher', function () {
                     statusCode: statusCode
                 };
                 middleware(req, res, next);
-                expect(statusCodeSet).to.be.true;
-                expect(headersSet).to.eql(responseHeaders);
             });
 
             var makeGetApiErrorTest = function(params, expStatusCode, expMessage) {
@@ -345,6 +312,7 @@ describe('Server Fetcher', function () {
                         res = {
                             json: function(data) {
                                 expect(data).to.eql(expMessage);
+                                expect(statusCodeSet).to.be.true;
                                 done();
                             },
                             status: function(code) {
@@ -361,7 +329,6 @@ describe('Server Fetcher', function () {
                         },
                         middleware = Fetcher.middleware({pathPrefix: '/api'});
                     middleware(req, res, next);
-                    expect(statusCodeSet).to.be.true;
                 };
             };
 
@@ -373,6 +340,45 @@ describe('Server Fetcher', function () {
 
             it('should respond to GET api request with custom error message',
                makeGetApiErrorTest({message: 'Error message...'}, 400, {message: 'Error message...'}));
+        });
+
+        describe('Invalid Access', function () {
+            function makeInvalidReqTest(req, debugMsg, done) {
+                var res = {};
+                var next = function (err) {
+                    expect(err).to.exist;
+                    expect(err).to.be.an.object;
+                    expect(err.debug).to.contain(debugMsg);
+                    expect(err.message).to.equal('Invalid Fetchr Access');
+                    expect(err.statusCode).to.equal(400);
+                    expect(err.source).to.equal('fetchr');
+                    done();
+                };
+                var middleware = Fetcher.middleware();
+                middleware(req, res, next);
+            }
+            it('should skip empty url', function (done) {
+                makeInvalidReqTest({method: 'GET', path: '/'}, 'Bad resource', done);
+            });
+            it('should skip invalid GET resource', function (done) {
+                makeInvalidReqTest({method: 'GET', path: '/invalidService'}, 'Bad resource invalidService', done);
+            });
+            it('should skip invalid POST request', function (done) {
+                makeInvalidReqTest({method: 'POST', body: {
+                    requests: {
+                        g0: {
+                            resource: 'invalidService'
+                        }
+                    }
+                }}, 'Bad resource invalidService', done);
+            });
+            it('should skip POST request with empty req.body.requests object', function (done) {
+                makeInvalidReqTest({method: 'POST', body: { requests: {}}}, 'No resources', done);
+            });
+            it('should skip POST request with no req.body.requests object', function (done) {
+                makeInvalidReqTest({method: 'POST'}, 'No resources', done);
+            });
+
         });
     });
 
