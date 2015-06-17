@@ -75,10 +75,11 @@ function parseParamValues (params) {
      */
     Fetcher.getFetcher = function (name) {
         //Access fetcher by name
-        if (!name || !Fetcher.fetchers[name]) {
+        var fetcher = Fetcher.isRegistered(name);
+        if (!fetcher) {
             throw new Error('Fetcher "' + name + '" could not be found');
         }
-        return Fetcher.fetchers[name];
+        return fetcher;
     };
 
     /**
@@ -88,7 +89,7 @@ function parseParamValues (params) {
      * @returns {Boolean} true if fetcher with name was registered
      */
     Fetcher.isRegistered = function (name) {
-        return name && Fetcher.fetchers[name];
+        return name && Fetcher.fetchers[name.split('.')[0]];
     };
 
     /**
@@ -211,7 +212,7 @@ function parseParamValues (params) {
      * @static
      */
     Fetcher.single = function (request) {
-        var fetcher = Fetcher.getFetcher(request.resource.split('.')[0]),
+        var fetcher = Fetcher.getFetcher(request.resource),
             op = request.operation,
             req = request.req,
             resource = request.resource,
