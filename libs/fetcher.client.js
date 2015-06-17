@@ -61,6 +61,7 @@ function parseResponse(response) {
  * @param {Function} callback The function to be used to process a given item in the queue.
  * @param {Object} callback.item The obj that was popped from the queue.
  */
+/* istanbul ignore next */
 function Queue(id, config, sweepFn, callback) {
     this.id = id;
     this.config = config || {};
@@ -80,7 +81,7 @@ function Queue(id, config, sweepFn, callback) {
  * @property config
  * @type Object
  */
-
+/* istanbul ignore next */
 Queue.prototype = {
     /**
      * Once an item is pushed to the queue,
@@ -259,6 +260,7 @@ Queue.prototype = {
             }
 
             // push request to queue so that it can be batched
+            /* istanbul ignore next */
             if (!this._q) {
                 this._q = new Queue(this.name, {
                     wait: Fetcher.batchWindow
@@ -275,6 +277,7 @@ Queue.prototype = {
                     }
                 });
             }
+            /* istanbul ignore next */
             this._q.push(request);
         },
         // ------------------------------------------------------------------
