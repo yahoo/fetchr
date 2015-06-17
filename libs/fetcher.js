@@ -56,14 +56,11 @@ function parseParamValues (params) {
      * @param {Function} fetcher
      */
     Fetcher.registerFetcher = function (fetcher) {
-        var name = fetcher.name || null;
-        //Store fetcher by name
-        if (!(fetcher && name)) {
+        if (!fetcher || !fetcher.name) {
             throw new Error('Fetcher is not defined correctly');
         }
-
-        Fetcher.fetchers[name] = fetcher;
-        debug('fetcher ' + name + ' added');
+        Fetcher.fetchers[fetcher.name] = fetcher;
+        debug('fetcher ' + fetcher.name + ' added');
         return;
     };
 

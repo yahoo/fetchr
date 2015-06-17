@@ -19,7 +19,7 @@ var expect = chai.expect,
 
 describe('Server Fetcher', function () {
 
-    it('should register fetchers', function () {
+    it('should register valid fetchers', function () {
         var getFetcher = Fetcher.getFetcher.bind(fetcher);
         expect(getFetcher).to.throw(Error, 'Fetcher "undefined" could not be found');
         getFetcher = Fetcher.getFetcher.bind(fetcher, mockService.name);
@@ -30,6 +30,17 @@ describe('Server Fetcher', function () {
         expect(getFetcher()).to.deep.equal(mockService);
         Fetcher.registerFetcher(mockErrorService);
         expect(Object.keys(Fetcher.fetchers)).to.have.length(2);
+
+        // valid vs invalid
+        var invalidFetcher = {not_name: 'test_name'};
+        var validFetcher = {name: 'test_name'};
+        var registerInvalidFetcher = Fetcher.registerFetcher.bind(fetcher, undefined);
+        expect(registerInvalidFetcher).to.throw(Error, 'Fetcher is not defined correctly');
+        registerInvalidFetcher = Fetcher.registerFetcher.bind(fetcher, invalidFetcher);
+        expect(registerInvalidFetcher).to.throw(Error, 'Fetcher is not defined correctly');
+        var registerValidFetcher = Fetcher.registerFetcher.bind(fetcher, validFetcher);
+        expect(registerValidFetcher).to.not.throw;
+        delete Fetcher.fetchers[validFetcher.name];
     });
 
     it('should get fetchers by resource and sub resource', function () {
