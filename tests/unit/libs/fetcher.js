@@ -15,22 +15,30 @@ var expect = chai.expect,
     }),
     mockService = require('../../mock/MockService'),
     mockErrorService = require('../../mock/MockErrorService'),
-    _ = require('lodash'),
     qs = require('querystring');
 
 describe('Server Fetcher', function () {
 
     it('should register fetchers', function () {
-        var fn = Fetcher.getFetcher.bind(fetcher);
-        expect(fn).to.throw(Error, 'Fetcher "undefined" could not be found');
-        fn = Fetcher.getFetcher.bind(fetcher, mockService.name);
-        expect(_.size(Fetcher.fetchers)).to.equal(0);
-        expect(fn).to.throw(Error, 'Fetcher "' + mockService.name + '" could not be found');
+        var getFetcher = Fetcher.getFetcher.bind(fetcher);
+        expect(getFetcher).to.throw(Error, 'Fetcher "undefined" could not be found');
+        getFetcher = Fetcher.getFetcher.bind(fetcher, mockService.name);
+        expect(Object.keys(Fetcher.fetchers)).to.have.length(0);
+        expect(getFetcher).to.throw(Error, 'Fetcher "' + mockService.name + '" could not be found');
         Fetcher.registerFetcher(mockService);
-        expect(_.size(Fetcher.fetchers)).to.equal(1);
-        expect(fn()).to.deep.equal(mockService);
+        expect(Object.keys(Fetcher.fetchers)).to.have.length(1);
+        expect(getFetcher()).to.deep.equal(mockService);
         Fetcher.registerFetcher(mockErrorService);
-        expect(_.size(Fetcher.fetchers)).to.equal(2);
+        expect(Object.keys(Fetcher.fetchers)).to.have.length(2);
+    });
+
+    it('should get fetchers by resource and sub resource', function () {
+        var getFetcher = Fetcher.getFetcher.bind(fetcher, mockService.name);
+        expect(getFetcher).to.not.throw;
+        expect(getFetcher()).to.deep.equal(mockService);
+        getFetcher = Fetcher.getFetcher.bind(fetcher, mockService.name + '.subResource');
+        expect(getFetcher).to.not.throw;
+        expect(getFetcher()).to.deep.equal(mockService);
     });
 
     describe('#middleware', function () {
