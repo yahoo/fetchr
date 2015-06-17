@@ -28,17 +28,17 @@
   },
   "devDependencies": {
     "body-parser": "^1.12.2",
-    "chai": "^2.0.0",
+    "chai": "^3.0.0",
     "coveralls": "^2.11.1",
     "express": "^4.12.3",
     "istanbul": "^0.3.2",
     "jshint": "^2.5.1",
     "mocha": "^2.0.1",
     "mockery": "^1.4.0",
-    "precommit-hook": "^1.0.2",
-    "qs": "^2.4.1",
+    "pre-commit": "^1.0.0",
+    "qs": "^3.0.0",
     "request": "^2.55.0",
-    "supertest": "^0.15.0"
+    "supertest": "^1.0.1"
   },
   "jshintConfig": {
     "node": true
