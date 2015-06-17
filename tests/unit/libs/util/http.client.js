@@ -101,6 +101,69 @@ describe('Client HTTP', function () {
         });
     });
 
+    describe('#Successful CORS requests', function () {
+        beforeEach(function () {
+            mockResponse = {
+                statusCode: 200
+            };
+            mockBody = 'BODY';
+            xhrOptions = [];
+        });
+
+        it('GET', function (done) {
+            http.get('/url', {'X-Foo': 'foo'}, {cors: true}, function (err, response) {
+                expect(xhrOptions.length).to.equal(1);
+                var options = xhrOptions[0];
+                expect(options.url).to.equal('/url');
+                expect(options.headers).to.not.have.property('X-Requested-With');
+                expect(options.headers['X-Foo']).to.equal('foo');
+                expect(options.method).to.equal('GET');
+                expect(err).to.equal(null);
+                expect(response.statusCode).to.equal(200);
+                expect(response.responseText).to.equal('BODY');
+                done();
+            });
+        });
+
+        it('PUT', function (done) {
+            http.put('/url', {'X-Foo': 'foo'}, {data: 'data'}, {cors: true}, function () {
+                expect(xhrOptions.length).to.equal(1);
+                var options = xhrOptions[0];
+                expect(options.url).to.equal('/url');
+                expect(options.headers).to.not.have.property('X-Requested-With');
+                expect(options.headers['X-Foo']).to.equal('foo');
+                expect(options.method).to.equal('PUT');
+                expect(options.body).to.eql('{"data":"data"}');
+                done();
+            });
+        });
+
+        it('POST', function (done) {
+            http.post('/url', {'X-Foo': 'foo'}, {data: 'data'}, {cors: true}, function () {
+                expect(xhrOptions.length).to.equal(1);
+                var options = xhrOptions[0];
+                expect(options.url).to.equal('/url');
+                expect(options.headers).to.not.have.property('X-Requested-With');
+                expect(options.headers['X-Foo']).to.equal('foo');
+                expect(options.method).to.equal('POST');
+                expect(options.body).to.eql('{"data":"data"}');
+                done();
+            });
+        });
+
+        it('DELETE', function (done) {
+            http['delete']('/url', {'X-Foo': 'foo'}, {cors: true}, function () {
+                expect(xhrOptions.length).to.equal(1);
+                var options = xhrOptions[0];
+                expect(options.url).to.equal('/url');
+                expect(options.headers).to.not.have.property('X-Requested-With');
+                expect(options.headers['X-Foo']).to.equal('foo');
+                expect(options.method).to.equal('DELETE');
+                done();
+            });
+        });
+    });
+
     describe('#400 requests', function () {
         beforeEach(function () {
             xhrOptions = [];

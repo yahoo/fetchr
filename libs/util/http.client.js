@@ -43,10 +43,11 @@ if (!String.prototype.trim) {
   };
 }
 
-function normalizeHeaders(headers, method) {
-    var normalized = {
-        'X-Requested-With': 'XMLHttpRequest'
-    };
+function normalizeHeaders(headers, method, isCors) {
+    var normalized = {};
+    if (!isCors) {
+        normalized['X-Requested-With'] = 'XMLHttpRequest';
+    }
     var needContentType = (method === METHOD_PUT || method === METHOD_POST);
     _.forEach(headers, function (v, field) {
         if (field.toLowerCase() === 'content-type') {
@@ -130,8 +131,8 @@ function mergeConfig(config) {
 function doXhr(method, url, headers, data, config, callback) {
     var options, timeout;
 
+    headers = normalizeHeaders(headers, method, config.cors);
     config = mergeConfig(config);
-    headers = normalizeHeaders(headers, method);
     // use config.tmp to store temporary values
     config.tmp = config.tmp || {retry_counter: 0};
 
