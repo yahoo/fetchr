@@ -20,7 +20,6 @@ var _ = {
         isNumber: require('lodash/lang/isNumber')
     },
     DEFAULT_CONFIG = {
-        timeout: 3000,
         retry: {
             interval: 200,
             max_retries: 0
@@ -28,7 +27,6 @@ var _ = {
     },
     CONTENT_TYPE = 'Content-Type',
     TYPE_JSON = 'application/json',
-    TIMEOUT = 'timeout',
     METHOD_GET = 'GET',
     METHOD_PUT = 'PUT',
     METHOD_POST = 'POST',
@@ -90,7 +88,6 @@ function shouldRetry(method, config, statusCode) {
 
 function mergeConfig(config) {
     var cfg = {
-            timeout: DEFAULT_CONFIG.timeout,
             unsafeAllowRetry: config.unsafeAllowRetry || false,
             retry: {
                 interval: DEFAULT_CONFIG.retry.interval,
@@ -102,7 +99,8 @@ function mergeConfig(config) {
         maxRetries;
 
     if (config) {
-        timeout = parseInt(config.timeout, 10);
+        timeout = config.timeout || config.xhrTimeout;
+        timeout = parseInt(timeout, 10);
         if (_.isNumber(timeout) && timeout > 0) {
             cfg.timeout = timeout;
         }

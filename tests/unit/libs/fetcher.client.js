@@ -195,7 +195,6 @@ describe('Client Fetcher', function () {
 
             after(function() {
                 mockery.deregisterAll();
-                app.cleanup();
             });
 
             testCrud(resource, params, body, {}, callback);
@@ -215,6 +214,224 @@ describe('Client Fetcher', function () {
             it('should handle DELETE w/ no config', function (done) {
                 var operation = 'delete';
                 fetcher[operation](resource, params, callback(operation, done));
+            });
+        });
+
+        describe('xhrTimeout', function () {
+            var DEFAULT_XHR_TIMEOUT = 3000;
+            var params = {
+                    uuids: [1,2,3,4,5],
+                    category: ''
+                },
+                body = { stuff: 'is'},
+                context = {
+                    _csrf: 'stuff'
+                },
+                config = {},
+                callback = function(operation, done) {
+                    return function(err, data) {
+                        if (err){
+                            done(err);
+                        }
+                        done();
+                    };
+                };
+
+            describe('set xhrTimeout', function () {
+                before(function(){
+                    mockery.resetCache();
+                    mockery.registerMock('./util/http.client', {
+                        get: function (url, headers, config, done) {
+                            expect(config.xhrTimeout).to.equal(4000);
+                            supertest(app)
+                                .get(url)
+                                .expect(200)
+                                .end(function (err, res) {
+                                    if (err) throw err;
+                                    done(null, {
+                                        responseText: res.text
+                                    });
+                                });
+                        },
+                        post : function (url, headers, body, config, done) {
+                            expect(config.xhrTimeout).to.equal(4000);
+                            supertest(app)
+                                .post(url)
+                                .send(body)
+                                .expect(200)
+                                .end(function (err, res) {
+                                    if (err) throw err;
+                                    done(null, {
+                                        responseText: res.text
+                                    });
+                                });
+                        }
+                    });
+
+                    Fetcher = require('../../../libs/fetcher.client');
+
+                    fetcher = new Fetcher({
+                        context: context,
+                        xhrTimeout: 4000
+                    });
+                });
+
+                after(function() {
+                    mockery.deregisterAll();
+                });
+
+                it('should handle CREATE w/ global xhrTimeout', function (done) {
+                    var operation = 'create';
+                    fetcher[operation](resource, params, body, config, callback(operation, done));
+                });
+
+                it('should handle READ w/ global xhrTimeout', function (done) {
+                    var operation = 'read';
+                    fetcher[operation](resource, params, config, callback(operation, done));
+                });
+
+                it('should handle UPDATE w/ global xhrTimeout', function (done) {
+                    var operation = 'update';
+                    fetcher[operation](resource, params, body, config, callback(operation, done));
+                });
+
+                it('should handle DELETE w/ global xhrTimeout', function (done) {
+                    var operation = 'delete';
+                    fetcher[operation](resource, params, config, callback(operation, done));
+                });
+            });
+
+            describe('set single call timeout', function () {
+                before(function(){
+                    config = {timeout: 5000};
+
+                    mockery.resetCache();
+                    mockery.registerMock('./util/http.client', {
+                        get: function (url, headers, config, done) {
+                            expect(config.xhrTimeout).to.equal(4000);
+                            expect(config.timeout).to.equal(5000);
+                            supertest(app)
+                                .get(url)
+                                .expect(200)
+                                .end(function (err, res) {
+                                    if (err) throw err;
+                                    done(null, {
+                                        responseText: res.text
+                                    });
+                                });
+                        },
+                        post : function (url, headers, body, config, done) {
+                            expect(config.xhrTimeout).to.equal(4000);
+                            expect(config.timeout).to.equal(5000);
+                            supertest(app)
+                                .post(url)
+                                .send(body)
+                                .expect(200)
+                                .end(function (err, res) {
+                                    if (err) throw err;
+                                    done(null, {
+                                        responseText: res.text
+                                    });
+                                });
+                        }
+                    });
+
+                    Fetcher = require('../../../libs/fetcher.client');
+
+                    fetcher = new Fetcher({
+                        context: context,
+                        xhrTimeout: 4000
+                    });
+                });
+
+                after(function() {
+                    mockery.deregisterAll();
+                });
+
+                it('should handle CREATE w/ config timeout', function (done) {
+                    var operation = 'create';
+                    fetcher[operation](resource, params, body, config, callback(operation, done));
+                });
+
+                it('should handle READ w/ config timeout', function (done) {
+                    var operation = 'read';
+                    fetcher[operation](resource, params, config, callback(operation, done));
+                });
+
+                it('should handle UPDATE w/ config timeout', function (done) {
+                    var operation = 'update';
+                    fetcher[operation](resource, params, body, config, callback(operation, done));
+                });
+
+                it('should handle DELETE w/ config timeout', function (done) {
+                    var operation = 'delete';
+                    fetcher[operation](resource, params, config, callback(operation, done));
+                });
+            });
+
+            describe('should handle default', function () {
+                before(function(){
+                    config = {};
+                    mockery.resetCache();
+                    mockery.registerMock('./util/http.client', {
+                        get: function (url, headers, config, done) {
+                            expect(config.xhrTimeout).to.equal(DEFAULT_XHR_TIMEOUT);
+                            supertest(app)
+                                .get(url)
+                                .expect(200)
+                                .end(function (err, res) {
+                                    if (err) throw err;
+                                    done(null, {
+                                        responseText: res.text
+                                    });
+                                });
+                        },
+                        post : function (url, headers, body, config, done) {
+                            expect(config.xhrTimeout).to.equal(DEFAULT_XHR_TIMEOUT);
+                            supertest(app)
+                                .post(url)
+                                .send(body)
+                                .expect(200)
+                                .end(function (err, res) {
+                                    if (err) throw err;
+                                    done(null, {
+                                        responseText: res.text
+                                    });
+                                });
+                        }
+                    });
+
+                    Fetcher = require('../../../libs/fetcher.client');
+
+                    fetcher = new Fetcher({
+                        context: context
+                    });
+                });
+
+                after(function() {
+                    mockery.deregisterAll();
+                    app.cleanup();
+                });
+
+                it('should handle CREATE w/ default timeout', function (done) {
+                    var operation = 'create';
+                    fetcher[operation](resource, params, body, config, callback(operation, done));
+                });
+
+                it('should handle READ w/ default timeout', function (done) {
+                    var operation = 'read';
+                    fetcher[operation](resource, params, config, callback(operation, done));
+                });
+
+                it('should handle UPDATE w/ default timeout', function (done) {
+                    var operation = 'update';
+                    fetcher[operation](resource, params, body, config, callback(operation, done));
+                });
+
+                it('should handle DELETE w/ default timeout', function (done) {
+                    var operation = 'delete';
+                    fetcher[operation](resource, params, config, callback(operation, done));
+                });
             });
         });
     });
