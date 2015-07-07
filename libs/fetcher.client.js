@@ -28,6 +28,7 @@ var lodash = {
 var CORE_REQUEST_FIELDS = ['resource', 'operation', 'params', 'body'];
 var DEFAULT_GUID = 'g0';
 var DEFAULT_XHR_PATH = '/api';
+var DEFAULT_XHR_TIMEOUT = 3000;
 // By default, wait for 20ms to trigger sweep of the queue, after an item is added to the queue.
 var DEFAULT_BATCH_WINDOW = 20;
 var MAX_URI_LEN = 2048;
@@ -146,6 +147,7 @@ Queue.prototype = {
      * @class FetcherClient
      * @param {object} options configuration options for Fetcher
      * @param {string} [options.xhrPath="/api"] The path for XHR requests
+     * @param {number} [options.xhrTimout=3000] Timeout in milliseconds for all XHR requests
      * @param {number} [options.batchWindow=20] Number of milliseconds to wait to batch requests
      * @param {Boolean} [options.corsPath] Base CORS path in case CORS is enabled
      * @param {Object} [options.context] The context object that is propagated to all outgoing
@@ -155,6 +157,7 @@ Queue.prototype = {
 
     function Fetcher (options) {
         this.xhrPath = options.xhrPath || DEFAULT_XHR_PATH;
+        this.xhrTimeout = options.xhrTimeout || DEFAULT_XHR_TIMEOUT;
         this.corsPath = options.corsPath;
         this.batchWindow = options.batchWindow || DEFAULT_BATCH_WINDOW;
         this.context = options.context || {};
@@ -358,7 +361,7 @@ Queue.prototype = {
             }
 
             if (!use_post) {
-                return REST.get(uri, {}, clientConfig, function getDone(err, response) {
+                return REST.get(uri, {}, lodash.merge({xhrTimeout: this.xhrTimeout}, clientConfig), function getDone(err, response) {
                     if (err) {
                         debug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info', NAME);
                         return callback(err);
@@ -379,7 +382,7 @@ Queue.prototype = {
             }; // TODO: remove. leave here for now for backward compatibility
             uri = this._constructGroupUri(uri);
             allow_retry_post = (request.operation === OP_READ);
-            REST.post(uri, {}, data, lodash.merge({unsafeAllowRetry: allow_retry_post}, clientConfig), function postDone(err, response) {
+            REST.post(uri, {}, data, lodash.merge({unsafeAllowRetry: allow_retry_post, xhrTimeout: this.xhrTimeout}, clientConfig), function postDone(err, response) {
                 if (err) {
                     debug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info', NAME);
                     return callback(err);

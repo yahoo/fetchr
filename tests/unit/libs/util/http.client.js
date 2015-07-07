@@ -51,7 +51,6 @@ describe('Client HTTP', function () {
                 expect(options.headers['X-Requested-With']).to.equal('XMLHttpRequest');
                 expect(options.headers['X-Foo']).to.equal('foo');
                 expect(options.method).to.equal('GET');
-                expect(options.timeout).to.equal(3000);
                 expect(err).to.equal(null);
                 expect(response.statusCode).to.equal(200);
                 expect(response.responseText).to.equal('BODY');
@@ -68,7 +67,6 @@ describe('Client HTTP', function () {
                 expect(options.headers['X-Foo']).to.equal('foo');
                 expect(options.method).to.equal('PUT');
                 expect(options.body).to.eql('{"data":"data"}');
-                expect(options.timeout).to.equal(3000);
                 done();
             });
         });
@@ -82,7 +80,6 @@ describe('Client HTTP', function () {
                 expect(options.headers['X-Foo']).to.equal('foo');
                 expect(options.method).to.equal('POST');
                 expect(options.body).to.eql('{"data":"data"}');
-                expect(options.timeout).to.equal(3000);
                 done();
             });
         });
@@ -95,7 +92,6 @@ describe('Client HTTP', function () {
                 expect(options.headers['X-Requested-With']).to.equal('XMLHttpRequest');
                 expect(options.headers['X-Foo']).to.equal('foo');
                 expect(options.method).to.equal('DELETE');
-                expect(options.timeout).to.equal(3000);
                 done();
             });
         });
@@ -186,7 +182,6 @@ describe('Client HTTP', function () {
                 expect(options.headers['X-Requested-With']).to.equal('XMLHttpRequest');
                 expect(options.headers['X-Foo']).to.equal('foo');
                 expect(options.method).to.equal('GET');
-                expect(options.timeout).to.equal(3000);
                 expect(err.message).to.equal('BODY');
                 expect(err.statusCode).to.equal(408);
                 expect(err.body).to.equal('BODY');
@@ -214,6 +209,94 @@ describe('Client HTTP', function () {
                 expect(err.body).to.equal('BODY');
                 expect(xhrOptions[0]).to.eql(xhrOptions[1]);
                 done();
+            });
+        });
+    });
+
+    describe('#Timeout', function () {
+        var config;
+
+        beforeEach(function () {
+            mockResponse = {
+                statusCode: 200
+            };
+            mockBody = 'BODY';
+            xhrOptions = [];
+        });
+
+        describe('#No timeout set for individual call', function () {
+            beforeEach(function () {
+                config = {xhrTimeout: 3000};
+            });
+
+            it('should use xhrTimeout for GET', function (done) {
+                http.get('/url', {'X-Foo': 'foo'}, config, function (err, response) {
+                    var options = xhrOptions[0];
+                    expect(options.timeout).to.equal(3000);
+                    done();
+                });
+            });
+
+            it('should use xhrTimeout for PUT', function (done) {
+                http.put('/url', {'X-Foo': 'foo'}, {data: 'data'}, config, function () {
+                    var options = xhrOptions[0];
+                    expect(options.timeout).to.equal(3000);
+                    done();
+                });
+            });
+
+            it('should use xhrTimeout for POST', function (done) {
+                http.post('/url', {'X-Foo': 'foo'}, {data: 'data'}, config, function () {
+                    var options = xhrOptions[0];
+                    expect(options.timeout).to.equal(3000);
+                    done();
+                });
+            });
+
+            it('should use xhrTimeout for DELETE', function (done) {
+                http['delete']('/url', {'X-Foo': 'foo'}, config, function () {
+                    var options = xhrOptions[0];
+                    expect(options.timeout).to.equal(3000);
+                    done();
+                });
+            });
+        });
+
+        describe('#Timeout set for individual call', function () {
+            beforeEach(function () {
+                config = {xhrTimeout: 3000, timeout: 6000};
+            });
+
+            it('should override default xhrTimeout for GET', function (done) {
+                http.get('/url', {'X-Foo': 'foo'}, config, function (err, response) {
+                    var options = xhrOptions[0];
+                    expect(options.timeout).to.equal(6000);
+                    done();
+                });
+            });
+
+            it('should override default xhrTimeout for PUT', function (done) {
+                http.put('/url', {'X-Foo': 'foo'}, {data: 'data'}, config, function () {
+                    var options = xhrOptions[0];
+                    expect(options.timeout).to.equal(6000);
+                    done();
+                });
+            });
+
+            it('should override default xhrTimeout for POST', function (done) {
+                http.post('/url', {'X-Foo': 'foo'}, {data: 'data'}, config, function () {
+                    var options = xhrOptions[0];
+                    expect(options.timeout).to.equal(6000);
+                    done();
+                });
+            });
+
+            it('should override default xhrTimeout for DELETE', function (done) {
+                http['delete']('/url', {'X-Foo': 'foo'}, config, function () {
+                    var options = xhrOptions[0];
+                    expect(options.timeout).to.equal(6000);
+                    done();
+                });
             });
         });
     });

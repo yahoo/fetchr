@@ -40,18 +40,21 @@ app.use(bodyParser.json());
 app.use('/myCustomAPIEndpoint', Fetcher.middleware());
 ```
 
-### 2. API xhrPath
+### 2. API xhrPath and xhrTimeout
 
 `xhrPath` is an optional config property that allows you to customize the endpoint to your services, defaults to `/api`.
 
-On the clientside, the xhrPath will be used for XHR requests. On the serverside, the xhrPath is not needed and is ignored.
+`xhrTimeout` is an optional config property that allows you to set timeout (in ms) for clientside requests, defaults to `3000`.
 
-Note: Even though this config is optional, it is necessary for xhrPath on the clientside fetcher to match the path where the middleware was mounted on in the previous step.
+On the clientside, xhrPath and xhrTimeout will be used for XHR requests. On the serverside, xhrPath and xhrTimeout are not needed and are ignored.
+
+Note: Even though xhrPath is optional, it is necessary for xhrPath on the clientside fetcher to match the path where the middleware was mounted on in the previous step.
 
 ```js
 var Fetcher = require('fetchr');
 var fetcher = new Fetcher({
-    xhrPath: '/myCustomAPIEndpoint'
+    xhrPath: '/myCustomAPIEndpoint',
+    xhrTimeout: 4000
 });
 ```
 
