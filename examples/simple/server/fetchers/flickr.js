@@ -16,7 +16,7 @@ FlickrFetcher = {
                 api_key: flickr_api_key,
                 method: params.method || 'flickr.photos.getRecent',
                 per_page: parseInt(params.per_page, 10) || 10,
-                format: config.format || 'json',
+                format: 'json',
                 nojsoncallback: config.nojsoncallback || 1
             },
             url = flickr_api_root + '?' + querystring.stringify(paramsObj);

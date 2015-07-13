@@ -18,39 +18,60 @@ var expect = chai.expect,
     qs = require('querystring');
 
 describe('Server Fetcher', function () {
-
+    beforeEach(function () {
+        Fetcher.registerService(mockService);
+        Fetcher.registerService(mockErrorService);
+    });
+    afterEach(function () {
+        Fetcher.services = {}; // reset services
+    });
     it('should register valid fetchers', function () {
-        var getFetcher = Fetcher.getFetcher.bind(fetcher);
-        expect(getFetcher).to.throw(Error, 'Fetcher "undefined" could not be found');
-        getFetcher = Fetcher.getFetcher.bind(fetcher, mockService.name);
-        expect(Object.keys(Fetcher.fetchers)).to.have.length(0);
-        expect(getFetcher).to.throw(Error, 'Fetcher "' + mockService.name + '" could not be found');
-        Fetcher.registerFetcher(mockService);
-        expect(Object.keys(Fetcher.fetchers)).to.have.length(1);
-        expect(getFetcher()).to.deep.equal(mockService);
-        Fetcher.registerFetcher(mockErrorService);
-        expect(Object.keys(Fetcher.fetchers)).to.have.length(2);
+        Fetcher.services = {}; // reset services so we can test getService and registerService methods
+        var getService = Fetcher.getService.bind(fetcher);
+        expect(getService).to.throw(Error, 'Service "undefined" could not be found');
+        getService = Fetcher.getService.bind(fetcher, mockService.name);
+        expect(getService).to.throw(Error, 'Service "' + mockService.name + '" could not be found');
+        expect(Object.keys(Fetcher.services)).to.have.length(0);
+        Fetcher.registerService(mockService);
+        expect(Object.keys(Fetcher.services)).to.have.length(1);
+        expect(getService()).to.deep.equal(mockService);
+        Fetcher.registerService(mockErrorService);
+        expect(Object.keys(Fetcher.services)).to.have.length(2);
 
         // valid vs invalid
-        var invalidFetcher = {not_name: 'test_name'};
-        var validFetcher = {name: 'test_name'};
-        var registerInvalidFetcher = Fetcher.registerFetcher.bind(fetcher, undefined);
-        expect(registerInvalidFetcher).to.throw(Error, 'Fetcher is not defined correctly');
-        registerInvalidFetcher = Fetcher.registerFetcher.bind(fetcher, invalidFetcher);
-        expect(registerInvalidFetcher).to.throw(Error, 'Fetcher is not defined correctly');
-        var registerValidFetcher = Fetcher.registerFetcher.bind(fetcher, validFetcher);
-        expect(registerValidFetcher).to.not.throw;
-        delete Fetcher.fetchers[validFetcher.name];
+        var invalidService = {not_name: 'test_name'};
+        var validService = {name: 'test_name'};
+        var registerInvalidService = Fetcher.registerService.bind(fetcher, undefined);
+        expect(registerInvalidService).to.throw(Error, 'Service is not defined correctly');
+        registerInvalidService = Fetcher.registerService.bind(fetcher, invalidService);
+        expect(registerInvalidService).to.throw(Error, 'Service is not defined correctly');
+        var registerValidService = Fetcher.registerService.bind(fetcher, validService);
+        expect(registerValidService).to.not.throw;
     });
 
     it('should get fetchers by resource and sub resource', function () {
-        var getFetcher = Fetcher.getFetcher.bind(fetcher, mockService.name);
-        expect(getFetcher).to.not.throw;
-        expect(getFetcher()).to.deep.equal(mockService);
-        getFetcher = Fetcher.getFetcher.bind(fetcher, mockService.name + '.subResource');
-        expect(getFetcher).to.not.throw;
-        expect(getFetcher()).to.deep.equal(mockService);
+        var getService = Fetcher.getService.bind(fetcher, mockService.name);
+        expect(getService).to.not.throw;
+        expect(getService()).to.deep.equal(mockService);
+        getService = Fetcher.getService.bind(fetcher, mockService.name + '.subResource');
+        expect(getService).to.not.throw;
+        expect(getService()).to.deep.equal(mockService);
     });
+
+    describe('should be backwards compatible', function () {
+        it('#registerFetcher & #getFetcher', function () {
+            Fetcher.services = {}; // reset services so we can test getFetcher and registerFetcher methods
+            var getFetcher = Fetcher.getFetcher.bind(fetcher, mockService.name);
+            expect(getFetcher).to.throw;
+            Fetcher.registerFetcher(mockService);
+            expect(getFetcher).to.not.throw;
+            expect(getFetcher()).to.deep.equal(mockService);
+            getFetcher = Fetcher.getFetcher.bind(fetcher, mockService.name + '.subResource');
+            expect(getFetcher).to.not.throw;
+            expect(getFetcher()).to.deep.equal(mockService);
+        });
+    });
+
 
     describe('#middleware', function () {
         describe('#POST', function() {
@@ -401,7 +422,7 @@ describe('Server Fetcher', function () {
         });
     });
 
-    describe('#CRUD', function () {
+    describe('CRUD Interface', function () {
         var resource = mockService.name,
             params = {},
             body = {},
@@ -417,39 +438,79 @@ describe('Server Fetcher', function () {
                     done();
                 };
             };
-
-        it('should handle CREATE', function (done) {
-            var operation = 'create';
-            fetcher[operation](resource, params, body, config, callback(operation, done));
+        describe('should work superagent style', function () {
+            it('should throw if no resource is given', function () {
+                expect(fetcher.read).to.throw('Resource is required for a fetcher request');
+            });
+            it('should handle CREATE', function (done) {
+                var operation = 'create';
+                fetcher
+                    [operation](resource)
+                    .params(params)
+                    .body(body)
+                    .clientConfig(config)
+                    .end(callback(operation, done));
+            });
+            it('should handle READ', function (done) {
+                var operation = 'read';
+                fetcher
+                    [operation](resource)
+                    .params(params)
+                    .clientConfig(config)
+                    .end(callback(operation, done));
+            });
+            it('should handle UPDATE', function (done) {
+                var operation = 'update';
+                fetcher
+                    [operation](resource)
+                    .params(params)
+                    .body(body)
+                    .clientConfig(config)
+                    .end(callback(operation, done));
+            });
+            it('should handle DELETE', function (done) {
+                var operation = 'delete';
+                fetcher
+                    [operation](resource)
+                    .params(params)
+                    .clientConfig(config)
+                    .end(callback(operation, done));
+            });
         });
-        it('should handle CREATE w/ no config', function (done) {
-            var operation = 'create';
-            fetcher[operation](resource, params, body, callback(operation, done));
-        });
-        it('should handle READ', function (done) {
-            var operation = 'read';
-            fetcher[operation](resource, params, config, callback(operation, done));
-        });
-        it('should handle READ w/ no config', function (done) {
-            var operation = 'read';
-            fetcher[operation](resource, params, callback(operation, done));
-        });
-        it('should handle UPDATE', function (done) {
-            var operation = 'update';
-            fetcher[operation](resource, params, body, config, callback(operation, done));
-        });
-        it('should handle UPDATE w/ no config', function (done) {
-            var operation = 'update';
-            fetcher[operation](resource, params, body, callback(operation, done));
-        });
-        it('should handle DELETE', function (done) {
-            var operation = 'delete';
-            fetcher[operation](resource, params, config, callback(operation, done));
-        });
-        it('should handle DELETE w/ no config', function (done) {
-            var operation = 'delete';
-            fetcher[operation](resource, params, callback(operation, done));
-        });
+        describe('should be backwards compatible', function () {
+            it('should handle CREATE', function (done) {
+                var operation = 'create';
+                fetcher[operation](resource, params, body, config, callback(operation, done));
+            });
+            it('should handle CREATE w/ no config', function (done) {
+                var operation = 'create';
+                fetcher[operation](resource, params, body, callback(operation, done));
+            });
+            it('should handle READ', function (done) {
+                var operation = 'read';
+                fetcher[operation](resource, params, config, callback(operation, done));
+            });
+            it('should handle READ w/ no config', function (done) {
+                var operation = 'read';
+                fetcher[operation](resource, params, callback(operation, done));
+            });
+            it('should handle UPDATE', function (done) {
+                var operation = 'update';
+                fetcher[operation](resource, params, body, config, callback(operation, done));
+            });
+            it('should handle UPDATE w/ no config', function (done) {
+                var operation = 'update';
+                fetcher[operation](resource, params, body, callback(operation, done));
+            });
+            it('should handle DELETE', function (done) {
+                var operation = 'delete';
+                fetcher[operation](resource, params, config, callback(operation, done));
+            });
+            it('should handle DELETE w/ no config', function (done) {
+                var operation = 'delete';
+                fetcher[operation](resource, params, callback(operation, done));
+            });
+        })
     });
 
 });
