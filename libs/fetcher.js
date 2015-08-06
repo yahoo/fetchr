@@ -11,6 +11,7 @@ var qs = require('querystring');
 var debug = require('debug')('Fetchr');
 var fumble = require('fumble');
 var objectAssign = require('object-assign');
+var Promise = global.Promise || require('es6-promise').Promise;
 
 function parseValue(value) {
     // take care of value of type: array, object
@@ -121,6 +122,7 @@ Request.prototype.clientConfig = function (config) {
     this._clientConfig = config;
     return this;
 };
+
 /**
  * Execute this fetcher request and call callback.
  * @method end
@@ -128,15 +130,48 @@ Request.prototype.clientConfig = function (config) {
  * @param {Fetcher~fetcherCallback} callback callback invoked when service is complete.
  */
 Request.prototype.end = function (callback) {
-    var args = [this.req, this.resource, this._params, this._clientConfig, callback];
-    var op = this.operation;
+    var self = this;
+    var promise = new Promise(function (resolve, reject) {
+        setImmediate(executeRequest, self, resolve, reject);
+    });
+
+    if (callback) {
+        promise.then(function (result) {
+            setImmediate(callback, null, result.data, result.meta);
+        }, function (err) {
+            setImmediate(callback, err);
+        });
+    } else {
+        return promise;
+    }
+};
+
+/**
+ * Execute and resolve/reject this fetcher request
+ * @method executeRequest
+ * @param {Object} request Request instance object
+ * @param {Function} resolve function to call when request fulfilled
+ * @param {Function} reject function to call when request rejected
+ */
+function executeRequest (request, resolve, reject) {
+    var args = [request.req, request.resource, request._params, request._clientConfig, function executeRequestCallback(err, data, meta) {
+        if (err) {
+            reject(err);
+        } else {
+            resolve({
+                data: data,
+                meta: meta
+            });
+        }
+    }];
+    var op = request.operation;
     if ((op === OP_CREATE) || (op === OP_UPDATE)) {
-        args.splice(3, 0, this._body);
+        args.splice(3, 0, request._body);
     }
 
-    var service = Fetcher.getService(this.resource);
+    var service = Fetcher.getService(request.resource);
     service[op].apply(service, args);
-};
+}
 
 /**
  * Fetcher class for the server.
