@@ -344,4 +344,25 @@ describe('Client Fetcher', function () {
             testCrud(it, resource, params, body, config, callback);
         });
     });
+
+    describe('Utils', function () {
+        it('should able to update options', function () {
+            fetcher = new Fetcher({
+                context: {
+                    _csrf: 'stuff'
+                },
+                xhrTimeout: 1000
+            });
+            fetcher.updateOptions({
+                context: {
+                    lang : 'en-US',
+                },
+                xhrTimeout: 1500
+            })
+            expect(fetcher.options.xhrTimeout).to.equal(1500);
+            // new context should be merged
+            expect(fetcher.options.context._csrf).to.equal('stuff'); 
+            expect(fetcher.options.context.lang).to.equal('en-US'); 
+        });
+    });
 });

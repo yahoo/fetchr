@@ -64,3 +64,7 @@ Call the update method of a service.
 ### delete(resource, params, config, callback)
 
 Call the delete method of a service.
+
+### updateOptions(options)
+
+Update the options of the fetchr instance.
