@@ -57,6 +57,11 @@ describe('Server Fetcher', function () {
         expect(getService).to.not.throw;
         expect(getService()).to.deep.equal(mockService);
     });
+    
+    it('should be able to update options for the fetchr instance', function () {
+        fetcher.updateOptions({req: {foo: 'bar'}});
+        expect(fetcher.options.req.foo).to.equal('bar');
+    });
 
     describe('should be backwards compatible', function () {
         it('#registerFetcher & #getFetcher', function () {

@@ -10,6 +10,7 @@ var GET = 'GET';
 var qs = require('querystring');
 var debug = require('debug')('Fetchr');
 var fumble = require('fumble');
+var objectAssign = require('object-assign');
 
 function parseValue(value) {
     // take care of value of type: array, object
@@ -415,6 +416,19 @@ Fetcher.prototype['delete'] = function (resource, params, config, callback) {
         .params(params)
         .clientConfig(config)
         .end(callback)
+};
+
+/**
+ * update fetchr options
+ * @method updateOptions
+ * @memberof Fetcher.prototype
+ * @param {Object} options configuration options for Fetcher
+ * @param {Object} [options.req] The request object.  It can contain per-request/context data.
+ * @param {string} [options.xhrPath="/api"] The path for XHR requests. Will be ignored server side.
+ */
+Fetcher.prototype.updateOptions = function (options) {
+    this.options = objectAssign(this.options, options);
+    this.req = this.options.req || {};
 };
 
 module.exports = Fetcher;

@@ -326,6 +326,14 @@ Fetcher.prototype = {
             .params(params)
             .clientConfig(clientConfig)
             .end(callback)
+    },
+
+    /**
+     * Update options
+     * @method updateOptions
+     */
+    updateOptions: function (options) {
+        this.options = lodash.merge(this.options, options);
     }
 };
 
