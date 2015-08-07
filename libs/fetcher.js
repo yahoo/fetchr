@@ -3,9 +3,6 @@
  * Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
  */
 
-/**
- * list of registered fetchers
- */
 var OP_READ = 'read';
 var OP_CREATE = 'create';
 var OP_UPDATE = 'update';
@@ -30,308 +27,397 @@ function parseParamValues (params) {
     }, {});
 }
 
-/*
- * @module createFetcherClass
- * @param {object} options
+
+/**
+ * A Request instance represents a single fetcher request.
+ * The constructor requires `operation` (CRUD) and `resource`.
+ * @class Request
+ * @param {String} operation The CRUD operation name: 'create|read|update|delete'.
+ * @param {String} resource name of service
+ * @param {Object} options configuration options for Request
+ * @param {Object} [options.req] The request object from express/connect.  It can contain per-request/context data.
+ * @constructor
  */
-
-
-    /**
-     * @class Fetcher
-     * @param {Object} options configuration options for Fetcher
-     * @param {Object} [options.req] The request object.  It can contain per-request/context data.
-     * @param {string} [options.xhrPath="/api"] The path for XHR requests. Will be ignored server side.
-     * @constructor
-     */
-    function Fetcher(options) {
-        this.options = options || {};
-        this.req = this.options.req || {};
+function Request (operation, resource, options) {
+    if (!resource) {
+        throw new Error('Resource is required for a fetcher request');
     }
 
-    Fetcher.fetchers = {};
+    this.operation = operation || OP_READ;
+    this.resource = resource;
+    options = options || {};
+    this.req = options.req || {};
+    this._params = {};
+    this._body = null;
+    this._clientConfig = {};
+}
 
-    /**
-     * @method registerFetcher
-     * @memberof Fetcher
-     * @param {Function} fetcher
-     */
-    Fetcher.registerFetcher = function (fetcher) {
-        if (!fetcher || !fetcher.name) {
-            throw new Error('Fetcher is not defined correctly');
-        }
-        Fetcher.fetchers[fetcher.name] = fetcher;
-        debug('fetcher ' + fetcher.name + ' added');
-        return;
-    };
+/**
+ * Add params to this fetcher request
+ * @method params
+ * @memberof Request
+ * @param {Object} params Information carried in query and matrix parameters in typical REST API
+ * @chainable
+ */
+Request.prototype.params = function (params) {
+    this._params = params;
+    return this;
+};
+/**
+ * Add body to this fetcher request
+ * @method body
+ * @memberof Request
+ * @param {Object} body The JSON object that contains the resource data being updated for this request. 
+ *                      Not used for read and delete operations.
+ * @chainable
+ */
+Request.prototype.body = function (body) {
+    this._body = body;
+    return this;
+};
+/**
+ * Add clientConfig to this fetcher request
+ * @method config
+ * @memberof Request
+ * @param {Object} config config for this fetcher request
+ * @chainable
+ */
+Request.prototype.clientConfig = function (config) {
+    this._clientConfig = config;
+    return this;
+};
+/**
+ * Execute this fetcher request and call callback.
+ * @method end
+ * @memberof Request
+ * @param {Fetcher~fetcherCallback} callback callback invoked when service is complete.
+ */
+Request.prototype.end = function (callback) {
+    var args = [this.req, this.resource, this._params, this._clientConfig, callback];
+    var op = this.operation;
+    if ((op === OP_CREATE) || (op === OP_UPDATE)) {
+        args.splice(3, 0, this._body);
+    }
 
-    /**
-     * @method getFetcher
-     * @memberof Fetcher
-     * @param {String} name of fetcher/service
-     * @returns {Function} fetcher
-     */
-    Fetcher.getFetcher = function (name) {
-        //Access fetcher by name
-        var fetcher = Fetcher.isRegistered(name);
-        if (!fetcher) {
-            throw new Error('Fetcher "' + name + '" could not be found');
-        }
-        return fetcher;
-    };
+    var service = Fetcher.getService(this.resource);
+    service[op].apply(service, args);
+};
 
-    /**
-     * @method isRegistered
-     * @memberof Fetcher
-     * @param {String} name of fetcher/service
-     * @returns {Boolean} true if fetcher with name was registered
-     */
-    Fetcher.isRegistered = function (name) {
-        return name && Fetcher.fetchers[name.split('.')[0]];
-    };
+/**
+ * Fetcher class for the server.
+ * Provides interface to register data services and
+ * to later access those services.
+ * @class Fetcher
+ * @param {Object} options configuration options for Fetcher
+ * @param {Object} [options.req] The express request object.  It can contain per-request/context data.
+ * @param {string} [options.xhrPath="/api"] The path for XHR requests. Will be ignored server side.
+ * @constructor
+ */
+function Fetcher (options) {
+    this.options = options || {};
+    this.req = this.options.req || {};
+}
 
-    /**
-     * @method middleware
-     * @memberof Fetcher
-     * @returns {Function} middleware
-     *     @param {Object} req
-     *     @param {Object} res
-     *     @param {Object} next
-     */
-    Fetcher.middleware = function () {
-        return function (req, res, next) {
-            var request;
-            var error;
+Fetcher.services = {};
 
-            if (req.method === GET) {
-                var path = req.path.substr(1).split(';');
-                var resource = path.shift();
+/**
+ * DEPRECATED
+ * Register a data fetcher
+ * @method registerFetcher
+ * @memberof Fetcher
+ * @param {Function} fetcher
+ */
+Fetcher.registerFetcher = function (fetcher) {
+    // TODO: Uncomment warnings in next minor release
+    // if ('production' !== process.env.NODE_ENV) {
+    //     console.warn('Fetcher.registerFetcher is deprecated. ' +
+    //         'Please use Fetcher.registerService instead.');
+    // }
+    return Fetcher.registerService(fetcher);
+};
 
-                if (!Fetcher.isRegistered(resource)) {
-                    error = fumble.http.badRequest('Invalid Fetchr Access', {
-                        debug: 'Bad resource ' + resource
-                    });
-                    error.source = 'fetchr';
-                    return next(error);
-                }
+/**
+ * Register a data service
+ * @method registerService
+ * @memberof Fetcher
+ * @param {Function} service
+ */
+Fetcher.registerService = function (fetcher) {
+    if (!fetcher || !fetcher.name) {
+        throw new Error('Service is not defined correctly');
+    }
+    Fetcher.services[fetcher.name] = fetcher;
+    debug('fetcher ' + fetcher.name + ' added');
+    return;
+};
 
-                request = {
-                    req: req,
-                    resource: resource,
-                    operation: OP_READ,
-                    params: parseParamValues(qs.parse(path.join('&'))),
-                    config: {},
-                    callback: function (err, data, meta) {
-                        meta = meta || {};
-                        if (meta.headers) {
-                            res.set(meta.headers);
-                        }
-                        if (err) {
-                            res.status(err.statusCode || 400).json({
-                                message: err.message || 'request failed'
-                            });
-                            return;
-                        }
-                        res.status(meta.statusCode || 200).json(data);
+/**
+ * DEPRECATED
+ * Retrieve a data fetcher by name
+ * @method getFetcher
+ * @memberof Fetcher
+ * @param {String} name of fetcher
+ * @returns {Function} fetcher
+ */
+Fetcher.getFetcher = function (name) {
+    // TODO: Uncomment warnings in next minor release
+    // if ('production' !== process.env.NODE_ENV) {
+    //     console.warn('Fetcher.getFetcher is deprecated. ' +
+    //         'Please use Fetcher.getService instead.');
+    // }
+    return Fetcher.getService(name);
+};
+
+/**
+ * Retrieve a data service by name
+ * @method getService
+ * @memberof Fetcher
+ * @param {String} name of service
+ * @returns {Function} service
+ */
+Fetcher.getService = function (name) {
+    //Access service by name
+    var service = Fetcher.isRegistered(name);
+    if (!service) {
+        throw new Error('Service "' + name + '" could not be found');
+    }
+    return service;
+};
+
+/**
+ * Returns true if service with name has been registered
+ * @method isRegistered
+ * @memberof Fetcher
+ * @param {String} name of service
+ * @returns {Boolean} true if service with name was registered
+ */
+Fetcher.isRegistered = function (name) {
+    return name && Fetcher.services[name.split('.')[0]];
+};
+
+/**
+ * Returns express/connect middleware for Fetcher
+ * @method middleware
+ * @memberof Fetcher
+ * @returns {Function} middleware
+ *     @param {Object} req
+ *     @param {Object} res
+ *     @param {Object} next
+ */
+Fetcher.middleware = function () {
+    return function (req, res, next) {
+        var request;
+        var error;
+
+        if (req.method === GET) {
+            var path = req.path.substr(1).split(';');
+            var resource = path.shift();
+
+            if (!Fetcher.isRegistered(resource)) {
+                error = fumble.http.badRequest('Invalid Fetchr Access', {
+                    debug: 'Bad resource ' + resource
+                });
+                error.source = 'fetchr';
+                return next(error);
+            }
+            request = new Request(OP_READ, resource, {req: req});
+            request
+                .params(parseParamValues(qs.parse(path.join('&'))))
+                .end(function (err, data, meta) {
+                    meta = meta || {};
+                    if (meta.headers) {
+                        res.set(meta.headers);
                     }
-                };
-            } else {
-                var requests = req.body && req.body.requests;
-
-                if (!requests || Object.keys(requests).length === 0) {
-                    error = fumble.http.badRequest('Invalid Fetchr Access', {
-                        debug: 'No resources'
-                    });
-                    error.source = 'fetchr';
-                    return next(error);
-                }
-
-                var DEFAULT_GUID = 'g0';
-                var singleRequest = requests[DEFAULT_GUID];
-
-                if (!Fetcher.isRegistered(singleRequest.resource)) {
-                    error = fumble.http.badRequest('Invalid Fetchr Access', {
-                        debug: 'Bad resource ' + singleRequest.resource
-                    });
-                    error.source = 'fetchr';
-                    return next(error);
-                }
-
-                request = {
-                    req: req,
-                    resource: singleRequest.resource,
-                    operation: singleRequest.operation,
-                    params: singleRequest.params,
-                    body: singleRequest.body || {},
-                    config: {},
-                    callback: function(err, data, meta) {
-                        meta = meta || {};
-                        if (meta.headers) {
-                            res.set(meta.headers);
-                        }
-                        if(err) {
-                            res.status(err.statusCode || 400).json({
-                                message: err.message || 'request failed'
-                            });
-                            return;
-                        }
-                        var responseObj = {};
-                        responseObj[DEFAULT_GUID] = {data: data};
-                        res.status(meta.statusCode || 200).json(responseObj);
+                    if (err) {
+                        res.status(err.statusCode || 400).json({
+                            message: err.message || 'request failed'
+                        });
+                        return;
                     }
-                };
+                    res.status(meta.statusCode || 200).json(data);
+                });
+        } else {
+            var requests = req.body && req.body.requests;
+
+            if (!requests || Object.keys(requests).length === 0) {
+                error = fumble.http.badRequest('Invalid Fetchr Access', {
+                    debug: 'No resources'
+                });
+                error.source = 'fetchr';
+                return next(error);
             }
 
-            Fetcher.single(request);
-            // TODO: Batching and multi requests
-        };
-    };
+            var DEFAULT_GUID = 'g0';
+            var singleRequest = requests[DEFAULT_GUID];
 
+            if (!Fetcher.isRegistered(singleRequest.resource)) {
+                error = fumble.http.badRequest('Invalid Fetchr Access', {
+                    debug: 'Bad resource ' + singleRequest.resource
+                });
+                error.source = 'fetchr';
+                return next(error);
+            }
 
-    // ------------------------------------------------------------------
-    // Data Access Wrapper Methods
-    // ------------------------------------------------------------------
-
-    /**
-     * Execute a single request.
-     * @method single
-     * @memberof Fetcher
-     * @param {Object} request
-     * @param {String} request.req       The req object from express/connect
-     * @param {String} request.resource  The resource name
-     * @param {String} request.operation The CRUD operation name: 'create|read|update|delete'.
-     * @param {Object} request.params    The parameters identify the resource, and along with information
-     *                                   carried in query and matrix parameters in typical REST API
-     * @param {Object} request.body      The JSON object that contains the resource data that is being updated. Not used
-     *                                   for read and delete operations.
-     * @param {Object} request.config    The config object.  It can contain "config" for per-request config data.
-     * @param {Fetcher~fetcherCallback} request.callback callback invoked when fetcher is complete.
-     * @protected
-     * @static
-     */
-    Fetcher.single = function (request) {
-        var fetcher = Fetcher.getFetcher(request.resource),
-            op = request.operation,
-            req = request.req,
-            resource = request.resource,
-            params = request.params,
-            body = request.body,
-            config = request.config,
-            callback = request.callback,
-            args;
-
-        if (typeof config === 'function') {
-            callback = config;
-            config = {};
+            request = new Request(singleRequest.operation, singleRequest.resource, {req: req});
+            request
+                .params(singleRequest.params)
+                .body(singleRequest.body || {})
+                .end(function(err, data, meta) {
+                    meta = meta || {};
+                    if (meta.headers) {
+                        res.set(meta.headers);
+                    }
+                    if(err) {
+                        res.status(err.statusCode || 400).json({
+                            message: err.message || 'request failed'
+                        });
+                        return;
+                    }
+                    var responseObj = {};
+                    responseObj[DEFAULT_GUID] = {data: data};
+                    res.status(meta.statusCode || 200).json(responseObj);
+                });
         }
-
-        args = [req, resource, params, config, callback];
-
-        if ((op === OP_CREATE) || (op === OP_UPDATE)) {
-            args.splice(3, 0, body);
-        }
-
-        fetcher[op].apply(fetcher, args);
+        // TODO: Batching and multi requests
     };
+};
 
 
-    // ------------------------------------------------------------------
-    // CRUD Methods
-    // ------------------------------------------------------------------
+// ------------------------------------------------------------------
+// CRUD Data Access Wrapper Methods
+// ------------------------------------------------------------------
 
-    /**
-     * read operation (read as in CRUD).
-     * @method read
-     * @memberof Fetcher.prototype
-     * @param {String} resource  The resource name
-     * @param {Object} params    The parameters identify the resource, and along with information
-     *                           carried in query and matrix parameters in typical REST API
-     * @param {Object} [config={}] The config object.  It can contain "config" for per-request config data.
-     * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
-     * @static
-     */
-    Fetcher.prototype.read = function (resource, params, config, callback) {
-        var request = {
-            req: this.req,
-            resource: resource,
-            operation: 'read',
-            params: params,
-            config: config,
-            callback: callback
-        };
-        Fetcher.single(request);
-    };
-    /**
-     * create operation (create as in CRUD).
-     * @method create
-     * @memberof Fetcher.prototype
-     * @param {String} resource  The resource name
-     * @param {Object} params    The parameters identify the resource, and along with information
-     *                           carried in query and matrix parameters in typical REST API
-     * @param {Object} body      The JSON object that contains the resource data that is being created
-     * @param {Object} [config={}] The config object.  It can contain "config" for per-request config data.
-     * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
-     * @static
-     */
-    Fetcher.prototype.create = function (resource, params, body, config, callback) {
-        var request = {
-            req: this.req,
-            resource: resource,
-            operation: 'create',
-            params: params,
-            body: body,
-            config: config,
-            callback: callback
-        };
-        Fetcher.single(request);
-    };
-    /**
-     * update operation (update as in CRUD).
-     * @method update
-     * @memberof Fetcher.prototype
-     * @param {String} resource  The resource name
-     * @param {Object} params    The parameters identify the resource, and along with information
-     *                           carried in query and matrix parameters in typical REST API
-     * @param {Object} body      The JSON object that contains the resource data that is being updated
-     * @param {Object} [config={}] The config object.  It can contain "config" for per-request config data.
-     * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
-     * @static
-     */
-    Fetcher.prototype.update = function (resource, params, body, config, callback) {
-        var request = {
-            req: this.req,
-            resource: resource,
-            operation: 'update',
-            params: params,
-            body: body,
-            config: config,
-            callback: callback
-        };
-        Fetcher.single(request);
-    };
-    /**
-     * delete operation (delete as in CRUD).
-     * @method delete
-     * @memberof Fetcher.prototype
-     * @param {String} resource  The resource name
-     * @param {Object} params    The parameters identify the resource, and along with information
-     *                           carried in query and matrix parameters in typical REST API
-     * @param {Object} [config={}] The config object.  It can contain "config" for per-request config data.
-     * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
-     * @static
-     */
-    Fetcher.prototype['delete'] = function (resource, params, config, callback) {
-        var request = {
-            req: this.req,
-            resource: resource,
-            operation: 'delete',
-            params: params,
-            config: config,
-            callback: callback
-        };
-        Fetcher.single(request);
-    };
+/**
+ * read operation (read as in CRUD).
+ * @method read
+ * @memberof Fetcher.prototype
+ * @param {String} resource  The resource name
+ * @param {Object} params    The parameters identify the resource, and along with information
+ *                           carried in query and matrix parameters in typical REST API
+ * @param {Object} [config={}] The config object.  It can contain "config" for per-request config data.
+ * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
+ * @static
+ */
+Fetcher.prototype.read = function (resource, params, config, callback) {
+    var request = new Request('read', resource, {req: this.req});
+    if (1 === arguments.length) {
+        return request;
+    }
+    // TODO: Uncomment warnings in next minor release
+    // if ('production' !== process.env.NODE_ENV) {
+    //     console.warn('The recommended way to use fetcher\'s .read method is \n' +
+    //         '.read(\'' + resource + '\').params({foo:bar}).end(callback);');
+    // }
+    // TODO: Remove below this line in release after next
+    if (typeof config === 'function') {
+        callback = config;
+        config = {};
+    }
+    request
+        .params(params)
+        .clientConfig(config)
+        .end(callback)
+};
+/**
+ * create operation (create as in CRUD).
+ * @method create
+ * @memberof Fetcher.prototype
+ * @param {String} resource  The resource name
+ * @param {Object} params    The parameters identify the resource, and along with information
+ *                           carried in query and matrix parameters in typical REST API
+ * @param {Object} body      The JSON object that contains the resource data that is being created
+ * @param {Object} [config={}] The config object.  It can contain "config" for per-request config data.
+ * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
+ * @static
+ */
+Fetcher.prototype.create = function (resource, params, body, config, callback) {
+    var request = new Request('create', resource, {req: this.req});
+    if (1 === arguments.length) {
+        return request;
+    }
+    // TODO: Uncomment warnings in next minor release
+    // if ('production' !== process.env.NODE_ENV) {
+    //     console.warn('The recommended way to use fetcher\'s .create method is \n' +
+    //         '.create(\'' + resource + '\').params({foo:bar}).body({}).end(callback);');
+    // }
+    // TODO: Remove below this line in release after next
+    if (typeof config === 'function') {
+        callback = config;
+        config = {};
+    }
+    request
+        .params(params)
+        .body(body)
+        .clientConfig(config)
+        .end(callback)
+};
+/**
+ * update operation (update as in CRUD).
+ * @method update
+ * @memberof Fetcher.prototype
+ * @param {String} resource  The resource name
+ * @param {Object} params    The parameters identify the resource, and along with information
+ *                           carried in query and matrix parameters in typical REST API
+ * @param {Object} body      The JSON object that contains the resource data that is being updated
+ * @param {Object} [config={}] The config object.  It can contain "config" for per-request config data.
+ * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
+ * @static
+ */
+Fetcher.prototype.update = function (resource, params, body, config, callback) {
+    var request = new Request('update', resource, {req: this.req});
+    if (1 === arguments.length) {
+        return request;
+    }
+    // TODO: Uncomment warnings in next minor release
+    // if ('production' !== process.env.NODE_ENV) {
+    //     console.warn('The recommended way to use fetcher\'s .update method is \n' +
+    //         '.update(\'' + resource + '\').params({foo:bar}).body({}).end(callback);');
+    // }
+    // TODO: Remove below this line in release after next
+    if (typeof config === 'function') {
+        callback = config;
+        config = {};
+    }
+    request
+        .params(params)
+        .body(body)
+        .clientConfig(config)
+        .end(callback)
+};
+/**
+ * delete operation (delete as in CRUD).
+ * @method delete
+ * @memberof Fetcher.prototype
+ * @param {String} resource  The resource name
+ * @param {Object} params    The parameters identify the resource, and along with information
+ *                           carried in query and matrix parameters in typical REST API
+ * @param {Object} [config={}] The config object.  It can contain "config" for per-request config data.
+ * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
+ * @static
+ */
+Fetcher.prototype['delete'] = function (resource, params, config, callback) {
+    var request = new Request('delete', resource, {req: this.req});
+    if (1 === arguments.length) {
+        return request;
+    }
 
-    module.exports = Fetcher;
+    // TODO: Uncomment warnings in next minor release
+    // if ('production' !== process.env.NODE_ENV) {
+    //     console.warn('The recommended way to use fetcher\'s .read method is \n' +
+    //         '.read(\'' + resource + '\').params({foo:bar}).end(callback);');
+    // }
+    // TODO: Remove below this line in release after next
+    if (typeof config === 'function') {
+        callback = config;
+        config = {};
+    }
+    request
+        .params(params)
+        .clientConfig(config)
+        .end(callback)
+};
+
+module.exports = Fetcher;
 
 /**
  * @callback Fetcher~fetcherCallback

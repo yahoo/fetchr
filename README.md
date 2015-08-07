@@ -22,7 +22,7 @@ npm install fetchr --save
 
 Follow the steps below to setup Fetchr properly. This assumes you are using the [Express](https://www.npmjs.com/package/express) framework.
 
-### 1. Middleware
+### 1. Configure Server
 
 On the server side, add the Fetchr middleware into your express app at a custom API endpoint.
 
@@ -40,41 +40,38 @@ app.use(bodyParser.json());
 app.use('/myCustomAPIEndpoint', Fetcher.middleware());
 ```
 
-### 2. API xhrPath and xhrTimeout
+### 2. Configure Client
+
+On the client side, it is necessary for the `xhrPath` option to match the path where the middleware was mounted in the previous step
 
 `xhrPath` is an optional config property that allows you to customize the endpoint to your services, defaults to `/api`.
-
-`xhrTimeout` is an optional config property that allows you to set timeout (in ms) for clientside requests, defaults to `3000`.
-
-On the clientside, xhrPath and xhrTimeout will be used for XHR requests. On the serverside, xhrPath and xhrTimeout are not needed and are ignored.
-
-Note: Even though xhrPath is optional, it is necessary for xhrPath on the clientside fetcher to match the path where the middleware was mounted on in the previous step.
 
 ```js
 var Fetcher = require('fetchr');
 var fetcher = new Fetcher({
-    xhrPath: '/myCustomAPIEndpoint',
-    xhrTimeout: 4000
+    xhrPath: '/myCustomAPIEndpoint'
 });
 ```
 
-### 3. Register data fetchers
+### 3. Register data services
 
-You will need to register any data fetchers that you wish to use in your application. The interface for your fetcher will be an object that must define a `name` property and at least one [CRUD](https://en.wikipedia.org/wiki/Create,_read,_update_and_delete) operation. The `name` propety will be used when you call one of the CRUD operations.
+You will need to register any data services that you wish to use in your application.
+The interface for your service will be an object that must define a `name` property and at least one [CRUD](https://en.wikipedia.org/wiki/Create,_read,_update_and_delete) operation.
+The `name` propety will be used when you call one of the CRUD operations.
 
 ```js
 // app.js
 var Fetcher = require('fetchr');
-var myDataFetcher = require('./dataFetcher');
-Fetcher.registerFetcher(myDataFetcher);
+var myDataService = require('./dataService');
+Fetcher.registerService(myDataFetcher);
 ```
 
 ```js
-// dataFetcher.js
+// dataService.js
 module.exports = {
     // name is required
-    name: 'data_api_fetcher',
-    // at least one of the CRUD methods is Required
+    name: 'data_service',
+    // at least one of the CRUD methods is required
     read: function(req, resource, params, config, callback) {
       //...
     },
@@ -87,9 +84,11 @@ module.exports = {
 
 ### 4. Instantiating the Fetchr Class
 
-Data fetchers might need access to each individual request, for example, to get the current logged in user's session. For this reason, Fetcher will have to be instantiated once per request.
+Data services might need access to each individual request, for example, to get the current logged in user's session.
+For this reason, Fetcher will have to be instantiated once per request.
 
-On the serverside, this requires fetcher to be instantiated per request, in express middleware. On the clientside, this only needs to happen on page load.
+On the serverside, this requires fetcher to be instantiated per request, in express middleware.
+On the clientside, this only needs to happen on page load.
 
 
 ```js
@@ -97,10 +96,10 @@ On the serverside, this requires fetcher to be instantiated per request, in expr
 var express = require('express');
 var Fetcher = require('fetchr');
 var app = express();
-var myDataFetcher = require('./dataFetcher');
+var myDataService = require('./dataService');
 
-// register the fetcher
-Fetcher.registerFetcher(myDataFetcher);
+// register the service
+Fetcher.registerService(myDataService);
 
 // register the middleware
 app.use('/myCustomAPIEndpoint', Fetcher.middleware());
@@ -113,9 +112,12 @@ app.use(function(req, res, next) {
     });
 
     // perform read call to get data
-    fetcher.read('data_api_fetcher', {id: ###}, {}, function (err, data, meta) {
+    fetcher
+        .read('data_service')
+        .params({id: ###})
+        .end(function (err, data, meta) {
         // handle err and/or data returned from data fetcher in this callback
-    })
+        });
 });
 ```
 
@@ -126,18 +128,47 @@ var Fetcher = require('fetchr');
 var fetcher = new Fetcher({
     xhrPath: '/myCustomAPIEndpoint' // xhrPath is REQUIRED on the clientside fetcher instantiation
 });
-fetcher.read('data_api_fetcher', {id: ###}, {}, function (err, data, meta) {
+fetcher
+    .read('data_api_fetcher')
+    .params({id: ###})
+    .end(function (err, data, meta) {
     // handle err and/or data returned from data fetcher in this callback
-})
+    });
 ```
 
 ## Usage Examples
 
 See the [simple example](https://github.com/yahoo/fetchr/tree/master/examples/simple).
 
+## XHR Timeouts
+
+`xhrTimeout` is an optional config property that allows you to set timeout (in ms) for all clientside requests, defaults to `3000`.
+On the clientside, xhrPath and xhrTimeout will be used for XHR requests.
+On the serverside, xhrPath and xhrTimeout are not needed and are ignored.
+
+```js
+var Fetcher = require('fetchr');
+var fetcher = new Fetcher({
+    xhrPath: '/myCustomAPIEndpoint',
+    xhrTimeout: 4000
+});
+```
+
+If you have an individual request that you need to ensure has a specific timeout you can do that via the `timeout` option in `clientConfig`:
+
+```js
+fetcher
+    .read('someData')
+    .params({id: ###})
+    .clientConfig({timeout: 5000}) // wait 5 seconds for this request before timing it out
+    .end(function (err, data, meta) {
+    // handle err and/or data returned from data fetcher in this callback
+    });
+```
+
 ## CORS Support
 
-Fetchr provides [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS) support by allowing you to pass the full origin host into `corsPath`.
+Fetchr provides [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS) support by allowing you to pass the full origin host into `corsPath` option.
 
 For example:
 
@@ -147,9 +178,11 @@ var fetcher = new Fetcher({
 	corsPath: 'http://www.foo.com',
 	xhrPath: '/fooProxy'
 });
-fetcher.read('service', { foo: 1 }, {
-    cors: true
-}, callbackFn);
+fetcher
+    .read('service')
+    .params({ foo: 1 })
+    .clientConfig({ cors: true })
+    .end(callbackFn);
 ```
 
 Additionally, you can also customize how the GET URL is constructed by passing in the `constructGetUri` property when you execute your `read` call:
@@ -169,10 +202,14 @@ var fetcher = new Fetcher({
 	corsPath: 'http://www.foo.com',
 	xhrPath: '/fooProxy'
 });
-fetcher.read('service', { foo: 1 }, {
-    cors: true,
-    constructGetUri: customConstructGetUri
-}, callbackFn);
+fetcher
+    .read('service')
+    .params({ foo: 1 })
+    .clientConfig({
+        cors: true,
+        constructGetUri: customConstructGetUri
+    })
+    .end(callbackFn);
 ```
 
 
@@ -201,22 +238,20 @@ This `_csrf` will be sent in all XHR requests as a query parameter so that it ca
 
 When calling a Fetcher service you can pass an optional config object.
 
-When this call is made from the client the config object is used to define XHR request options and can be used to override default options:
+When this call is made from the client, the config object is used to define XHR request options and can be used to override default options:
 
 ```js
 //app.js - client
 var config = {
     timeout: 6000, // Timeout (in ms) for each request
-    retry: {
-        interval: 100, // The start interval unit (in ms)
-        max_retries: 2 // Number of max retries
-    },
     unsafeAllowRetry: false // for POST requests, whether to allow retrying this post
 };
 
-fetcher.read('data_api_fetcher', {id: ###}, config, function (err, data, meta) {
-    //handle err and/or data returned from data fetcher in this callback
-});
+fetcher
+    .read('service')
+    .params({ id: 1 })
+    .clientConfig(config)
+    .end(callbackFn);
 ```
 
 For requests from the server, the config object is simply passed into the service being called.
