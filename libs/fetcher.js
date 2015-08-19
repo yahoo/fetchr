@@ -28,6 +28,31 @@ function parseParamValues (params) {
     }, {});
 }
 
+/**
+ * Takes an error and resolves output and statusCode to respond to client with
+ *
+ * @param  {Error} JavaScript error
+ * @return {Object} object with resolved statusCode & output
+ */
+function getErrorResponse(err) {
+    var statusCode = err.statusCode || 400;
+    var output = {
+        message: 'request failed'
+    };
+
+    if (typeof err.output !== 'undefined') {
+        output = err.output;
+    } else if (err.message) {
+        output.message = err.message;
+    }
+
+
+    return {
+        statusCode: statusCode,
+        output: output
+    };
+}
+
 
 /**
  * A Request instance represents a single fetcher request.
@@ -68,7 +93,7 @@ Request.prototype.params = function (params) {
  * Add body to this fetcher request
  * @method body
  * @memberof Request
- * @param {Object} body The JSON object that contains the resource data being updated for this request. 
+ * @param {Object} body The JSON object that contains the resource data being updated for this request.
  *                      Not used for read and delete operations.
  * @chainable
  */
@@ -230,9 +255,8 @@ Fetcher.middleware = function () {
                         res.set(meta.headers);
                     }
                     if (err) {
-                        res.status(err.statusCode || 400).json({
-                            message: err.message || 'request failed'
-                        });
+                        var errResponse = getErrorResponse(err);
+                        res.status(errResponse.statusCode).json(errResponse.output);
                         return;
                     }
                     res.status(meta.statusCode || 200).json(data);
@@ -269,9 +293,8 @@ Fetcher.middleware = function () {
                         res.set(meta.headers);
                     }
                     if(err) {
-                        res.status(err.statusCode || 400).json({
-                            message: err.message || 'request failed'
-                        });
+                        var errResponse = getErrorResponse(err);
+                        res.status(errResponse.statusCode).json(errResponse.output);
                         return;
                     }
                     var responseObj = {};
