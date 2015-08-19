@@ -57,7 +57,7 @@ describe('Server Fetcher', function () {
         expect(getService).to.not.throw;
         expect(getService()).to.deep.equal(mockService);
     });
-    
+
     it('should be able to update options for the fetchr instance', function () {
         fetcher.updateOptions({req: {foo: 'bar'}});
         expect(fetcher.options.req.foo).to.equal('bar');
@@ -251,7 +251,23 @@ describe('Server Fetcher', function () {
 
             it('should respond to POST api request with custom error message',
                makePostApiErrorTest({message: 'Error message...'}, 400, {message: 'Error message...'}));
+
+            it('should respond to POST api request with no leaked error information',
+               makePostApiErrorTest({statusCode: 500, danger: 'zone'}, 500, {message: 'request failed'}));
+
+
+            describe('should respond to POST api request with custom output', function() {
+                it('using json object',
+                   makePostApiErrorTest({statusCode: 500, output: {
+                      message: 'custom message',
+                      foo    : 'bar',
+                   }}, 500, {message: 'custom message', 'foo': 'bar'}));
+
+                it('using json array',
+                   makePostApiErrorTest({statusCode: 500, output: [1, 2]}, 500, [1, 2]));
+            });
         });
+
 
         describe('#GET', function() {
             it('should respond to GET api request', function (done) {
@@ -346,14 +362,26 @@ describe('Server Fetcher', function () {
                 middleware(req, res, next);
             });
 
+            var paramsToQuerystring = function(params) {
+                var str = '';
+                for (var key in params) {
+                    str += ';' + key + '=' + JSON.stringify(params[key]);
+                }
+
+                return str;
+            };
+
             var makeGetApiErrorTest = function(params, expStatusCode, expMessage) {
                 return function(done) {
                     var operation = 'read',
                         statusCodeSet = false,
+
                         req = {
                             method: 'GET',
-                            path: '/' + mockErrorService.name + ';' + qs.stringify(params, ';')
+                            path: '/' + mockErrorService.name + paramsToQuerystring(params),
+                            params: params,
                         },
+
                         res = {
                             json: function(data) {
                                 expect(data).to.eql(expMessage);
@@ -383,8 +411,22 @@ describe('Server Fetcher', function () {
             it('should respond to GET api request with custom error status code',
                makeGetApiErrorTest({statusCode: 500}, 500, {message: 'request failed'}));
 
+            it('should respond to GET api request with no leaked error information',
+               makeGetApiErrorTest({statusCode: 500, danger: 'zone'}, 500, {message: 'request failed'}));
+
             it('should respond to GET api request with custom error message',
                makeGetApiErrorTest({message: 'Error message...'}, 400, {message: 'Error message...'}));
+
+            describe('should respond to GET api request with custom output', function() {
+                it('using json object',
+                   makeGetApiErrorTest({statusCode: 500, output: {
+                      message: 'custom message',
+                      foo    : 'bar',
+                   }}, 500, {message: 'custom message', 'foo': 'bar'}));
+
+                it('using json array',
+                   makeGetApiErrorTest({statusCode: 500, output: [1, 2]}, 500, [1, 2]));
+            });
         });
 
         describe('Invalid Access', function () {

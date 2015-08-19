@@ -23,6 +23,7 @@ var MockErrorService = {
     read: function (req, resource, params, config, callback) {
         callback({
             statusCode: parseInt(params.statusCode),
+            output: params.output,
             message: params.message,
             read: 'error'
         }, null);
@@ -43,6 +44,7 @@ var MockErrorService = {
         callback({
             statusCode: parseInt(params.statusCode),
             message: params.message,
+            output: params.output,
             create: 'error'
         }, null);
     },
@@ -62,6 +64,7 @@ var MockErrorService = {
         callback({
             statusCode: parseInt(params.statusCode),
             message: params.message,
+            output: params.output,
             update: 'error'
         }, null);
     },
@@ -80,6 +83,7 @@ var MockErrorService = {
         callback({
             statusCode: parseInt(params.statusCode),
             message: params.message,
+            output: params.output,
             delete: 'error'
         }, null);
     }
