@@ -121,7 +121,6 @@ app.use(function(req, res, next) {
 });
 ```
 
-
 ```js
 // app.js - client
 var Fetcher = require('fetchr');
@@ -134,7 +133,17 @@ fetcher
     .end(function (err, data, meta) {
     // handle err and/or data returned from data fetcher in this callback
     });
+    
+// for create you can use the body() method to pass data
+fetcher
+    .create('data_api_create')
+    .body({"some":"data");
+    .end(function (err, data, meta) {
+    // handle err and/or data returned from data fetcher in this callback
+    });
 ```
+
+
 
 ## Usage Examples
 
