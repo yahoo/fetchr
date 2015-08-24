@@ -149,6 +149,22 @@ fetcher
 
 See the [simple example](https://github.com/yahoo/fetchr/tree/master/examples/simple).
 
+## Error Handling
+
+When an error occurs in your Fetchr CRUD method, you should return an error object to the callback. The error object should contain a `statusCode` (default 400) and `output` property that contains valid `JSON` which will be serialized to the client.
+
+```js
+module.exports = {
+    name: 'FooService',
+    read: function create(req, resource, params, configs, callback) {
+        var err = new Error('it failed');
+        err.statusCode = 404;
+        err.output = { message: "Not found", more: "meta data" };
+        return callback(err);
+    }
+};
+```
+
 ## XHR Timeouts
 
 `xhrTimeout` is an optional config property that allows you to set timeout (in ms) for all clientside requests, defaults to `3000`.
