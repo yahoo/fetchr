@@ -149,6 +149,27 @@ fetcher
 
 See the [simple example](https://github.com/yahoo/fetchr/tree/master/examples/simple).
 
+## Updating Configuration
+
+Usually you instantiate fetcher with some default options for the entire browser session,
+but there might be cases where you want to update these options later in the same session.
+
+You can do that with the `updateOptions` method:
+
+```js
+// Start
+var fetcher = new Fetcher({
+    xhrPath: '/myCustomAPIEndpoint',
+    xhrTimeout: 2000
+});
+
+// Later, you may want to update the xhrTimeout
+fetcher.updateOptions({
+    xhrTimeout: 4000
+});
+```
+
+
 ## Error Handling
 
 When an error occurs in your Fetchr CRUD method, you should return an error object to the callback. The error object should contain a `statusCode` (default 400) and `output` property that contains valid `JSON` which will be serialized to the client.
@@ -200,8 +221,8 @@ For example:
 ```js
 var Fetcher = require('fetchr');
 var fetcher = new Fetcher({
-	corsPath: 'http://www.foo.com',
-	xhrPath: '/fooProxy'
+    corsPath: 'http://www.foo.com',
+    xhrPath: '/fooProxy'
 });
 fetcher
     .read('service')
@@ -215,17 +236,17 @@ Additionally, you can also customize how the GET URL is constructed by passing i
 ```js
 var qs = require('qs');
 function customConstructGetUri(uri, resource, params, config) {
-	// this refers to the Fetcher object itself that this function is invoked with.
-	if (config.cors) {
-		return uri + '/' + resource + '?' + qs.stringify(this.context);
-	}
+    // this refers to the Fetcher object itself that this function is invoked with.
+    if (config.cors) {
+        return uri + '/' + resource + '?' + qs.stringify(this.context);
+    }
     // Return `falsy` value will result in `fetcher` using its internal path construction instead.
 }
 
 var Fetcher = require('fetchr');
 var fetcher = new Fetcher({
-	corsPath: 'http://www.foo.com',
-	xhrPath: '/fooProxy'
+    corsPath: 'http://www.foo.com',
+    xhrPath: '/fooProxy'
 });
 fetcher
     .read('service')
