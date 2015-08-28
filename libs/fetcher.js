@@ -15,7 +15,16 @@ var objectAssign = require('object-assign');
 function parseValue(value) {
     // take care of value of type: array, object
     try {
-        return JSON.parse(value);
+        var ret = JSON.parse(value);
+        // Numbers larger than MAX_SAFE_INTEGER will contain rounding errors so,
+        // we will just leave them as strings instead. The length > 15 check is because
+        // the MAX_SAFE_INTEGER in javascript is 9007199254740991 which has a length of 16.
+        // Using a length > 15 check is still safe and faster than trying to use another
+        // library that supports big integers.
+        if (typeof ret === 'number' && value.length > 15) {
+            ret = value;
+        }
+        return ret;
     } catch (e) {
         return value;
     }

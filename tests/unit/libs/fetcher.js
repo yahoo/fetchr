@@ -362,6 +362,49 @@ describe('Server Fetcher', function () {
                 middleware(req, res, next);
             });
 
+            it('should leave big integers in query params as strings', function (done) {
+                var operation = 'read',
+                    statusCodeSet = false,
+                    params = {
+                        id: '123456789012345', // will not cause rounding errors
+                        bigId: '1234567890123456789' // will cause rounding erros
+                    },
+                    req = {
+                        method: 'GET',
+                        path: '/' + mockService.name + ';' + qs.stringify(params, ';')
+                    },
+                    res = {
+                        json: function(response) {
+                            expect(response).to.exist;
+                            expect(response).to.not.be.empty;
+                            expect(response).to.contain.keys('operation', 'args');
+                            expect(response.operation.name).to.equal(operation);
+                            expect(response.operation.success).to.be.true;
+                            expect(response.args).to.contain.keys('params');
+                            expect(response.args.params.id).to.be.a.number;
+                            expect(response.args.params.id.toString()).to.equal(params.id);
+                            expect(response.args.params.bigId).to.be.a.String;
+                            expect(response.args.params.bigId.toString()).to.equal(params.bigId);
+                            expect(statusCodeSet).to.be.true;
+                            done();
+                        },
+                        status: function(code) {
+                            expect(code).to.equal(200);
+                            statusCodeSet = true;
+                            return this;
+                        },
+                        send: function (code) {
+                            console.log('Not Expected: middleware responded with', code);
+                        }
+                    },
+                    next = function () {
+                        console.log('Not Expected: middleware skipped request');
+                    },
+                    middleware = Fetcher.middleware({pathPrefix: '/api'});
+
+                middleware(req, res, next);
+            });
+
             var paramsToQuerystring = function(params) {
                 var str = '';
                 for (var key in params) {
