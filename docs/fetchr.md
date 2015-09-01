@@ -5,8 +5,14 @@
 Creates a new fetchr plugin instance with the following parameters:
 
  * `options`: An object containing the plugin settings
- * `options.req` (required): The request object.  It can contain per-request/context data.
+ * `options.req` (required on server): The request object.  It can contain per-request/context data.
  * `options.xhrPath` (optional): The path for XHR requests. Will be ignored serverside.
+ * `options.xhrTimeout` (optional): Timeout in milliseconds for all XHR requests
+ * `options.corsPath` (optional): Base CORS path in case CORS is enabled
+ * `options.context` (optional): The context object 
+ * `options.contextPicker` (optional): The context predicate functions, it will be applied to lodash/object/pick to pick values from context object
+ * `options.contextPicker.GET` (optional): GET predicate function
+ * `options.contextPicker.POST` (optional): POST predicate function
 
 ## Static Methods
 

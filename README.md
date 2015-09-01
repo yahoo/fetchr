@@ -302,6 +302,39 @@ fetcher
 
 For requests from the server, the config object is simply passed into the service being called.
 
+## Context Variables
+
+By Default, fetchr appends all context values to the xhr url as query params. `contextPicker` allows you to greater control over which context variables get sent as query params depending on the xhr method (`GET` or `POST`). This is useful when you want to limit the number of variables in a `GET` url in order not to accidentally [cache bust](http://webassets.readthedocs.org/en/latest/expiring.html).
+
+`contextPicker` follows the same format as the `predicate` parameter in [`lodash/object/pick`](https://lodash.com/docs#pick) with three arguments: `(value, key, object)`.
+
+var fetcher = new Fetcher({
+    context: { // These context values are persisted with XHR calls as query params
+        _csrf: 'Ax89D94j',
+        device: 'desktop'
+    },
+    contextPicker: {
+        GET: function (value, key, object) {
+            // for example, if you don't enable CSRF protection for GET, you are able to ignore it with the url
+            if (key === '_csrf') {
+                return false;
+            }
+            rerurn true;
+        }
+        // for other method e.g., POST, if you don't define the picker, it will pick the entire context object
+    }
+});
+
+var fetcher = new Fetcher({
+    context: { // These context values are persisted with XHR calls as query params
+        _csrf: 'Ax89D94j',
+        device: 'desktop'
+    },
+    contextPicker: {
+        GET: ['device'] // predicate can be an array of strings
+    }
+});
+
 ## API
 
 - [Fetchr](https://github.com/yahoo/fetchr/blob/master/docs/fetchr.md)
