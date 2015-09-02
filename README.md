@@ -308,6 +308,7 @@ By Default, fetchr appends all context values to the xhr url as query params. `c
 
 `contextPicker` follows the same format as the `predicate` parameter in [`lodash/object/pick`](https://lodash.com/docs#pick) with three arguments: `(value, key, object)`.
 
+```js
 var fetcher = new Fetcher({
     context: { // These context values are persisted with XHR calls as query params
         _csrf: 'Ax89D94j',
@@ -334,6 +335,7 @@ var fetcher = new Fetcher({
         GET: ['device'] // predicate can be an array of strings
     }
 });
+```
 
 ## API
 
