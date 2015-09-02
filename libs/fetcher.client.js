@@ -15,7 +15,8 @@ var lodash = {
         isFunction: require('lodash/lang/isFunction'),
         forEach: require('lodash/collection/forEach'),
         merge: require('lodash/object/merge'),
-        noop: require('lodash/utility/noop')
+        noop: require('lodash/utility/noop'),
+        pick: require('lodash/object/pick')
     };
 var DEFAULT_GUID = 'g0';
 var DEFAULT_XHR_PATH = '/api';
@@ -34,6 +35,17 @@ function parseResponse(response) {
         }
     }
     return null;
+}
+
+/**
+ * Pick keys from the context object
+ * @method pickContext
+ * @param {Object} context context object
+ * @param {Function} picker picker function for lodash/object/pick
+ * @param {String} method method name, get or post
+ */
+function pickContext (context, picker, method) {
+    return picker && picker[method] ? lodash.pick(context, picker[method]) : context;
 }
 
 /**
@@ -56,7 +68,8 @@ function Request (operation, resource, options) {
         xhrPath: options.xhrPath || DEFAULT_XHR_PATH,
         xhrTimeout: options.xhrTimeout || DEFAULT_XHR_TIMEOUT,
         corsPath: options.corsPath,
-        context: options.context || {}
+        context: options.context || {},
+        contextPicker: options.contextPicker || {}
     };
     this._params = {};
     this._body = null;
@@ -126,7 +139,7 @@ Request.prototype.end = function (callback) {
     // by specifying {post_for_read: true} in your request's clientConfig
     if (!use_post) {
         var getUriFn = lodash.isFunction(clientConfig.constructGetUri) ? clientConfig.constructGetUri : defaultConstructGetUri;
-        var get_uri = getUriFn.call(this, uri, this.resource, this._params, clientConfig, this.options.context);
+        var get_uri = getUriFn.call(this, uri, this.resource, this._params, clientConfig, pickContext(this.options.context, this.options.contextPicker, 'GET'));
         /* istanbul ignore next */
         if (!get_uri) {
             // If a custom getUriFn returns falsy value, we should run defaultConstructGetUri
@@ -190,7 +203,7 @@ Request.prototype.end = function (callback) {
 Request.prototype._constructGroupUri = function (uri) {
     var query = [];
     var final_uri = uri;
-    lodash.forEach(this.options.context, function eachContext(v, k) {
+    lodash.forEach(pickContext(this.options.context, this.options.contextPicker, 'POST'), function eachContext(v, k) {
         query.push(k + '=' + encodeURIComponent(v));
     });
     if (query.length > 0) {
@@ -202,13 +215,17 @@ Request.prototype._constructGroupUri = function (uri) {
 /**
  * Fetcher class for the client. Provides CRUD methods.
  * @class FetcherClient
- * @param {object} options configuration options for Fetcher
- * @param {string} [options.xhrPath="/api"] The path for XHR requests
- * @param {number} [options.xhrTimout=3000] Timeout in milliseconds for all XHR requests
+ * @param {Object} options configuration options for Fetcher
+ * @param {String} [options.xhrPath="/api"] The path for XHR requests
+ * @param {Number} [options.xhrTimout=3000] Timeout in milliseconds for all XHR requests
  * @param {Boolean} [options.corsPath] Base CORS path in case CORS is enabled
  * @param {Object} [options.context] The context object that is propagated to all outgoing
  *      requests as query params.  It can contain current-session/context data that should
  *      persist to all requests.
+ * @param {Object} [options.contextPicker] The context picker for GET and POST, they must be
+ *      lodash pick predicate function with three arguments (value, key, object)
+ * @param {Function|String|String[]} [options.contextPicker.GET] GET context picker
+ * @param {Function|String|String[]} [options.contextPicker.POST] POST context picker
  */
 
 function Fetcher (options) {

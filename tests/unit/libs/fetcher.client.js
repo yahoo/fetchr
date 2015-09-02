@@ -345,6 +345,49 @@ describe('Client Fetcher', function () {
         });
     });
 
+    describe('Context Picker', function () {
+        var context = {_csrf: 'stuff', random: 'randomnumber'};
+        var params = {};
+        var body = {};
+        var config = {};
+        var callback = function(operation, done) {
+                return function(err, data) {
+                    if (err){
+                        done(err);
+                    }
+                    done();
+                };
+            };
+
+        beforeEach(function(){
+            fetcher = new Fetcher({
+                context: context,
+                contextPicker: {
+                    GET: function getContextPicker(value, key, object) {
+                        if (key === 'random') {
+                            return false
+                        }
+                        return true;
+                    }
+                }
+            });
+            validateHTTP({
+                validateGET: function (url, headers, config) {
+                    expect(url).to.contain(DEFAULT_XHR_PATH + '/' + resource);
+                    expect(url).to.contain('?_csrf=' + context._csrf);
+                    // for GET, ignore 'random'
+                    expect(url).to.not.contain('random=' + context.random);
+                },
+                validatePOST: function (url, headers, body, config) {
+                    expect(url).to.equal(DEFAULT_XHR_PATH + '?_csrf=' + context._csrf + '&random=' + context.random);
+                }
+            });
+        });
+
+        testCrud(it, resource, params, body, config, callback);
+    });
+
+
     describe('Utils', function () {
         it('should able to update options', function () {
             fetcher = new Fetcher({
