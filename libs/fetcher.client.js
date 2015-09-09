@@ -24,6 +24,7 @@ var DEFAULT_XHR_TIMEOUT = 3000;
 var MAX_URI_LEN = 2048;
 var OP_READ = 'read';
 var defaultConstructGetUri = require('./util/defaultConstructGetUri');
+var Promise = global.Promise || require('es6-promise').Promise;
 
 function parseResponse(response) {
     if (response && response.responseText) {
@@ -121,8 +122,32 @@ Request.prototype.clientConfig = function (config) {
  * @async
  */
 Request.prototype.end = function (callback) {
-    var clientConfig = this._clientConfig;
-    var callback = callback || lodash.noop;
+    var self = this;
+    var promise = new Promise(function (resolve, reject) {
+        debug('Executing request %s.%s with params %o and body %o', self.resource, self.operation, self._params, self._body);
+        setImmediate(executeRequest, self, resolve, reject);
+    });
+
+    if (callback) {
+        promise.then(function (data) {
+            setImmediate(callback, null, data);
+        }, function (err) {
+            setImmediate(callback, err);
+        });
+    } else {
+        return promise;
+    }
+};
+
+/**
+ * Execute and resolve/reject this fetcher request
+ * @method executeRequest
+ * @param {Object} request Request instance object
+ * @param {Function} resolve function to call when request fulfilled
+ * @param {Function} reject function to call when request rejected
+ */
+function executeRequest (request, resolve, reject) {
+    var clientConfig = request._clientConfig;
     var use_post;
     var allow_retry_post;
     var uri = clientConfig.uri;
@@ -131,20 +156,20 @@ Request.prototype.end = function (callback) {
     var data;
 
     if (!uri) {
-        uri = clientConfig.cors ? this.options.corsPath : this.options.xhrPath;
+        uri = clientConfig.cors ? request.options.corsPath : request.options.xhrPath;
     }
 
-    use_post = this.operation !== OP_READ || clientConfig.post_for_read;
+    use_post = request.operation !== OP_READ || clientConfig.post_for_read;
     // We use GET request by default for READ operation, but you can override that behavior
     // by specifying {post_for_read: true} in your request's clientConfig
     if (!use_post) {
         var getUriFn = lodash.isFunction(clientConfig.constructGetUri) ? clientConfig.constructGetUri : defaultConstructGetUri;
-        var get_uri = getUriFn.call(this, uri, this.resource, this._params, clientConfig, pickContext(this.options.context, this.options.contextPicker, 'GET'));
+        var get_uri = getUriFn.call(request, uri, request.resource, request._params, clientConfig, pickContext(request.options.context, request.options.contextPicker, 'GET'));
         /* istanbul ignore next */
         if (!get_uri) {
             // If a custom getUriFn returns falsy value, we should run defaultConstructGetUri
             // TODO: Add test for this fallback
-            get_uri = defaultConstructGetUri.call(this, uri, this.resource, this._params, clientConfig, this.options.context);
+            get_uri = defaultConstructGetUri.call(request, uri, request.resource, request._params, clientConfig, request.options.context);
         }
         if (get_uri.length <= MAX_URI_LEN) {
             uri = get_uri;
@@ -154,35 +179,35 @@ Request.prototype.end = function (callback) {
     }
 
     if (!use_post) {
-        return REST.get(uri, {}, lodash.merge({xhrTimeout: this.options.xhrTimeout}, clientConfig), function getDone(err, response) {
+        return REST.get(uri, {}, lodash.merge({xhrTimeout: request.options.xhrTimeout}, clientConfig), function getDone(err, response) {
             if (err) {
-                debug('Syncing ' + this.resource + ' failed: statusCode=' + err.statusCode, 'info');
-                return callback(err);
+                debug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info');
+                return reject(err);
             }
-            callback(null, parseResponse(response));
+            resolve(parseResponse(response));
         });
     }
 
     // individual request is also normalized into a request hash to pass to api
     requests = {};
     requests[DEFAULT_GUID] = {
-        resource: this.resource,
-        operation: this.operation,
-        params: this._params
+        resource: request.resource,
+        operation: request.operation,
+        params: request._params
     };
-    if (this._body) {
-        requests[DEFAULT_GUID].body = this._body;
+    if (request._body) {
+        requests[DEFAULT_GUID].body = request._body;
     }
     data = {
         requests: requests,
-        context: this.options.context
+        context: request.options.context
     }; // TODO: remove. leave here for now for backward compatibility
-    uri = this._constructGroupUri(uri);
-    allow_retry_post = (this.operation === OP_READ);
-    REST.post(uri, {}, data, lodash.merge({unsafeAllowRetry: allow_retry_post, xhrTimeout: this.options.xhrTimeout}, clientConfig), function postDone(err, response) {
+    uri = request._constructGroupUri(uri);
+    allow_retry_post = (request.operation === OP_READ);
+    REST.post(uri, {}, data, lodash.merge({unsafeAllowRetry: allow_retry_post, xhrTimeout: request.options.xhrTimeout}, clientConfig), function postDone(err, response) {
         if (err) {
-            debug('Syncing ' + this.resource + ' failed: statusCode=' + err.statusCode, 'info');
-            return callback(err);
+            debug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info');
+            return reject(err);
         }
         var result = parseResponse(response);
         if (result) {
@@ -190,7 +215,7 @@ Request.prototype.end = function (callback) {
         } else {
             result = {};
         }
-        callback(null, result.data);
+        resolve(result.data);
     });
 };
 

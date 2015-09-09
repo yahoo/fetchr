@@ -513,58 +513,122 @@ describe('Server Fetcher', function () {
     });
 
     describe('CRUD Interface', function () {
-        var resource = mockService.name,
-            params = {},
-            body = {},
-            config = {},
-            callback = function(operation, done) {
-                return function(err, data) {
-                    if (err){
-                        done(err);
-                    }
-                    expect(data.operation).to.exist;
-                    expect(data.operation.name).to.equal(operation);
-                    expect(data.operation.success).to.be.true;
-                    done();
-                };
+        var resource = mockService.name;
+        var params = {};
+        var body = {};
+        var config = {};
+        var callback = function(operation, done) {
+            return function(err, data) {
+                if (err){
+                    done(err);
+                }
+                expect(data.operation).to.exist;
+                expect(data.operation.name).to.equal(operation);
+                expect(data.operation.success).to.be.true;
+                done();
             };
+        };
+        var resolve = function (operation, done) {
+            return function (result) {
+                try {
+                    expect(result.data).to.exist;
+                    expect(result.data.operation).to.exist;
+                    expect(result.data.operation.name).to.equal(operation);
+                    expect(result.data.operation.success).to.be.true;
+                } catch (e) {
+                    done(e);
+                    return;
+                }
+                done();
+            };
+        };
+        var reject = function (operation, done) {
+            return function (err) {
+                done(err);
+            };
+        };
         describe('should work superagent style', function () {
-            it('should throw if no resource is given', function () {
-                expect(fetcher.read).to.throw('Resource is required for a fetcher request');
+            describe('with callbacks', function () {
+                it('should throw if no resource is given', function () {
+                    expect(fetcher.read).to.throw('Resource is required for a fetcher request');
+                });
+                it('should handle CREATE', function (done) {
+                    var operation = 'create';
+                    fetcher
+                        [operation](resource)
+                        .params(params)
+                        .body(body)
+                        .clientConfig(config)
+                        .end(callback(operation, done));
+                });
+                it('should handle READ', function (done) {
+                    var operation = 'read';
+                    fetcher
+                        [operation](resource)
+                        .params(params)
+                        .clientConfig(config)
+                        .end(callback(operation, done));
+                });
+                it('should handle UPDATE', function (done) {
+                    var operation = 'update';
+                    fetcher
+                        [operation](resource)
+                        .params(params)
+                        .body(body)
+                        .clientConfig(config)
+                        .end(callback(operation, done));
+                });
+                it('should handle DELETE', function (done) {
+                    var operation = 'delete';
+                    fetcher
+                        [operation](resource)
+                        .params(params)
+                        .clientConfig(config)
+                        .end(callback(operation, done));
+                });
             });
-            it('should handle CREATE', function (done) {
-                var operation = 'create';
-                fetcher
-                    [operation](resource)
-                    .params(params)
-                    .body(body)
-                    .clientConfig(config)
-                    .end(callback(operation, done));
-            });
-            it('should handle READ', function (done) {
-                var operation = 'read';
-                fetcher
-                    [operation](resource)
-                    .params(params)
-                    .clientConfig(config)
-                    .end(callback(operation, done));
-            });
-            it('should handle UPDATE', function (done) {
-                var operation = 'update';
-                fetcher
-                    [operation](resource)
-                    .params(params)
-                    .body(body)
-                    .clientConfig(config)
-                    .end(callback(operation, done));
-            });
-            it('should handle DELETE', function (done) {
-                var operation = 'delete';
-                fetcher
-                    [operation](resource)
-                    .params(params)
-                    .clientConfig(config)
-                    .end(callback(operation, done));
+            describe('with Promises', function () {
+                it('should throw if no resource is given', function () {
+                    expect(fetcher.read).to.throw('Resource is required for a fetcher request');
+                });
+                it('should handle CREATE', function (done) {
+                    var operation = 'create';
+                    fetcher
+                        [operation](resource)
+                        .params(params)
+                        .body(body)
+                        .clientConfig(config)
+                        .end()
+                        .then(resolve(operation, done), reject(operation, done));
+                });
+                it('should handle READ', function (done) {
+                    var operation = 'read';
+                    fetcher
+                        [operation](resource)
+                        .params(params)
+                        .clientConfig(config)
+                        .end()
+                        .then(resolve(operation, done), reject(operation, done));
+                });
+                it('should handle UPDATE', function (done) {
+                    var operation = 'update';
+                    fetcher
+                        [operation](resource)
+                        .params(params)
+                        .body(body)
+                        .clientConfig(config)
+                        .end()
+                        .then(resolve(operation, done), reject(operation, done));
+                });
+                it('should handle DELETE', function (done) {
+                    var operation = 'delete';
+                    fetcher
+                        [operation](resource)
+                        .params(params)
+                        .clientConfig(config)
+                        .end()
+                        .then(resolve(operation, done), reject(operation, done));
+                });
             });
         });
         describe('should be backwards compatible', function () {

@@ -124,25 +124,92 @@ describe('Client Fetcher', function () {
             };
         var body = { stuff: 'is'};
         var config = {};
-        var callback = function(operation, done) {
-                return function(err, data) {
+        var callback = function (operation, done) {
+                return function (err, data) {
                     if (err){
                         done(err);
                     }
                     expect(data.operation).to.exist;
                     expect(data.operation.name).to.equal(operation);
-                    expect(data.operation.success).to.equal(true);
+                    expect(data.operation.success).to.be.true;
                     expect(data.args).to.exist;
                     expect(data.args.resource).to.equal(resource);
                     expect(data.args.params).to.eql(params);
                     done();
                 };
             };
+        var resolve = function (operation, done) {
+            return function (data) {
+                try {
+                    expect(data).to.exist;
+                    expect(data.operation).to.exist;
+                    expect(data.operation.name).to.equal(operation);
+                    expect(data.operation.success).to.be.true;
+                    expect(data.args).to.exist;
+                    expect(data.args.resource).to.equal(resource);
+                    expect(data.args.params).to.eql(params);
+                } catch (e) {
+                    done(e);
+                    return;
+                }
+                done();
+            };
+        };
+        var reject = function (operation, done) {
+            return function (err) {
+                done(err);
+            };
+        };
         describe('should work superagent style', function (done) {
-            testCrud(it, resource, params, body, config, callback);
-            it('should throw if no resource is given', function () {
-                expect(fetcher.read).to.throw('Resource is required for a fetcher request');
+            describe('with callbacks', function () {
+                testCrud(it, resource, params, body, config, callback);
+                it('should throw if no resource is given', function () {
+                    expect(fetcher.read).to.throw('Resource is required for a fetcher request');
+                });
             });
+            describe('with Promises', function () {
+                it('should handle CREATE', function (done) {
+                    var operation = 'create';
+                    fetcher
+                        [operation](resource)
+                        .params(params)
+                        .body(body)
+                        .clientConfig(config)
+                        .end()
+                        .then(resolve(operation, done), reject(operation, done));
+                });
+                it('should handle READ', function (done) {
+                    var operation = 'read';
+                    fetcher
+                        [operation](resource)
+                        .params(params)
+                        .clientConfig(config)
+                        .end()
+                        .then(resolve(operation, done), reject(operation, done));
+                });
+                it('should handle UPDATE', function (done) {
+                    var operation = 'update';
+                    fetcher
+                        [operation](resource)
+                        .params(params)
+                        .body(body)
+                        .clientConfig(config)
+                        .end()
+                        .then(resolve(operation, done), reject(operation, done));
+                });
+                it('should handle DELETE', function (done) {
+                    var operation = 'delete';
+                    fetcher
+                        [operation](resource)
+                        .params(params)
+                        .clientConfig(config)
+                        .end()
+                        .then(resolve(operation, done), reject(operation, done));
+                });
+                it('should throw if no resource is given', function () {
+                    expect(fetcher.read).to.throw('Resource is required for a fetcher request');
+                });
+            })
         });
         describe('should be backwards compatible', function (done) {
             // with config
