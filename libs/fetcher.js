@@ -72,6 +72,7 @@ function getErrorResponse(err) {
  * @param {String} resource name of service
  * @param {Object} options configuration options for Request
  * @param {Object} [options.req] The request object from express/connect.  It can contain per-request/context data.
+ * @param {Array} [options.serviceMeta] Array to hold per-request/session metadata from all service calls.
  * @constructor
  */
 function Request (operation, resource, options) {
@@ -83,6 +84,7 @@ function Request (operation, resource, options) {
     this.resource = resource;
     options = options || {};
     this.req = options.req || {};
+    this.serviceMeta = options.serviceMeta || [];
     this._params = {};
     this._body = null;
     this._clientConfig = {};
@@ -132,7 +134,15 @@ Request.prototype.clientConfig = function (config) {
 Request.prototype.end = function (callback) {
     var self = this;
     var promise = new Promise(function (resolve, reject) {
+        executeRequest(self, resolve, reject);
         setImmediate(executeRequest, self, resolve, reject);
+    });
+
+    promise.then(function (result) {
+        if (result.meta) {
+            self.serviceMeta.push(result.meta)
+        };
+        return result;
     });
 
     if (callback) {
@@ -168,7 +178,6 @@ function executeRequest (request, resolve, reject) {
     if ((op === OP_CREATE) || (op === OP_UPDATE)) {
         args.splice(3, 0, request._body);
     }
-
     var service = Fetcher.getService(request.resource);
     service[op].apply(service, args);
 }
@@ -186,6 +195,8 @@ function executeRequest (request, resolve, reject) {
 function Fetcher (options) {
     this.options = options || {};
     this.req = this.options.req || {};
+    this.serviceMeta = [];
+
 }
 
 Fetcher.services = {};
@@ -290,11 +301,15 @@ Fetcher.middleware = function () {
                 error.source = 'fetchr';
                 return next(error);
             }
-            request = new Request(OP_READ, resource, {req: req});
+            var serviceMeta = [];
+            request = new Request(OP_READ, resource, {
+                req: req,
+                serviceMeta: serviceMeta
+            });
             request
                 .params(parseParamValues(qs.parse(path.join('&'))))
-                .end(function (err, data, meta) {
-                    meta = meta || {};
+                .end(function (err, data) {
+                    var meta = serviceMeta[0] || {};
                     if (meta.headers) {
                         res.set(meta.headers);
                     }
@@ -303,7 +318,15 @@ Fetcher.middleware = function () {
                         res.status(errResponse.statusCode).json(errResponse.output);
                         return;
                     }
-                    res.status(meta.statusCode || 200).json(data);
+                    if (req.query.returnMeta) {
+                        res.status(meta.statusCode || 200).json({
+                            data: data,
+                            meta: meta
+                        });
+                    } else {
+                        // TODO: Remove `returnMeta` feature flag after next release
+                        res.status(meta.statusCode || 200).json(data);
+                    }
                 });
         } else {
             var requests = req.body && req.body.requests;
@@ -326,13 +349,16 @@ Fetcher.middleware = function () {
                 error.source = 'fetchr';
                 return next(error);
             }
-
-            request = new Request(singleRequest.operation, singleRequest.resource, {req: req});
+            var serviceMeta = [];
+            request = new Request(singleRequest.operation, singleRequest.resource, {
+                req: req,
+                serviceMeta: serviceMeta
+            });
             request
                 .params(singleRequest.params)
                 .body(singleRequest.body || {})
-                .end(function(err, data, meta) {
-                    meta = meta || {};
+                .end(function(err, data) {
+                    var meta = serviceMeta[0] || {};
                     if (meta.headers) {
                         res.set(meta.headers);
                     }
@@ -342,7 +368,10 @@ Fetcher.middleware = function () {
                         return;
                     }
                     var responseObj = {};
-                    responseObj[DEFAULT_GUID] = {data: data};
+                    responseObj[DEFAULT_GUID] = {
+                        data: data,
+                        meta: meta
+                    };
                     res.status(meta.statusCode || 200).json(responseObj);
                 });
         }
@@ -367,7 +396,10 @@ Fetcher.middleware = function () {
  * @static
  */
 Fetcher.prototype.read = function (resource, params, config, callback) {
-    var request = new Request('read', resource, {req: this.req});
+    var request = new Request('read', resource, {
+        req: this.req,
+        serviceMeta: this.serviceMeta
+    });
     if (1 === arguments.length) {
         return request;
     }
@@ -399,7 +431,10 @@ Fetcher.prototype.read = function (resource, params, config, callback) {
  * @static
  */
 Fetcher.prototype.create = function (resource, params, body, config, callback) {
-    var request = new Request('create', resource, {req: this.req});
+    var request = new Request('create', resource, {
+        req: this.req,
+        serviceMeta: this.serviceMeta
+    });
     if (1 === arguments.length) {
         return request;
     }
@@ -432,7 +467,10 @@ Fetcher.prototype.create = function (resource, params, body, config, callback) {
  * @static
  */
 Fetcher.prototype.update = function (resource, params, body, config, callback) {
-    var request = new Request('update', resource, {req: this.req});
+    var request = new Request('update', resource, {
+        req: this.req,
+        serviceMeta: this.serviceMeta
+    });
     if (1 === arguments.length) {
         return request;
     }
@@ -464,7 +502,10 @@ Fetcher.prototype.update = function (resource, params, body, config, callback) {
  * @static
  */
 Fetcher.prototype['delete'] = function (resource, params, config, callback) {
-    var request = new Request('delete', resource, {req: this.req});
+    var request = new Request('delete', resource, {
+        req: this.req,
+        serviceMeta: this.serviceMeta
+    });
     if (1 === arguments.length) {
         return request;
     }
@@ -497,6 +538,13 @@ Fetcher.prototype.updateOptions = function (options) {
     this.options = objectAssign(this.options, options);
     this.req = this.options.req || {};
 };
+
+/**
+ * Get all the aggregated metadata sent data services in this request
+ */
+Fetcher.prototype.getServiceMeta = function () {
+    return this.serviceMeta;
+}
 
 module.exports = Fetcher;
 

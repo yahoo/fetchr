@@ -56,6 +56,9 @@ function pickContext (context, picker, method) {
  * @param {String} operation The CRUD operation name: 'create|read|update|delete'.
  * @param {String} resource name of fetcher/service
  * @param {Object} options configuration options for Request
+ * @param {Array} [options._serviceMeta] Array to hold per-request/session metadata from all service calls.
+ * Data will be pushed on to this array while the Fetchr instance maintains the reference for this session.
+ *
  * @constructor
  */
 function Request (operation, resource, options) {
@@ -70,7 +73,8 @@ function Request (operation, resource, options) {
         xhrTimeout: options.xhrTimeout || DEFAULT_XHR_TIMEOUT,
         corsPath: options.corsPath,
         context: options.context || {},
-        contextPicker: options.contextPicker || {}
+        contextPicker: options.contextPicker || {},
+        _serviceMeta: options._serviceMeta || []
     };
     this._params = {};
     this._body = null;
@@ -128,9 +132,16 @@ Request.prototype.end = function (callback) {
         setImmediate(executeRequest, self, resolve, reject);
     });
 
+    promise.then(function (result) {
+        if (result.meta) {
+            self.options._serviceMeta.push(result.meta)
+        };
+        return result;
+    });
+
     if (callback) {
-        promise.then(function (data) {
-            setImmediate(callback, null, data);
+        promise.then(function (result) {
+            setImmediate(callback, null, result.data, result.meta);
         }, function (err) {
             setImmediate(callback, err);
         });
@@ -171,6 +182,19 @@ function executeRequest (request, resolve, reject) {
             // TODO: Add test for this fallback
             get_uri = defaultConstructGetUri.call(request, uri, request.resource, request._params, clientConfig, request.options.context);
         }
+        // TODO: Remove `returnMeta` feature flag after next release
+        // This feature flag will enable the new return format for GET api requests
+        // Whereas before any data from services was returned as is. We now return
+        // an object with a data key containing the service response, and a meta key
+        // containing the service's metadata response (i.e headers and statusCode).
+        // We need this feature flag to be truly backwards compatible because it is
+        // concievable that some active browser sessions could have the old version of
+        // client fetcher while the server upgrades to the new version. This could be
+        // easily fixed by refreshing the browser, but the feature flag will ensure
+        // old fetcher clients will receive the old format and the new client will
+        // receive the new format
+        get_uri += (get_uri.indexOf('?') !== -1) ? '&' : '?';
+        get_uri += 'returnMeta=true';
         if (get_uri.length <= MAX_URI_LEN) {
             uri = get_uri;
         } else {
@@ -215,7 +239,7 @@ function executeRequest (request, resolve, reject) {
         } else {
             result = {};
         }
-        resolve(result.data);
+        resolve(result);
     });
 };
 
@@ -254,7 +278,15 @@ Request.prototype._constructGroupUri = function (uri) {
  */
 
 function Fetcher (options) {
-    this.options = options || {};
+    this._serviceMeta = [];
+    this.options = {
+        xhrPath: options.xhrPath,
+        xhrTimeout: options.xhrTimeout,
+        corsPath: options.corsPath,
+        context: options.context,
+        contextPicker: options.contextPicker,
+        _serviceMeta: this._serviceMeta
+    };
 }
 
 Fetcher.prototype = {
@@ -376,6 +408,17 @@ Fetcher.prototype = {
      */
     updateOptions: function (options) {
         this.options = lodash.merge(this.options, options);
+    },
+
+    /**
+     * get the serviceMeta array.
+     * The array contains all xhr meta returned in this session
+     * with the 0 index being the first call.
+     * @method getServiceMeta
+     * @return {Array} array of metadata returned by each service call
+     */
+    getServiceMeta: function () {
+        return this._serviceMeta;
     }
 };
 

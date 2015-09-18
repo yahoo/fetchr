@@ -11,6 +11,7 @@ var expect = require('chai').expect;
 var mockery = require('mockery');
 var Fetcher;
 var fetcher;
+var mockService = require('../../mock/MockService');
 var app = require('../../mock/app');
 var supertest = require('supertest');
 var request = require('request');
@@ -113,6 +114,7 @@ describe('Client Fetcher', function () {
                 validateGET: function (url, headers, config) {
                     expect(url).to.contain(DEFAULT_XHR_PATH + '/' + resource);
                     expect(url).to.contain('?_csrf=' + context._csrf);
+                    expect(url).to.contain('returnMeta=true');
                 },
                 validatePOST: function (url, headers, body, config) {
                     expect(url).to.equal(DEFAULT_XHR_PATH + '?_csrf=' + context._csrf);
@@ -120,12 +122,17 @@ describe('Client Fetcher', function () {
             });
         });
         var params = {
-                uuids: ['1','2','3','4','5']
+                uuids: ['1','2','3','4','5'],
+                meta: {
+                    headers: {
+                        'x-foo-bar': 'foobar'
+                    }
+                }
             };
         var body = { stuff: 'is'};
         var config = {};
         var callback = function (operation, done) {
-                return function (err, data) {
+                return function (err, data, meta) {
                     if (err){
                         done(err);
                     }
@@ -135,19 +142,22 @@ describe('Client Fetcher', function () {
                     expect(data.args).to.exist;
                     expect(data.args.resource).to.equal(resource);
                     expect(data.args.params).to.eql(params);
+                    expect(meta).to.eql(params.meta);
                     done();
                 };
             };
         var resolve = function (operation, done) {
-            return function (data) {
+            return function (result) {
                 try {
-                    expect(data).to.exist;
-                    expect(data.operation).to.exist;
-                    expect(data.operation.name).to.equal(operation);
-                    expect(data.operation.success).to.be.true;
-                    expect(data.args).to.exist;
-                    expect(data.args.resource).to.equal(resource);
-                    expect(data.args.params).to.eql(params);
+                    expect(result).to.exist;
+                    expect(result).to.have.keys('data', 'meta');
+                    expect(result.data.operation).to.exist;
+                    expect(result.data.operation.name).to.equal(operation);
+                    expect(result.data.operation.success).to.be.true;
+                    expect(result.data.args).to.exist;
+                    expect(result.data.args.resource).to.equal(resource);
+                    expect(result.data.args.params).to.eql(params);
+                    expect(result.meta).to.eql(params.meta);
                 } catch (e) {
                     done(e);
                     return;
@@ -160,11 +170,54 @@ describe('Client Fetcher', function () {
                 done(err);
             };
         };
-        describe('should work superagent style', function (done) {
+        it('should keep track of session\'s metadata in getServiceMeta', function (done) {
+            mockService.meta = {
+                headers: {
+                    'x-foo': 'foo'
+                }
+            };
+            fetcher
+                .read(resource)
+                .params(params)
+                .end(function (err, data, meta) {
+                    if (err) {
+                        done(err);
+                    }
+                    expect(meta).to.eql({
+                        headers: {
+                            'x-foo': 'foo'
+                        }
+                    });
+                    mockService.meta = {
+                        headers: {
+                            'x-bar': 'bar'
+                        }
+                    };
+                    fetcher
+                        .read(resource)
+                        .params(params)
+                        .end(function (err, data, meta) {
+                            if (err) {
+                                done(err);
+                            }
+                            expect(meta).to.eql({
+                                headers: {
+                                    'x-bar': 'bar'
+                                }
+                            });
+                            var serviceMeta = fetcher.getServiceMeta();
+                            expect(serviceMeta).to.have.length(2);
+                            expect(serviceMeta[0].headers).to.eql({'x-foo': 'foo'})
+                            expect(serviceMeta[1].headers).to.eql({'x-bar': 'bar'})
+                            done();
+                        });
+                });
+        });
+        describe('should work superagent style', function () {
             describe('with callbacks', function () {
                 testCrud(it, resource, params, body, config, callback);
                 it('should throw if no resource is given', function () {
-                    expect(fetcher.read).to.throw('Resource is required for a fetcher request');
+                    expect(fetcher.read.bind(fetcher)).to.throw('Resource is required for a fetcher request');
                 });
             });
             describe('with Promises', function () {
@@ -444,6 +497,7 @@ describe('Client Fetcher', function () {
                     expect(url).to.contain('?_csrf=' + context._csrf);
                     // for GET, ignore 'random'
                     expect(url).to.not.contain('random=' + context.random);
+                    expect(url).to.contain('returnMeta=true');
                 },
                 validatePOST: function (url, headers, body, config) {
                     expect(url).to.equal(DEFAULT_XHR_PATH + '?_csrf=' + context._csrf + '&random=' + context.random);

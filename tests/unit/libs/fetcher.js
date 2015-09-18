@@ -8,14 +8,12 @@
 
 var chai = require('chai');
 chai.config.includeStack = true;
-var expect = chai.expect,
-    Fetcher = require('../../../libs/fetcher'),
-    fetcher = new Fetcher({
-        req: {}
-    }),
-    mockService = require('../../mock/MockService'),
-    mockErrorService = require('../../mock/MockErrorService'),
-    qs = require('querystring');
+var expect = chai.expect;
+var Fetcher = require('../../../libs/fetcher');
+var fetcher;
+var mockService = require('../../mock/MockService');
+var mockErrorService = require('../../mock/MockErrorService');
+var qs = require('querystring');
 
 describe('Server Fetcher', function () {
     beforeEach(function () {
@@ -25,11 +23,11 @@ describe('Server Fetcher', function () {
     afterEach(function () {
         Fetcher.services = {}; // reset services
     });
-    it('should register valid fetchers', function () {
+    it('should register valid services', function () {
         Fetcher.services = {}; // reset services so we can test getService and registerService methods
-        var getService = Fetcher.getService.bind(fetcher);
+        var getService = Fetcher.getService.bind(Fetcher);
         expect(getService).to.throw(Error, 'Service "undefined" could not be found');
-        getService = Fetcher.getService.bind(fetcher, mockService.name);
+        getService = Fetcher.getService.bind(Fetcher, mockService.name);
         expect(getService).to.throw(Error, 'Service "' + mockService.name + '" could not be found');
         expect(Object.keys(Fetcher.services)).to.have.length(0);
         Fetcher.registerService(mockService);
@@ -41,37 +39,40 @@ describe('Server Fetcher', function () {
         // valid vs invalid
         var invalidService = {not_name: 'test_name'};
         var validService = {name: 'test_name'};
-        var registerInvalidService = Fetcher.registerService.bind(fetcher, undefined);
+        var registerInvalidService = Fetcher.registerService.bind(Fetcher, undefined);
         expect(registerInvalidService).to.throw(Error, 'Service is not defined correctly');
-        registerInvalidService = Fetcher.registerService.bind(fetcher, invalidService);
+        registerInvalidService = Fetcher.registerService.bind(Fetcher, invalidService);
         expect(registerInvalidService).to.throw(Error, 'Service is not defined correctly');
-        var registerValidService = Fetcher.registerService.bind(fetcher, validService);
+        var registerValidService = Fetcher.registerService.bind(Fetcher, validService);
         expect(registerValidService).to.not.throw;
     });
 
-    it('should get fetchers by resource and sub resource', function () {
-        var getService = Fetcher.getService.bind(fetcher, mockService.name);
+    it('should get services by resource and sub resource', function () {
+        var getService = Fetcher.getService.bind(Fetcher, mockService.name);
         expect(getService).to.not.throw;
         expect(getService()).to.deep.equal(mockService);
-        getService = Fetcher.getService.bind(fetcher, mockService.name + '.subResource');
+        getService = Fetcher.getService.bind(Fetcher, mockService.name + '.subResource');
         expect(getService).to.not.throw;
         expect(getService()).to.deep.equal(mockService);
     });
 
     it('should be able to update options for the fetchr instance', function () {
+        fetcher = new Fetcher({ req: {} });
+        expect(fetcher.options.req.foo).to.be.undefined;
         fetcher.updateOptions({req: {foo: 'bar'}});
         expect(fetcher.options.req.foo).to.equal('bar');
+        fetcher = null;
     });
 
     describe('should be backwards compatible', function () {
         it('#registerFetcher & #getFetcher', function () {
             Fetcher.services = {}; // reset services so we can test getFetcher and registerFetcher methods
-            var getFetcher = Fetcher.getFetcher.bind(fetcher, mockService.name);
+            var getFetcher = Fetcher.getFetcher.bind(Fetcher, mockService.name);
             expect(getFetcher).to.throw;
             Fetcher.registerFetcher(mockService);
             expect(getFetcher).to.not.throw;
             expect(getFetcher()).to.deep.equal(mockService);
-            getFetcher = Fetcher.getFetcher.bind(fetcher, mockService.name + '.subResource');
+            getFetcher = Fetcher.getFetcher.bind(Fetcher, mockService.name + '.subResource');
             expect(getFetcher).to.not.throw;
             expect(getFetcher()).to.deep.equal(mockService);
         });
@@ -270,6 +271,47 @@ describe('Server Fetcher', function () {
 
 
         describe('#GET', function() {
+            it('should respond to GET api request w/o meta', function (done) {
+                var operation = 'read';
+                var statusCodeSet = false;
+                var params = {
+                        uuids: ['cd7240d6-aeed-3fed-b63c-d7e99e21ca17', 'cd7240d6-aeed-3fed-b63c-d7e99e21ca17'],
+                        id: 'asdf'
+                    };
+                var req = {
+                         method: 'GET',
+                         path: '/' + mockService.name + ';' + qs.stringify(params, ';'),
+                         query: {}
+                    };
+                var res = {
+                        json: function(response) {
+                            expect(response).to.exist;
+                            expect(response).to.not.be.empty;
+                            expect(response).to.not.contain.keys('data', 'meta');
+                            expect(response).to.contain.keys('operation', 'args');
+                            expect(response.operation.name).to.equal(operation);
+                            expect(response.operation.success).to.be.true;
+                            expect(response.args).to.contain.keys('params');
+                            expect(response.args.params).to.deep.equal(params);
+                            expect(statusCodeSet).to.be.true;
+                            done();
+                        },
+                        status: function(code) {
+                            expect(code).to.equal(200);
+                            statusCodeSet = true;
+                            return this;
+                        },
+                        send: function (code) {
+                            console.log('Not Expected: middleware responded with', code);
+                        }
+                    };
+                var next = function () {
+                        console.log('Not Expected: middleware skipped request');
+                    };
+                var middleware = Fetcher.middleware({pathPrefix: '/api'});
+
+                middleware(req, res, next);
+            });
             it('should respond to GET api request', function (done) {
                 var operation = 'read',
                     statusCodeSet = false,
@@ -279,17 +321,22 @@ describe('Server Fetcher', function () {
                     },
                     req = {
                         method: 'GET',
-                        path: '/' + mockService.name + ';' + qs.stringify(params, ';')
+                        path: '/' + mockService.name + ';' + qs.stringify(params, ';'),
+                        query: {
+                            returnMeta: true
+                        }
                     },
                     res = {
                         json: function(response) {
                             expect(response).to.exist;
                             expect(response).to.not.be.empty;
-                            expect(response).to.contain.keys('operation', 'args');
-                            expect(response.operation.name).to.equal(operation);
-                            expect(response.operation.success).to.be.true;
-                            expect(response.args).to.contain.keys('params');
-                            expect(response.args.params).to.deep.equal(params);
+                            expect(response).to.contain.keys('data', 'meta');
+                            expect(response.data).to.contain.keys('operation', 'args');
+                            expect(response.data.operation.name).to.equal(operation);
+                            expect(response.data.operation.success).to.be.true;
+                            expect(response.data.args).to.contain.keys('params');
+                            expect(response.data.args.params).to.deep.equal(params);
+                            expect(response.meta).to.be.empty;
                             expect(statusCodeSet).to.be.true;
                             done();
                         },
@@ -322,17 +369,25 @@ describe('Server Fetcher', function () {
                     },
                     req = {
                         method: 'GET',
-                        path: '/' + mockService.name + ';' + qs.stringify(params, ';')
+                        path: '/' + mockService.name + ';' + qs.stringify(params, ';'),
+                        query: {
+                            returnMeta: true
+                        }
                     },
                     res = {
                         json: function(response) {
                             expect(response).to.exist;
                             expect(response).to.not.be.empty;
-                            expect(response).to.contain.keys('operation', 'args');
-                            expect(response.operation.name).to.equal(operation);
-                            expect(response.operation.success).to.be.true;
-                            expect(response.args).to.contain.keys('params');
-                            expect(response.args.params).to.deep.equal(params);
+                            expect(response).to.contain.keys('data', 'meta');
+                            expect(response.data).to.contain.keys('operation', 'args');
+                            expect(response.data.operation.name).to.equal(operation);
+                            expect(response.data.operation.success).to.be.true;
+                            expect(response.data.args).to.contain.keys('params');
+                            expect(response.data.args.params).to.deep.equal(params);
+                            expect(response.meta).to.eql({
+                                headers: responseHeaders,
+                                statusCode: statusCode
+                            });
                             expect(statusCodeSet).to.be.true;
                             expect(headersSet).to.eql(responseHeaders);
                             done();
@@ -371,20 +426,24 @@ describe('Server Fetcher', function () {
                     },
                     req = {
                         method: 'GET',
-                        path: '/' + mockService.name + ';' + qs.stringify(params, ';')
+                        path: '/' + mockService.name + ';' + qs.stringify(params, ';'),
+                        query: {
+                            returnMeta: true
+                        }
                     },
                     res = {
                         json: function(response) {
                             expect(response).to.exist;
                             expect(response).to.not.be.empty;
-                            expect(response).to.contain.keys('operation', 'args');
-                            expect(response.operation.name).to.equal(operation);
-                            expect(response.operation.success).to.be.true;
-                            expect(response.args).to.contain.keys('params');
-                            expect(response.args.params.id).to.be.a.number;
-                            expect(response.args.params.id.toString()).to.equal(params.id);
-                            expect(response.args.params.bigId).to.be.a.String;
-                            expect(response.args.params.bigId.toString()).to.equal(params.bigId);
+                            expect(response).to.contain.keys('data', 'meta');
+                            expect(response.data).to.contain.keys('operation', 'args');
+                            expect(response.data.operation.name).to.equal(operation);
+                            expect(response.data.operation.success).to.be.true;
+                            expect(response.data.args).to.contain.keys('params');
+                            expect(response.data.args.params.id).to.be.a.number;
+                            expect(response.data.args.params.id.toString()).to.equal(params.id);
+                            expect(response.data.args.params.bigId).to.be.a.String;
+                            expect(response.data.args.params.bigId.toString()).to.equal(params.bigId);
                             expect(statusCodeSet).to.be.true;
                             done();
                         },
@@ -547,10 +606,51 @@ describe('Server Fetcher', function () {
                 done(err);
             };
         };
+        beforeEach(function () {
+            fetcher = new Fetcher ({
+                req: {}
+            });
+        });
+        it('should keep track of serviceMeta data', function (done) {
+            var fetcher = new Fetcher ({
+                req: {}
+            });
+            mockService.meta = {
+                headers: {
+                    'x-foo': 'foo'
+                }
+            };
+            fetcher
+                .read(resource)
+                .params(params)
+                .end(function (err) {
+                    if (err) {
+                        done(err);
+                    }
+                    mockService.meta = {
+                        headers: {
+                            'x-bar': 'bar'
+                        }
+                    };
+                    fetcher
+                        .read(resource)
+                        .params(params)
+                        .end(function (err) {
+                            if (err) {
+                                done(err);
+                            }
+                            var serviceMeta = fetcher.getServiceMeta();
+                            expect(serviceMeta).to.have.length(2);
+                            expect(serviceMeta[0].headers).to.eql({'x-foo': 'foo'})
+                            expect(serviceMeta[1].headers).to.eql({'x-bar': 'bar'})
+                            done();
+                        });
+                });
+        });
         describe('should work superagent style', function () {
             describe('with callbacks', function () {
                 it('should throw if no resource is given', function () {
-                    expect(fetcher.read).to.throw('Resource is required for a fetcher request');
+                    expect(fetcher.read.bind(fetcher)).to.throw('Resource is required for a fetcher request');
                 });
                 it('should handle CREATE', function (done) {
                     var operation = 'create';
@@ -589,7 +689,7 @@ describe('Server Fetcher', function () {
             });
             describe('with Promises', function () {
                 it('should throw if no resource is given', function () {
-                    expect(fetcher.read).to.throw('Resource is required for a fetcher request');
+                    expect(fetcher.read.bind(fetcher)).to.throw('Resource is required for a fetcher request');
                 });
                 it('should handle CREATE', function (done) {
                     var operation = 'create';

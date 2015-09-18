@@ -149,6 +149,52 @@ fetcher
 
 See the [simple example](https://github.com/yahoo/fetchr/tree/master/examples/simple).
 
+## Service Metadata
+
+Service calls on the client transparently become xhr requests.
+It is a good idea to set cache headers on common xhr calls.
+You can do so by providing a third parameter in your service's callback.
+If you want to look at what headers were set by the service you just called,
+simply inspect the third parameter in the callback.
+
+Note: If you're using promises, the metadata will be available on the `meta`
+property of the resolved value.
+
+```js
+// dataService.js
+module.exports = {
+    name: 'data_service',
+    read: function(req, resource, params, config, callback) {
+        // business logic
+        var data = 'response';
+        var meta = {
+            headers: {
+                'cache-control': 'public, max-age=3600'
+            },
+            statusCode: 200 // You can even provide a custom statusCode for the xhr response
+        };
+        callback(null, data, meta);
+    }
+}
+```
+
+```js
+fetcher
+    .read('data_service')
+    .params({id: ###})
+    .end(function (err, data, meta) {
+        // data will be 'response'
+        // meta will have the header and statusCode from above
+    });
+```
+
+There is a convenience method called `fetcher.getServiceMeta` on the fetchr instance.
+This method will return the metadata for all the calls that have happened so far
+in an array format.
+In the server, this will include all service calls for the current request.
+In the client, this will include all service calls for the current session.
+
+
 ## Updating Configuration
 
 Usually you instantiate fetcher with some default options for the entire browser session,

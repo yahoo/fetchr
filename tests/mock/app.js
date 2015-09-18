@@ -10,8 +10,8 @@ var Fetcher = require('../../libs/fetcher.js');
 var mockService = require('./MockService');
 var mockErrorService = require('./MockErrorService');
 
-Fetcher.registerFetcher(mockService);
-Fetcher.registerFetcher(mockErrorService);
+Fetcher.registerService(mockService);
+Fetcher.registerService(mockErrorService);
 
 var app = express();
 app.use(bodyParser.json());
@@ -21,5 +21,5 @@ var server = http.createServer(app).listen(port);
 console.log('Listening on port ' + port);
 module.exports = server;
 module.exports.cleanup = function () {
-    Fetcher.fetchers = {};
+    Fetcher.services = {};
 };
