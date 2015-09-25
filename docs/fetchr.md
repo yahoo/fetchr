@@ -71,6 +71,11 @@ Call the update method of a service.
 
 Call the delete method of a service.
 
+### getServiceMeta()
+
+Returns metadata for all service calls in an array format.
+The 0 index will be the first service call.
+
 ### updateOptions(options)
 
 Update the options of the fetchr instance.

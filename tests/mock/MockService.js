@@ -32,7 +32,7 @@ var MockService = {
                 resource: resource,
                 params: params
             }
-        }, this.meta);
+        }, this.meta || params.meta);
         this.meta = null;
     },
     /**
@@ -57,7 +57,7 @@ var MockService = {
                 resource: resource,
                 params: params
             }
-        }, this.meta);
+        }, this.meta || params.meta);
         this.meta = null;
     },
     /**
@@ -82,7 +82,7 @@ var MockService = {
                 resource: resource,
                 params: params
             }
-        }, this.meta);
+        }, this.meta || params.meta);
         this.meta = null;
     },
     /**
@@ -106,7 +106,7 @@ var MockService = {
                 resource: resource,
                 params: params
             }
-        }, this.meta);
+        }, this.meta || params.meta);
         this.meta = null;
     }
 
