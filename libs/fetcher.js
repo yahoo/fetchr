@@ -134,7 +134,6 @@ Request.prototype.clientConfig = function (config) {
 Request.prototype.end = function (callback) {
     var self = this;
     var promise = new Promise(function (resolve, reject) {
-        executeRequest(self, resolve, reject);
         setImmediate(executeRequest, self, resolve, reject);
     });
 
