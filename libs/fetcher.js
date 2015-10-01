@@ -137,7 +137,7 @@ Request.prototype.end = function (callback) {
         setImmediate(executeRequest, self, resolve, reject);
     });
 
-    promise.then(function (result) {
+    promise = promise.then(function (result) {
         if (result.meta) {
             self.serviceMeta.push(result.meta)
         };
