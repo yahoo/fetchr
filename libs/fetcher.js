@@ -412,7 +412,7 @@ Fetcher.prototype.read = function (resource, params, config, callback) {
         callback = config;
         config = {};
     }
-    request
+    return request
         .params(params)
         .clientConfig(config)
         .end(callback)
@@ -447,7 +447,7 @@ Fetcher.prototype.create = function (resource, params, body, config, callback) {
         callback = config;
         config = {};
     }
-    request
+    return request
         .params(params)
         .body(body)
         .clientConfig(config)
@@ -483,7 +483,7 @@ Fetcher.prototype.update = function (resource, params, body, config, callback) {
         callback = config;
         config = {};
     }
-    request
+    return request
         .params(params)
         .body(body)
         .clientConfig(config)
@@ -519,7 +519,7 @@ Fetcher.prototype['delete'] = function (resource, params, config, callback) {
         callback = config;
         config = {};
     }
-    request
+    return request
         .params(params)
         .clientConfig(config)
         .end(callback)
