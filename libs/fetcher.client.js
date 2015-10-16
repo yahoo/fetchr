@@ -315,7 +315,7 @@ Fetcher.prototype = {
             callback = clientConfig;
             clientConfig = {};
         }
-        request
+        return request
             .params(params)
             .body(body)
             .clientConfig(clientConfig)
@@ -342,7 +342,7 @@ Fetcher.prototype = {
             callback = clientConfig;
             clientConfig = {};
         }
-        request
+        return request
             .params(params)
             .clientConfig(clientConfig)
             .end(callback)
@@ -369,7 +369,7 @@ Fetcher.prototype = {
             callback = clientConfig;
             clientConfig = {};
         }
-        request
+        return request
             .params(params)
             .body(body)
             .clientConfig(clientConfig)
@@ -396,7 +396,7 @@ Fetcher.prototype = {
             callback = clientConfig;
             clientConfig = {};
         }
-        request
+        return request
             .params(params)
             .clientConfig(clientConfig)
             .end(callback)
