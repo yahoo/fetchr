@@ -59,7 +59,8 @@ function getErrorResponse(err) {
 
     return {
         statusCode: statusCode,
-        output: output
+        output: output,
+        meta: err.meta
     };
 }
 
@@ -148,6 +149,9 @@ Request.prototype.end = function (callback) {
         promise.then(function (result) {
             setImmediate(callback, null, result.data, result.meta);
         }, function (err) {
+            if (err.meta) {
+                self.serviceMeta.push(err.meta);
+            };
             setImmediate(callback, err);
         });
     } else {
