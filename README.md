@@ -63,7 +63,7 @@ The `name` propety will be used when you call one of the CRUD operations.
 // app.js
 var Fetcher = require('fetchr');
 var myDataService = require('./dataService');
-Fetcher.registerService(myDataFetcher);
+Fetcher.registerService(myDataService);
 ```
 
 ```js
