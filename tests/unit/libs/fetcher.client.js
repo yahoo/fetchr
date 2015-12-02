@@ -6,6 +6,7 @@
 /*globals before,beforeEach,after,afterEach,describe,it */
 "use strict";
 
+var lodash = require('lodash');
 var libUrl = require('url');
 var expect = require('chai').expect;
 var mockery = require('mockery');
@@ -127,7 +128,8 @@ describe('Client Fetcher', function () {
                     headers: {
                         'x-foo-bar': 'foobar'
                     }
-                }
+                },
+                missing: undefined
             };
         var body = { stuff: 'is'};
         var config = {};
@@ -141,7 +143,7 @@ describe('Client Fetcher', function () {
                     expect(data.operation.success).to.be.true;
                     expect(data.args).to.exist;
                     expect(data.args.resource).to.equal(resource);
-                    expect(data.args.params).to.eql(params);
+                    expect(data.args.params).to.eql(lodash.omit(params, lodash.isUndefined));
                     expect(meta).to.eql(params.meta);
                     done();
                 };
@@ -156,7 +158,7 @@ describe('Client Fetcher', function () {
                     expect(result.data.operation.success).to.be.true;
                     expect(result.data.args).to.exist;
                     expect(result.data.args.resource).to.equal(resource);
-                    expect(result.data.args.params).to.eql(params);
+                    expect(result.data.args.params).to.eql(lodash.omit(params, lodash.isUndefined));
                     expect(result.meta).to.eql(params.meta);
                 } catch (e) {
                     done(e);

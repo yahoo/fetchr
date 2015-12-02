@@ -39,7 +39,7 @@ module.exports = function defaultConstructGetUri(baseUri, resource, params, conf
         lodash.forEach(params, function eachParam(v, k) {
             if (k === id_param) {
                 id_val = encodeURIComponent(v);
-            } else {
+            } else if (v !== undefined) {
                 try {
                     matrix.push(k + '=' + encodeURIComponent(jsonifyComplexType(v)));
                 } catch (err) {
