@@ -1,16 +1,16 @@
-# Fetchr 
+# Fetchr
 
 [![npm version](https://badge.fury.io/js/fetchr.svg)](http://badge.fury.io/js/fetchr)
 [![Build Status](https://travis-ci.org/yahoo/fetchr.svg?branch=master)](https://travis-ci.org/yahoo/fetchr)
 [![Dependency Status](https://david-dm.org/yahoo/fetchr.svg)](https://david-dm.org/yahoo/fetchr)
 [![devDependency Status](https://david-dm.org/yahoo/fetchr/dev-status.svg)](https://david-dm.org/yahoo/fetchr#info=devDependencies)
-[![Coverage Status](https://coveralls.io/repos/yahoo/fetchr/badge.png?branch=master)](https://coveralls.io/r/yahoo/fetchr?branch=master) 
+[![Coverage Status](https://coveralls.io/repos/yahoo/fetchr/badge.png?branch=master)](https://coveralls.io/r/yahoo/fetchr?branch=master)
 
 Universal data access layer for web applications.
 
 Typically on the server, you call your API or database directly to fetch some data. However, on the client, you cannot always call your services in the same way (i.e, cross domain policies). Instead, XHR requests need to be made to the server which get forwarded to your service.
 
-Having to write code differently for both environments is duplicative and error prone. Fetchr provides an abstraction layer over your data service calls so that you can fetch data using the same API on the server and client side. 
+Having to write code differently for both environments is duplicative and error prone. Fetchr provides an abstraction layer over your data service calls so that you can fetch data using the same API on the server and client side.
 
 ## Install
 
@@ -133,7 +133,7 @@ fetcher
     .end(function (err, data, meta) {
     // handle err and/or data returned from data fetcher in this callback
     });
-    
+
 // for create you can use the body() method to pass data
 fetcher
     .create('data_api_create')
@@ -257,6 +257,29 @@ fetcher
     // handle err and/or data returned from data fetcher in this callback
     });
 ```
+
+## XHR Response Formatting
+
+For some applications, there may be a situation where you need to modify an XHR response before it is passed to the client. Typically, you would apply your modifications in the service itself. However, if you want to modify the XHR responses across many services (i.e. add debug information), then you can use the `responseFormatter` option.
+
+`responseFormatter` is a function that is passed into the `Fetcher.middleware` method. It is passed three arguments, the request object, response object and the service response object (i.e. the data returned from your service). The `responseFormatter` function can then modify the service response to add additional information.
+
+Take a look at the example below:
+
+```js
+/**
+    Using the app.js from above, you can modify the Fetcher.middleware
+    method to pass in the responseFormatter function.
+ */
+app.use('/myCustomAPIEndpoint', Fetcher.middleware({
+    responseFormatter: function (req, res, data) {
+        data.debug = 'some debug information';
+        return data;
+    }
+}));
+```
+
+Now when an XHR request is performed, your response will contain the `debug` property added above.
 
 ## CORS Support
 

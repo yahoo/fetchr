@@ -569,6 +569,116 @@ describe('Server Fetcher', function () {
             });
 
         });
+
+        describe('Response Formatter', function () {
+            describe('GET', function () {
+                it('should modify the response object', function (done) {
+                    var operation = 'read';
+                    var statusCodeSet = false;
+                    var params = {
+                            uuids: ['cd7240d6-aeed-3fed-b63c-d7e99e21ca17', 'cd7240d6-aeed-3fed-b63c-d7e99e21ca17'],
+                            id: 'asdf'
+                        };
+                    var req = {
+                             method: 'GET',
+                             path: '/' + mockService.name + ';' + qs.stringify(params, ';'),
+                             query: {
+                                 returnMeta: true
+                             }
+                        };
+                    var res = {
+                            json: function(response) {
+                                expect(response).to.exist;
+                                expect(response).to.not.be.empty;
+                                expect(response).to.contain.keys('data', 'meta', 'modified');
+                                expect(response.data).to.contain.keys('operation', 'args');
+                                expect(response.data.operation.name).to.equal(operation);
+                                expect(response.data.operation.success).to.be.true;
+                                expect(response.data.args).to.contain.keys('params');
+                                expect(response.data.args.params).to.deep.equal(params);
+                                expect(response.meta).to.be.empty;
+                                expect(statusCodeSet).to.be.true;
+                                done();
+                            },
+                            status: function(code) {
+                                expect(code).to.equal(200);
+                                statusCodeSet = true;
+                                return this;
+                            },
+                            send: function (code) {
+                                console.log('Not Expected: middleware responded with', code);
+                            }
+                        };
+                    var next = function () {
+                            console.log('Not Expected: middleware skipped request');
+                        };
+                    var middleware = Fetcher.middleware({responseFormatter: function (req, res, data) {
+                            data.modified = true;
+                            return data;
+                        }});
+
+                    middleware(req, res, next);
+                });
+            });
+            describe('POST', function () {
+                it('should modify the response object', function (done) {
+                    var operation = 'create',
+                        statusCodeSet = false,
+                        req = {
+                            method: 'POST',
+                            path: '/' + mockService.name,
+                            body: {
+                                requests: {
+                                    g0: {
+                                        resource: mockService.name,
+                                        operation: operation,
+                                        params: {
+                                            uuids: ['cd7240d6-aeed-3fed-b63c-d7e99e21ca17', 'cd7240d6-aeed-3fed-b63c-d7e99e21ca17'],
+                                            id: 'asdf'
+                                        }
+                                    }
+                                },
+                                context: {
+                                    site: '',
+                                    device: ''
+                                }
+                            }
+                        },
+                        res = {
+                            json: function(response) {
+                                expect(response).to.exist;
+                                expect(response).to.not.be.empty;
+                                expect(response.g0).to.contain.keys('data', 'meta', 'modified');
+                                var data = response.g0.data;
+                                expect(data).to.contain.keys('operation', 'args');
+                                expect(data.operation.name).to.equal(operation);
+                                expect(data.operation.success).to.be.true;
+                                expect(data.args).to.contain.keys('params');
+                                expect(data.args.params).to.equal(req.body.requests.g0.params);
+                                expect(statusCodeSet).to.be.true;
+                                done();
+                            },
+                            status: function(code) {
+                                expect(code).to.equal(200);
+                                statusCodeSet = true;
+                                return this;
+                            },
+                            send: function (code) {
+                                console.log('Not Expected: middleware responded with', code);
+                            }
+                        },
+                        next = function () {
+                            console.log('Not Expected: middleware skipped request');
+                        },
+                        middleware = Fetcher.middleware({responseFormatter: function (req, res, data) {
+                            data.modified = true;
+                            return data;
+                        }});
+
+                    middleware(req, res, next);
+                });
+            });
+        });
     });
 
     describe('CRUD Interface', function () {

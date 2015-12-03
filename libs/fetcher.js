@@ -279,12 +279,20 @@ Fetcher.isRegistered = function (name) {
  * Returns express/connect middleware for Fetcher
  * @method middleware
  * @memberof Fetcher
+ * @param {Object} [options] Optional configurations
+ * @param {Function} [options.responseFormatter=no op function] Function to modify the response
+            before sending to client. First argument is the HTTP request object,
+            second argument is the HTTP response object and the third argument is the service data object.
  * @returns {Function} middleware
  *     @param {Object} req
  *     @param {Object} res
  *     @param {Object} next
  */
-Fetcher.middleware = function () {
+Fetcher.middleware = function (options) {
+    options = options || {};
+    var responseFormatter = options.responseFormatter || function noOp(req, res, data) {
+        return data;
+    };
     return function (req, res, next) {
         var request;
         var error;
@@ -314,14 +322,14 @@ Fetcher.middleware = function () {
                     }
                     if (err) {
                         var errResponse = getErrorResponse(err);
-                        res.status(errResponse.statusCode).json(errResponse.output);
+                        res.status(errResponse.statusCode).json(responseFormatter(req, res, errResponse.output));
                         return;
                     }
                     if (req.query.returnMeta) {
-                        res.status(meta.statusCode || 200).json({
+                        res.status(meta.statusCode || 200).json(responseFormatter(req, res, {
                             data: data,
                             meta: meta
-                        });
+                        }));
                     } else {
                         // TODO: Remove `returnMeta` feature flag after next release
                         res.status(meta.statusCode || 200).json(data);
@@ -361,16 +369,16 @@ Fetcher.middleware = function () {
                     if (meta.headers) {
                         res.set(meta.headers);
                     }
-                    if(err) {
+                    if (err) {
                         var errResponse = getErrorResponse(err);
-                        res.status(errResponse.statusCode).json(errResponse.output);
+                        res.status(errResponse.statusCode).json(responseFormatter(req, res, errResponse.output));
                         return;
                     }
                     var responseObj = {};
-                    responseObj[DEFAULT_GUID] = {
+                    responseObj[DEFAULT_GUID] = responseFormatter(req, res, {
                         data: data,
                         meta: meta
-                    };
+                    });
                     res.status(meta.statusCode || 200).json(responseObj);
                 });
         }
