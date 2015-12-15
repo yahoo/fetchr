@@ -137,7 +137,7 @@ fetcher
 // for create you can use the body() method to pass data
 fetcher
     .create('data_api_create')
-    .body({"some":"data");
+    .body({"some":"data"});
     .end(function (err, data, meta) {
     // handle err and/or data returned from data fetcher in this callback
     });
