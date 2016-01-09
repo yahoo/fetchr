@@ -140,12 +140,12 @@ Request.prototype.end = function (callback) {
     promise = promise.then(function (result) {
         if (result.meta) {
             self.serviceMeta.push(result.meta);
-        };
+        }
         return result;
     }, function(errData) {
         if (errData.meta) {
             self.serviceMeta.push(errData.meta);
-        };
+        }
         throw errData.err;
     });
 

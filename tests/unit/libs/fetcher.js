@@ -647,6 +647,27 @@ describe('Server Fetcher', function () {
                         });
                 });
         });
+        it('should have serviceMeta data on error', function (done) {
+            var fetcher = new Fetcher ({
+                req: {}
+            });
+            mockErrorService.meta = {
+                headers: {
+                    'x-foo': 'foo'
+                }
+            };
+            fetcher
+                .read(mockErrorService.name)
+                .params(params)
+                .end(function (err) {
+                    if (err) {
+                        var serviceMeta = fetcher.getServiceMeta();
+                        expect(serviceMeta).to.have.length(1);
+                        expect(serviceMeta[0].headers).to.eql({'x-foo': 'foo'});
+                        done();
+                    }
+                });
+        });
         describe('should work superagent style', function () {
             describe('with callbacks', function () {
                 it('should throw if no resource is given', function () {
