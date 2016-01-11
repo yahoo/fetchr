@@ -139,9 +139,14 @@ Request.prototype.end = function (callback) {
 
     promise = promise.then(function (result) {
         if (result.meta) {
-            self.serviceMeta.push(result.meta)
-        };
+            self.serviceMeta.push(result.meta);
+        }
         return result;
+    }, function(errData) {
+        if (errData.meta) {
+            self.serviceMeta.push(errData.meta);
+        }
+        throw errData.err;
     });
 
     if (callback) {
@@ -165,7 +170,10 @@ Request.prototype.end = function (callback) {
 function executeRequest (request, resolve, reject) {
     var args = [request.req, request.resource, request._params, request._clientConfig, function executeRequestCallback(err, data, meta) {
         if (err) {
-            reject(err);
+            reject({
+                err: err,
+                meta: meta
+            });
         } else {
             resolve({
                 data: data,

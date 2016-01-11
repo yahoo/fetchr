@@ -26,7 +26,8 @@ var MockErrorService = {
             output: params.output,
             message: params.message,
             read: 'error'
-        }, null);
+        }, null, this.meta || params.meta);
+        this.meta = null;
     },
     /**
      * create operation (create as in CRUD).
@@ -46,7 +47,8 @@ var MockErrorService = {
             message: params.message,
             output: params.output,
             create: 'error'
-        }, null);
+        }, null, this.meta || params.meta);
+        this.meta = null;
     },
     /**
      * update operation (update as in CRUD).
