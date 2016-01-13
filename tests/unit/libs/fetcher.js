@@ -552,6 +552,9 @@ describe('Server Fetcher', function () {
             it('should skip invalid GET resource', function (done) {
                 makeInvalidReqTest({method: 'GET', path: '/invalidService'}, 'Bad resource invalidService', done);
             });
+            it('should sanitize resource name for invalid GET resource', function (done) {
+                makeInvalidReqTest({method: 'GET', path: '/invalid&Service'}, 'Bad resource invalid*Service', done);
+            });
             it('should skip invalid POST request', function (done) {
                 makeInvalidReqTest({method: 'POST', body: {
                     requests: {
@@ -560,6 +563,15 @@ describe('Server Fetcher', function () {
                         }
                     }
                 }}, 'Bad resource invalidService', done);
+            });
+            it('should sanitize invalid POST request', function (done) {
+                makeInvalidReqTest({method: 'POST', body: {
+                    requests: {
+                        g0: {
+                            resource: 'invalid&Service'
+                        }
+                    }
+                }}, 'Bad resource invalid*Service', done);
             });
             it('should skip POST request with empty req.body.requests object', function (done) {
                 makeInvalidReqTest({method: 'POST', body: { requests: {}}}, 'No resources', done);
