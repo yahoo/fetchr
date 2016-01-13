@@ -12,6 +12,7 @@ var debug = require('debug')('Fetchr');
 var fumble = require('fumble');
 var objectAssign = require('object-assign');
 var Promise = global.Promise || require('es6-promise').Promise;
+var RESOURCE_SANTIZER_REGEXP = /[^\w\.]+/g;
 
 function parseValue(value) {
     // take care of value of type: array, object
@@ -38,6 +39,10 @@ function parseParamValues (params) {
     }, {});
 }
 
+function sanitizeResourceName(resource) {
+    return resource ? resource.replace(RESOURCE_SANTIZER_REGEXP, '*') : resource;
+}
+
 /**
  * Takes an error and resolves output and statusCode to respond to client with
  *
@@ -55,7 +60,6 @@ function getErrorResponse(err) {
     } else if (err.message) {
         output.message = err.message;
     }
-
 
     return {
         statusCode: statusCode,
@@ -267,7 +271,7 @@ Fetcher.getService = function (name) {
     //Access service by name
     var service = Fetcher.isRegistered(name);
     if (!service) {
-        throw new Error('Service "' + name + '" could not be found');
+        throw new Error('Service "' + sanitizeResourceName(name) + '" could not be found');
     }
     return service;
 };
@@ -304,6 +308,7 @@ Fetcher.middleware = function (options) {
     return function (req, res, next) {
         var request;
         var error;
+        var serviceMeta;
 
         if (req.method === GET) {
             var path = req.path.substr(1).split(';');
@@ -311,12 +316,12 @@ Fetcher.middleware = function (options) {
 
             if (!Fetcher.isRegistered(resource)) {
                 error = fumble.http.badRequest('Invalid Fetchr Access', {
-                    debug: 'Bad resource ' + resource
+                    debug: 'Bad resource ' + sanitizeResourceName(resource)
                 });
                 error.source = 'fetchr';
                 return next(error);
             }
-            var serviceMeta = [];
+            serviceMeta = [];
             request = new Request(OP_READ, resource, {
                 req: req,
                 serviceMeta: serviceMeta
@@ -359,12 +364,12 @@ Fetcher.middleware = function (options) {
 
             if (!Fetcher.isRegistered(singleRequest.resource)) {
                 error = fumble.http.badRequest('Invalid Fetchr Access', {
-                    debug: 'Bad resource ' + singleRequest.resource
+                    debug: 'Bad resource ' + sanitizeResourceName(singleRequest.resource)
                 });
                 error.source = 'fetchr';
                 return next(error);
             }
-            var serviceMeta = [];
+            serviceMeta = [];
             request = new Request(singleRequest.operation, singleRequest.resource, {
                 req: req,
                 serviceMeta: serviceMeta
@@ -431,7 +436,7 @@ Fetcher.prototype.read = function (resource, params, config, callback) {
     return request
         .params(params)
         .clientConfig(config)
-        .end(callback)
+        .end(callback);
 };
 /**
  * create operation (create as in CRUD).
@@ -467,7 +472,7 @@ Fetcher.prototype.create = function (resource, params, body, config, callback) {
         .params(params)
         .body(body)
         .clientConfig(config)
-        .end(callback)
+        .end(callback);
 };
 /**
  * update operation (update as in CRUD).
@@ -503,7 +508,7 @@ Fetcher.prototype.update = function (resource, params, body, config, callback) {
         .params(params)
         .body(body)
         .clientConfig(config)
-        .end(callback)
+        .end(callback);
 };
 /**
  * delete operation (delete as in CRUD).
@@ -538,7 +543,7 @@ Fetcher.prototype['delete'] = function (resource, params, config, callback) {
     return request
         .params(params)
         .clientConfig(config)
-        .end(callback)
+        .end(callback);
 };
 
 /**
@@ -559,7 +564,7 @@ Fetcher.prototype.updateOptions = function (options) {
  */
 Fetcher.prototype.getServiceMeta = function () {
     return this.serviceMeta;
-}
+};
 
 module.exports = Fetcher;
 

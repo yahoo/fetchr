@@ -1,3 +1,6 @@
+*.yml
+.editorconfig
+/docs/
 /artifacts/
 /examples/
 /tests/
