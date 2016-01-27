@@ -143,7 +143,7 @@ describe('Client Fetcher', function () {
                     expect(data.operation.success).to.be.true;
                     expect(data.args).to.exist;
                     expect(data.args.resource).to.equal(resource);
-                    expect(data.args.params).to.eql(lodash.omit(params, lodash.isUndefined));
+                    expect(data.args.params).to.eql(lodash.omitBy(params, lodash.isUndefined));
                     expect(meta).to.eql(params.meta);
                     done();
                 };
@@ -158,7 +158,7 @@ describe('Client Fetcher', function () {
                     expect(result.data.operation.success).to.be.true;
                     expect(result.data.args).to.exist;
                     expect(result.data.args.resource).to.equal(resource);
-                    expect(result.data.args.params).to.eql(lodash.omit(params, lodash.isUndefined));
+                    expect(result.data.args.params).to.eql(lodash.omitBy(params, lodash.isUndefined));
                     expect(result.meta).to.eql(params.meta);
                 } catch (e) {
                     done(e);
@@ -209,8 +209,8 @@ describe('Client Fetcher', function () {
                             });
                             var serviceMeta = fetcher.getServiceMeta();
                             expect(serviceMeta).to.have.length(2);
-                            expect(serviceMeta[0].headers).to.eql({'x-foo': 'foo'})
-                            expect(serviceMeta[1].headers).to.eql({'x-bar': 'bar'})
+                            expect(serviceMeta[0].headers).to.eql({'x-foo': 'foo'});
+                            expect(serviceMeta[1].headers).to.eql({'x-bar': 'bar'});
                             done();
                         });
                 });
@@ -264,7 +264,7 @@ describe('Client Fetcher', function () {
                 it('should throw if no resource is given', function () {
                     expect(fetcher.read).to.throw('Resource is required for a fetcher request');
                 });
-            })
+            });
         });
         describe('should be backwards compatible', function (done) {
             // with config
@@ -473,26 +473,16 @@ describe('Client Fetcher', function () {
         var body = {};
         var config = {};
         var callback = function(operation, done) {
-                return function(err, data) {
-                    if (err){
-                        done(err);
-                    }
-                    done();
-                };
-            };
-
-        beforeEach(function(){
-            fetcher = new Fetcher({
-                context: context,
-                contextPicker: {
-                    GET: function getContextPicker(value, key, object) {
-                        if (key === 'random') {
-                            return false
-                        }
-                        return true;
-                    }
+            return function(err, data) {
+                if (err){
+                    done(err);
                 }
-            });
+                done();
+            };
+        };
+
+        function prepTest (fetcherInstance) {
+            fetcher = fetcherInstance;
             validateHTTP({
                 validateGET: function (url, headers, config) {
                     expect(url).to.contain(DEFAULT_XHR_PATH + '/' + resource);
@@ -502,12 +492,55 @@ describe('Client Fetcher', function () {
                     expect(url).to.contain('returnMeta=true');
                 },
                 validatePOST: function (url, headers, body, config) {
-                    expect(url).to.equal(DEFAULT_XHR_PATH + '?_csrf=' + context._csrf + '&random=' + context.random);
+                    expect(url).to.equal(DEFAULT_XHR_PATH + '?_csrf=' +
+                        context._csrf + '&random=' + context.random);
                 }
             });
+        }
+
+        describe('Function', function () {
+            beforeEach(function () {
+                prepTest(new Fetcher({
+                    context: context,
+                    contextPicker: {
+                        GET: function getContextPicker(value, key) {
+                            if (key === 'random') {
+                                return false;
+                            }
+                            return true;
+                        }
+                    }
+                }));
+            });
+
+            testCrud(it, resource, params, body, config, callback);
         });
 
-        testCrud(it, resource, params, body, config, callback);
+        describe('Property Name', function () {
+            beforeEach(function () {
+                prepTest(new Fetcher({
+                    context: context,
+                    contextPicker: {
+                        GET: '_csrf'
+                    }
+                }));
+            });
+
+            testCrud(it, resource, params, body, config, callback);
+        });
+
+        describe('Property Names', function () {
+            beforeEach(function () {
+                prepTest(new Fetcher({
+                    context: context,
+                    contextPicker: {
+                        GET: ['_csrf']
+                    }
+                }));
+            });
+
+            testCrud(it, resource, params, body, config, callback);
+        });
     });
 
 
@@ -524,11 +557,11 @@ describe('Client Fetcher', function () {
                     lang : 'en-US',
                 },
                 xhrTimeout: 1500
-            })
+            });
             expect(fetcher.options.xhrTimeout).to.equal(1500);
             // new context should be merged
-            expect(fetcher.options.context._csrf).to.equal('stuff'); 
-            expect(fetcher.options.context.lang).to.equal('en-US'); 
+            expect(fetcher.options.context._csrf).to.equal('stuff');
+            expect(fetcher.options.context.lang).to.equal('en-US');
         });
     });
 });

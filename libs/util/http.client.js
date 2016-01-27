@@ -14,10 +14,10 @@
  *          Note that only retry only applies on GET.
  */
 var _ = {
-        forEach: require('lodash/collection/forEach'),
-        some: require('lodash/collection/some'),
-        delay: require('lodash/function/delay'),
-        isNumber: require('lodash/lang/isNumber')
+        forEach: require('lodash/forEach'),
+        some: require('lodash/some'),
+        delay: require('lodash/delay'),
+        isNumber: require('lodash/isNumber')
     },
     DEFAULT_CONFIG = {
         retry: {
@@ -201,7 +201,7 @@ function io(url, options) {
         resp.responseText = body;
 
         if (err) {
-            // getting detail info from xhr module 
+            // getting detail info from xhr module
             err.rawRequest = resp.rawRequest;
             err.url = resp.url;
             options.on.failure.call(null, err, resp);

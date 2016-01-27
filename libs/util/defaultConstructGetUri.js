@@ -6,9 +6,9 @@
 
 var debug = require('debug')('Fetcher:defaultConstructGetUri');
 var lodash = {
-    forEach: require('lodash/collection/forEach'),
-    isArray: require('lodash/lang/isArray'),
-    isObject: require('lodash/lang/isObject')
+    forEach: require('lodash/forEach'),
+    isArray: require('lodash/isArray'),
+    isObject: require('lodash/isObject')
 };
 
 function jsonifyComplexType(value) {

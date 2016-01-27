@@ -12,11 +12,12 @@
 var REST = require('./util/http.client');
 var debug = require('debug')('FetchrClient');
 var lodash = {
-        isFunction: require('lodash/lang/isFunction'),
-        forEach: require('lodash/collection/forEach'),
-        merge: require('lodash/object/merge'),
-        noop: require('lodash/utility/noop'),
-        pick: require('lodash/object/pick')
+        isFunction: require('lodash/isFunction'),
+        forEach: require('lodash/forEach'),
+        merge: require('lodash/merge'),
+        noop: require('lodash/noop'),
+        pickBy: require('lodash/pickBy'),
+        pick: require('lodash/pick')
     };
 var DEFAULT_GUID = 'g0';
 var DEFAULT_XHR_PATH = '/api';
@@ -42,11 +43,15 @@ function parseResponse(response) {
  * Pick keys from the context object
  * @method pickContext
  * @param {Object} context context object
- * @param {Function} picker picker function for lodash/object/pick
+ * @param {Function|Array|String} picker picker object w/iteratee for lodash/pickBy|pick
  * @param {String} method method name, get or post
  */
 function pickContext (context, picker, method) {
-    return picker && picker[method] ? lodash.pick(context, picker[method]) : context;
+    if (picker && picker[method]) {
+        var libPicker = lodash.isFunction(picker[method]) ? lodash.pickBy : lodash.pick;
+        return libPicker(context, picker[method]);
+    }
+    return context;
 }
 
 /**
@@ -97,7 +102,7 @@ Request.prototype.params = function (params) {
  * Add body to this fetcher request
  * @method body
  * @memberof Request
- * @param {Object} body The JSON object that contains the resource data being updated for this request. 
+ * @param {Object} body The JSON object that contains the resource data being updated for this request.
  *                      Not used for read and delete operations.
  * @chainable
  */
@@ -134,8 +139,8 @@ Request.prototype.end = function (callback) {
 
     promise = promise.then(function (result) {
         if (result.meta) {
-            self.options._serviceMeta.push(result.meta)
-        };
+            self.options._serviceMeta.push(result.meta);
+        }
         return result;
     });
 
@@ -241,7 +246,7 @@ function executeRequest (request, resolve, reject) {
         }
         resolve(result);
     });
-};
+}
 
 /**
  * Build a final uri by adding query params to base uri from this.context
@@ -319,7 +324,7 @@ Fetcher.prototype = {
             .params(params)
             .body(body)
             .clientConfig(clientConfig)
-            .end(callback)
+            .end(callback);
     },
 
     /**
@@ -345,7 +350,7 @@ Fetcher.prototype = {
         return request
             .params(params)
             .clientConfig(clientConfig)
-            .end(callback)
+            .end(callback);
     },
 
     /**
@@ -373,7 +378,7 @@ Fetcher.prototype = {
             .params(params)
             .body(body)
             .clientConfig(clientConfig)
-            .end(callback)
+            .end(callback);
     },
 
     /**
@@ -399,7 +404,7 @@ Fetcher.prototype = {
         return request
             .params(params)
             .clientConfig(clientConfig)
-            .end(callback)
+            .end(callback);
     },
 
     /**
