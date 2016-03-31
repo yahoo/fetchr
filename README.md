@@ -218,7 +218,7 @@ fetcher.updateOptions({
 
 ## Error Handling
 
-When an error occurs in your Fetchr CRUD method, you should return an error object to the callback. The error object should contain a `statusCode` (default 400) and `output` property that contains a JSON serializable object which will be sent to the client.
+When an error occurs in your Fetchr CRUD method, you should return an error object to the callback. The error object should contain a `statusCode` (default 500) and `output` property that contains a JSON serializable object which will be sent to the client.
 
 ```js
 module.exports = {
