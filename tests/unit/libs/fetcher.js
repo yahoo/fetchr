@@ -245,27 +245,27 @@ describe('Server Fetcher', function () {
             };
 
             it('should respond to POST api request with default error details',
-               makePostApiErrorTest({}, 400, {message: 'request failed'}));
+               makePostApiErrorTest({}, 500, {message: 'request failed'}));
 
             it('should respond to POST api request with custom error status code',
-               makePostApiErrorTest({statusCode: 500}, 500, {message: 'request failed'}));
+               makePostApiErrorTest({statusCode: 400}, 400, {message: 'request failed'}));
 
             it('should respond to POST api request with custom error message',
-               makePostApiErrorTest({message: 'Error message...'}, 400, {message: 'Error message...'}));
+               makePostApiErrorTest({message: 'Error message...'}, 500, {message: 'Error message...'}));
 
             it('should respond to POST api request with no leaked error information',
-               makePostApiErrorTest({statusCode: 500, danger: 'zone'}, 500, {message: 'request failed'}));
+               makePostApiErrorTest({statusCode: 400, danger: 'zone'}, 400, {message: 'request failed'}));
 
 
             describe('should respond to POST api request with custom output', function() {
                 it('using json object',
-                   makePostApiErrorTest({statusCode: 500, output: {
+                   makePostApiErrorTest({statusCode: 400, output: {
                       message: 'custom message',
                       foo    : 'bar',
-                   }}, 500, {message: 'custom message', 'foo': 'bar'}));
+                   }}, 400, {message: 'custom message', 'foo': 'bar'}));
 
                 it('using json array',
-                   makePostApiErrorTest({statusCode: 500, output: [1, 2]}, 500, [1, 2]));
+                   makePostApiErrorTest({statusCode: 400, output: [1, 2]}, 400, [1, 2]));
             });
         });
 
@@ -508,26 +508,26 @@ describe('Server Fetcher', function () {
             };
 
             it('should respond to GET api request with default error details',
-               makeGetApiErrorTest({}, 400, {message: 'request failed'}));
+               makeGetApiErrorTest({}, 500, {message: 'request failed'}));
 
             it('should respond to GET api request with custom error status code',
-               makeGetApiErrorTest({statusCode: 500}, 500, {message: 'request failed'}));
+               makeGetApiErrorTest({statusCode: 400}, 400, {message: 'request failed'}));
 
             it('should respond to GET api request with no leaked error information',
-               makeGetApiErrorTest({statusCode: 500, danger: 'zone'}, 500, {message: 'request failed'}));
+               makeGetApiErrorTest({statusCode: 400, danger: 'zone'}, 400, {message: 'request failed'}));
 
             it('should respond to GET api request with custom error message',
-               makeGetApiErrorTest({message: 'Error message...'}, 400, {message: 'Error message...'}));
+               makeGetApiErrorTest({message: 'Error message...'}, 500, {message: 'Error message...'}));
 
             describe('should respond to GET api request with custom output', function() {
                 it('using json object',
-                   makeGetApiErrorTest({statusCode: 500, output: {
+                   makeGetApiErrorTest({statusCode: 400, output: {
                       message: 'custom message',
                       foo    : 'bar',
-                   }}, 500, {message: 'custom message', 'foo': 'bar'}));
+                   }}, 400, {message: 'custom message', 'foo': 'bar'}));
 
                 it('using json array',
-                   makeGetApiErrorTest({statusCode: 500, output: [1, 2]}, 500, [1, 2]));
+                   makeGetApiErrorTest({statusCode: 400, output: [1, 2]}, 400, [1, 2]));
             });
         });
 

@@ -50,7 +50,7 @@ function sanitizeResourceName(resource) {
  * @return {Object} object with resolved statusCode & output
  */
 function getErrorResponse(err) {
-    var statusCode = err.statusCode || 400;
+    var statusCode = err.statusCode || 500;
     var output = {
         message: 'request failed'
     };
@@ -571,7 +571,7 @@ module.exports = Fetcher;
 /**
  * @callback Fetcher~fetcherCallback
  * @param {Object} err  The request error, pass null if there was no error. The data and meta parameters will be ignored if this parameter is not null.
- * @param {number} [err.statusCode=400] http status code to return
+ * @param {number} [err.statusCode=500] http status code to return
  * @param {string} [err.message=request failed] http response body
  * @param {Object} data request result
  * @param {Object} [meta] request meta-data
