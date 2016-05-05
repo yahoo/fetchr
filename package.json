@@ -40,6 +40,7 @@
     "pre-commit": "^1.0.0",
     "qs": "^4.0.0",
     "request": "^2.61.0",
+    "sinon": "^1.17.3",
     "supertest": "^1.0.1"
   },
   "jshintConfig": {

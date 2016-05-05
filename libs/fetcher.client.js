@@ -142,6 +142,11 @@ Request.prototype.end = function (callback) {
             self.options._serviceMeta.push(result.meta);
         }
         return result;
+    }, function(errData) {
+        if (errData.meta) {
+            self.options._serviceMeta.push(errData.meta);
+        }
+        throw errData;
     });
 
     if (callback) {

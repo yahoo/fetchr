@@ -14,6 +14,7 @@ var fetcher;
 var mockService = require('../../mock/MockService');
 var mockErrorService = require('../../mock/MockErrorService');
 var qs = require('querystring');
+var testCrud = require('../../util/testCrud');
 
 describe('Server Fetcher', function () {
     beforeEach(function () {
@@ -693,7 +694,7 @@ describe('Server Fetcher', function () {
         });
     });
 
-    describe('CRUD Interface', function () {
+    describe('CRUD', function () {
         var resource = mockService.name;
         var params = {};
         var body = {};
@@ -728,186 +729,13 @@ describe('Server Fetcher', function () {
                 done(err);
             };
         };
-        beforeEach(function () {
-            fetcher = new Fetcher ({
+        before(function () {
+            this.fetcher = new Fetcher ({
                 req: {}
             });
         });
-        it('should keep track of serviceMeta data', function (done) {
-            var fetcher = new Fetcher ({
-                req: {}
-            });
-            mockService.meta = {
-                headers: {
-                    'x-foo': 'foo'
-                }
-            };
-            fetcher
-                .read(resource)
-                .params(params)
-                .end(function (err) {
-                    if (err) {
-                        done(err);
-                    }
-                    mockService.meta = {
-                        headers: {
-                            'x-bar': 'bar'
-                        }
-                    };
-                    fetcher
-                        .read(resource)
-                        .params(params)
-                        .end(function (err) {
-                            if (err) {
-                                done(err);
-                            }
-                            var serviceMeta = fetcher.getServiceMeta();
-                            expect(serviceMeta).to.have.length(2);
-                            expect(serviceMeta[0].headers).to.eql({'x-foo': 'foo'})
-                            expect(serviceMeta[1].headers).to.eql({'x-bar': 'bar'})
-                            done();
-                        });
-                });
-        });
-        it('should have serviceMeta data on error', function (done) {
-            var fetcher = new Fetcher ({
-                req: {}
-            });
-            mockErrorService.meta = {
-                headers: {
-                    'x-foo': 'foo'
-                }
-            };
-            fetcher
-                .read(mockErrorService.name)
-                .params(params)
-                .end(function (err) {
-                    if (err) {
-                        var serviceMeta = fetcher.getServiceMeta();
-                        expect(serviceMeta).to.have.length(1);
-                        expect(serviceMeta[0].headers).to.eql({'x-foo': 'foo'});
-                        done();
-                    }
-                });
-        });
-        describe('should work superagent style', function () {
-            describe('with callbacks', function () {
-                it('should throw if no resource is given', function () {
-                    expect(fetcher.read.bind(fetcher)).to.throw('Resource is required for a fetcher request');
-                });
-                it('should handle CREATE', function (done) {
-                    var operation = 'create';
-                    fetcher
-                        [operation](resource)
-                        .params(params)
-                        .body(body)
-                        .clientConfig(config)
-                        .end(callback(operation, done));
-                });
-                it('should handle READ', function (done) {
-                    var operation = 'read';
-                    fetcher
-                        [operation](resource)
-                        .params(params)
-                        .clientConfig(config)
-                        .end(callback(operation, done));
-                });
-                it('should handle UPDATE', function (done) {
-                    var operation = 'update';
-                    fetcher
-                        [operation](resource)
-                        .params(params)
-                        .body(body)
-                        .clientConfig(config)
-                        .end(callback(operation, done));
-                });
-                it('should handle DELETE', function (done) {
-                    var operation = 'delete';
-                    fetcher
-                        [operation](resource)
-                        .params(params)
-                        .clientConfig(config)
-                        .end(callback(operation, done));
-                });
-            });
-            describe('with Promises', function () {
-                it('should throw if no resource is given', function () {
-                    expect(fetcher.read.bind(fetcher)).to.throw('Resource is required for a fetcher request');
-                });
-                it('should handle CREATE', function (done) {
-                    var operation = 'create';
-                    fetcher
-                        [operation](resource)
-                        .params(params)
-                        .body(body)
-                        .clientConfig(config)
-                        .end()
-                        .then(resolve(operation, done), reject(operation, done));
-                });
-                it('should handle READ', function (done) {
-                    var operation = 'read';
-                    fetcher
-                        [operation](resource)
-                        .params(params)
-                        .clientConfig(config)
-                        .end()
-                        .then(resolve(operation, done), reject(operation, done));
-                });
-                it('should handle UPDATE', function (done) {
-                    var operation = 'update';
-                    fetcher
-                        [operation](resource)
-                        .params(params)
-                        .body(body)
-                        .clientConfig(config)
-                        .end()
-                        .then(resolve(operation, done), reject(operation, done));
-                });
-                it('should handle DELETE', function (done) {
-                    var operation = 'delete';
-                    fetcher
-                        [operation](resource)
-                        .params(params)
-                        .clientConfig(config)
-                        .end()
-                        .then(resolve(operation, done), reject(operation, done));
-                });
-            });
-        });
-        describe('should be backwards compatible', function () {
-            it('should handle CREATE', function (done) {
-                var operation = 'create';
-                fetcher[operation](resource, params, body, config, callback(operation, done));
-            });
-            it('should handle CREATE w/ no config', function (done) {
-                var operation = 'create';
-                fetcher[operation](resource, params, body, callback(operation, done));
-            });
-            it('should handle READ', function (done) {
-                var operation = 'read';
-                fetcher[operation](resource, params, config, callback(operation, done));
-            });
-            it('should handle READ w/ no config', function (done) {
-                var operation = 'read';
-                fetcher[operation](resource, params, callback(operation, done));
-            });
-            it('should handle UPDATE', function (done) {
-                var operation = 'update';
-                fetcher[operation](resource, params, body, config, callback(operation, done));
-            });
-            it('should handle UPDATE w/ no config', function (done) {
-                var operation = 'update';
-                fetcher[operation](resource, params, body, callback(operation, done));
-            });
-            it('should handle DELETE', function (done) {
-                var operation = 'delete';
-                fetcher[operation](resource, params, config, callback(operation, done));
-            });
-            it('should handle DELETE w/ no config', function (done) {
-                var operation = 'delete';
-                fetcher[operation](resource, params, callback(operation, done));
-            });
-        })
+        // CRUD
+        testCrud(params, body, config, callback, resolve, reject);
     });
 
 });

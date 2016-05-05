@@ -193,6 +193,10 @@ function io(url, options) {
             err = new Error(errMessage);
             err.statusCode = status;
             err.body = errBody || body;
+            if (err.body) {
+                err.output = err.body.output;
+                err.meta = err.body.meta;
+            }
             if (408 === status || 0 === status) {
                 err.timeout = options.timeout;
             }
