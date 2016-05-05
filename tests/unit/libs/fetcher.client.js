@@ -136,6 +136,52 @@ describe('Client Fetcher', function () {
         })
     });
 
+    describe('xhr', function () {
+        before(function () {
+            this.fetcher = new Fetcher({
+                context: context
+            });
+        });
+
+        it('should return xhr object when calling end w/ callback', function (done) {
+            var operation = 'create';
+            var xhr = this.fetcher
+                [operation](resource)
+                .params(params)
+                .body(body)
+                .clientConfig(config)
+                .end(callback(operation, function (err) {
+                    if (err) {
+                        done(err);
+                        return;
+                    }
+                    console.log(xhr.readyState);
+                    expect(xhr.readyState).to.exist;
+                    expect(xhr.abort).to.exist;
+                    expect(xhr.open).to.exist;
+                    expect(xhr.send).to.exist;
+                    done();
+                }));
+        });
+        it('should be able to abort xhr when calling end w/ callback', function (done) {
+            var operation = 'create';
+            var xhr = this.fetcher
+                [operation](resource)
+                .params(params)
+                .body(body)
+                .clientConfig(config)
+                .end(callback(operation, function (err) {
+                    if (err) {
+                        // in this case, an error is good
+                        // we want the error to be thrown then request is aborted
+                        done();
+                    }
+                }));
+            expect(xhr.abort).to.exist;
+            xhr.abort();
+        });
+    });
+
     describe('xhrTimeout', function () {
         var DEFAULT_XHR_TIMEOUT = 3000;
 

@@ -132,30 +132,27 @@ Request.prototype.clientConfig = function (config) {
  */
 Request.prototype.end = function (callback) {
     var self = this;
-    var promise = new Promise(function (resolve, reject) {
-        debug('Executing request %s.%s with params %o and body %o', self.resource, self.operation, self._params, self._body);
-        setImmediate(executeRequest, self, resolve, reject);
-    });
-
-    promise = promise.then(function (result) {
-        if (result.meta) {
-            self.options._serviceMeta.push(result.meta);
+    function captureMeta (data) {
+        if (data.meta) {
+            self.options._serviceMeta.push(data.meta);
         }
-        return result;
-    }, function(errData) {
-        if (errData.meta) {
-            self.options._serviceMeta.push(errData.meta);
-        }
-        throw errData;
-    });
+        return data;
+    }
 
     if (callback) {
-        promise.then(function (result) {
+        return executeRequest(self, function (result) {
+            captureMeta(result);
             setImmediate(callback, null, result.data, result.meta);
         }, function (err) {
+            captureMeta(err);
             setImmediate(callback, err);
         });
     } else {
+        var promise = new Promise(function (resolve, reject) {
+            debug('Executing request %s.%s with params %o and body %o', self.resource, self.operation, self._params, self._body);
+            setImmediate(executeRequest, self, resolve, reject);
+        });
+        promise = promise.then(captureMeta, captureMeta);
         return promise;
     }
 };
@@ -238,7 +235,7 @@ function executeRequest (request, resolve, reject) {
     }; // TODO: remove. leave here for now for backward compatibility
     uri = request._constructGroupUri(uri);
     allow_retry_post = (request.operation === OP_READ);
-    REST.post(uri, {}, data, lodash.merge({unsafeAllowRetry: allow_retry_post, xhrTimeout: request.options.xhrTimeout}, clientConfig), function postDone(err, response) {
+    return REST.post(uri, {}, data, lodash.merge({unsafeAllowRetry: allow_retry_post, xhrTimeout: request.options.xhrTimeout}, clientConfig), function postDone(err, response) {
         if (err) {
             debug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info');
             return reject(err);
