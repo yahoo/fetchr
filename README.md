@@ -232,6 +232,19 @@ module.exports = {
 };
 ```
 
+And in your service call:
+
+```js
+fetcher
+    .read('someData')
+    .params({id: ###})
+    .end(function (err, data, meta) {
+        if (err) {
+            // err.output will be { message: "Not found", more: "meta data" }
+        }
+    });
+```
+
 ## XHR Timeouts
 
 `xhrTimeout` is an optional config property that allows you to set timeout (in ms) for all clientside requests, defaults to `3000`.
