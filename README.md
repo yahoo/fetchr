@@ -245,6 +245,32 @@ fetcher
     });
 ```
 
+## XHR Object
+
+The xhr object is returned by the `.end()` method as long as you're *not* chaining promises.
+This is useful if you want to abort a request before it is completed.
+
+```js
+var req = fetcher
+    .read('someData')
+    .params({id: ###})
+    .end(function (err, data, meta) {
+        // err.output will be { message: "Not found", more: "meta data" }
+    });
+// req is the xhr object
+req.abort();
+```
+
+However, you can't acces the xhr object if using promise chaining like so:
+```js
+var req = fetcher
+    .read('someData')
+    .params({id: ###})
+    .end();
+// req is a promise
+req.then(onResolve, onReject);
+```
+
 ## XHR Timeouts
 
 `xhrTimeout` is an optional config property that allows you to set timeout (in ms) for all clientside requests, defaults to `3000`.
