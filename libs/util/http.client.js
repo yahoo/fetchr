@@ -159,11 +159,11 @@ function doXhr(method, url, headers, data, config, callback) {
     if (data !== undefined && data !== NULL) {
         options.data = isContentTypeJSON(headers) ? JSON.stringify(data) : data;
     }
-    io(url, options);
+    return io(url, options);
 }
 
 function io(url, options) {
-    xhr({
+    return xhr({
         url: url,
         method: options.method || METHOD_GET,
         timeout: options.timeout,
@@ -233,7 +233,7 @@ module.exports = {
      * @param {Function} callback The callback function, with two params (error, response)
      */
     get : function (url, headers, config, callback) {
-        doXhr(METHOD_GET, url, headers, NULL, config, callback);
+        return doXhr(METHOD_GET, url, headers, NULL, config, callback);
     },
 
     /**
@@ -249,7 +249,7 @@ module.exports = {
      * @param {Function} callback The callback function, with two params (error, response)
      */
     put : function (url, headers, data, config, callback) {
-        doXhr(METHOD_PUT, url, headers, data, config, callback);
+        return doXhr(METHOD_PUT, url, headers, data, config, callback);
     },
 
     /**
@@ -266,7 +266,7 @@ module.exports = {
      * @param {Function} callback The callback function, with two params (error, response)
      */
     post : function (url, headers, data, config, callback) {
-        doXhr(METHOD_POST, url, headers, data, config, callback);
+        return doXhr(METHOD_POST, url, headers, data, config, callback);
     },
 
     /**
@@ -281,6 +281,6 @@ module.exports = {
      * @param {Function} callback The callback function, with two params (error, response)
      */
     'delete' : function (url, headers, config, callback) {
-        doXhr(METHOD_DELETE, url, headers, NULL, config, callback);
+        return doXhr(METHOD_DELETE, url, headers, NULL, config, callback);
     }
 };
