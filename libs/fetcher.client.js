@@ -152,7 +152,9 @@ Request.prototype.end = function (callback) {
             debug('Executing request %s.%s with params %o and body %o', self.resource, self.operation, self._params, self._body);
             setImmediate(executeRequest, self, resolve, reject);
         });
-        promise = promise.then(captureMeta, captureMeta);
+        promise = promise.then(captureMeta, function (err) {
+            throw captureMeta(err);
+        });
         return promise;
     }
 };

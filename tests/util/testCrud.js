@@ -187,28 +187,55 @@ module.exports = function testCrud (params, body, config, callback, resolve, rej
                 });
             });
         });
-        it('should have serviceMeta data on error', function (done) {
-            var fetcher = this.fetcher;
-            fetcher._serviceMeta.length = 0; // reset serviceMeta to empty array
-            fetcher
-            .read(mockErrorService.name)
-            .params(_.merge({}, params, {
-                meta: {
-                    headers: {
-                        'x-foo': 'foo'
-                    }
-                }
-            }))
-            .clientConfig(config)
-            .end(function (err) {
-                if (err) {
-                    var serviceMeta = fetcher.getServiceMeta();
-                    expect(serviceMeta).to.have.length(1);
-                    expect(serviceMeta[0]).to.include.keys('headers');
-                    expect(serviceMeta[0].headers).to.include.keys('x-foo');
-                    expect(serviceMeta[0].headers['x-foo']).to.equal('foo');
-                    done();
-                }
+        describe('should have serviceMeta data on error', function() {
+            it('with callbacks', function (done) {
+                var fetcher = this.fetcher;
+                fetcher._serviceMeta.length = 0; // reset serviceMeta to empty array
+                fetcher
+                  .read(mockErrorService.name)
+                  .params(_.merge({}, params, {
+                      meta: {
+                          headers: {
+                              'x-foo': 'foo'
+                          }
+                      }
+                  }))
+                  .clientConfig(config)
+                  .end(function (err) {
+                      if (err) {
+                          var serviceMeta = fetcher.getServiceMeta();
+                          expect(serviceMeta).to.have.length(1);
+                          expect(serviceMeta[0]).to.include.keys('headers');
+                          expect(serviceMeta[0].headers).to.include.keys('x-foo');
+                          expect(serviceMeta[0].headers['x-foo']).to.equal('foo');
+                          done();
+                      }
+                  });
+            });
+            it('with Promises', function (done) {
+                var fetcher = this.fetcher;
+                fetcher._serviceMeta.length = 0; // reset serviceMeta to empty array
+                fetcher
+                  .read(mockErrorService.name)
+                  .params(_.merge({}, params, {
+                      meta: {
+                          headers: {
+                              'x-foo': 'foo'
+                          }
+                      }
+                  }))
+                  .clientConfig(config)
+                  .end()
+                  .catch(function (err) {
+                      if (err) {
+                          var serviceMeta = fetcher.getServiceMeta();
+                          expect(serviceMeta).to.have.length(1);
+                          expect(serviceMeta[0]).to.include.keys('headers');
+                          expect(serviceMeta[0].headers).to.include.keys('x-foo');
+                          expect(serviceMeta[0].headers['x-foo']).to.equal('foo');
+                          done();
+                      }
+                  });
             });
         });
     });
