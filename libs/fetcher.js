@@ -189,7 +189,13 @@ function executeRequest (request, resolve, reject) {
     if ((op === OP_CREATE) || (op === OP_UPDATE)) {
         args.splice(3, 0, request._body);
     }
-    var service = Fetcher.getService(request.resource);
+    var service;
+    try {
+        service = Fetcher.getService(request.resource);
+    } catch (err) {
+        reject({err: err});
+        return;
+    }
     service[op].apply(service, args);
 }
 

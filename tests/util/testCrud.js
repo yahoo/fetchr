@@ -1,6 +1,7 @@
 var expect = require('chai').expect;
 var defaultOptions = require('./defaultOptions');
 var resource = defaultOptions.resource;
+var invalidResource = 'invalid_resource';
 var mockErrorService = require('../mock/MockErrorService');
 var _ = require('lodash');
 module.exports = function testCrud (params, body, config, callback, resolve, reject) {
@@ -95,6 +96,57 @@ module.exports = function testCrud (params, body, config, callback, resolve, rej
                         .end()
                         .then(resolve(operation, done), reject(operation, done));
                 });
+                var denySuccess = function (done) {
+                    return function () {
+                        done(new Error('This operation should have failed'));
+                    };
+                };
+                var allowFailure = function (done) {
+                    return function (err) {
+                        expect(err.name).to.equal('Error');
+                        expect(err.message).to.exist;
+                        expect(err.stack).to.exist;
+                        done();
+                    };
+                };
+                it('should reject a CREATE promise on invalid resource', function (done) {
+                    var operation = 'create';
+                    this.fetcher
+                        [operation](invalidResource)
+                        .params(params)
+                        .body(body)
+                        .clientConfig(config)
+                        .end()
+                        .then(denySuccess(done), allowFailure(done));
+                });
+                it('should reject a READ promise on invalid resource', function (done) {
+                    var operation = 'read';
+                    this.fetcher
+                        [operation](invalidResource)
+                        .params(params)
+                        .clientConfig(config)
+                        .end()
+                        .then(denySuccess(done), allowFailure(done));
+                });
+                it('should reject a UPDATE promise on invalid resource', function (done) {
+                    var operation = 'update';
+                    this.fetcher
+                        [operation](invalidResource)
+                        .params(params)
+                        .body(body)
+                        .clientConfig(config)
+                        .end()
+                        .then(denySuccess(done), allowFailure(done));
+                });
+                it('should reject a DELETE promise on invalid resource', function (done) {
+                    var operation = 'delete';
+                    this.fetcher
+                        [operation](invalidResource)
+                        .params(params)
+                        .clientConfig(config)
+                        .end()
+                        .then(denySuccess(done), allowFailure(done));
+                });
                 it('should throw if no resource is given', function () {
                     expect(this.fetcher.read).to.throw('Resource is required for a fetcher request');
                 });
@@ -117,6 +169,34 @@ module.exports = function testCrud (params, body, config, callback, resolve, rej
             it('should handle DELETE', function (done) {
                 var operation = 'delete';
                 this.fetcher[operation](resource, params, config, callback(operation, done));
+            });
+            var denySuccess = function (done) {
+                return function (err, data) {
+                    if (!err) {
+                        done(new Error('This operation should have failed'));
+                    } else {
+                        expect(err.name).to.equal('Error');
+                        expect(err.message).to.exist;
+                        expect(err.stack).to.exist;
+                        done();
+                    }
+                };
+            };
+            it('should throw catchable error on CREATE with invalid resource', function (done) {
+                var operation = 'create';
+                this.fetcher[operation](invalidResource, params, body, config, denySuccess(done));
+            });
+            it('should throw catchable error on READ with invalid resource', function (done) {
+                var operation = 'read';
+                this.fetcher[operation](invalidResource, params, config, denySuccess(done));
+            });
+            it('should throw catchable error on UPDATE with invalid resource', function (done) {
+                var operation = 'update';
+                this.fetcher[operation](invalidResource, params, body, config, denySuccess(done));
+            });
+            it('should throw catchable error on DELETE with invalid resource', function (done) {
+                var operation = 'delete';
+                this.fetcher[operation](invalidResource, params, config, denySuccess(done));
             });
             if (!options.disableNoConfigTests) {
                 // without config
