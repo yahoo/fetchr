@@ -7,7 +7,7 @@
   "scripts": {
     "cover": "istanbul cover --dir artifacts -- ./node_modules/mocha/bin/_mocha tests/unit/ --recursive --reporter spec",
     "lint": "jshint libs tests",
-    "test": "mocha tests/unit/ --recursive --reporter spec"
+    "test": "NODE_ENV=test mocha tests/unit/ --recursive --reporter spec"
   },
   "repository": {
     "type": "git",
