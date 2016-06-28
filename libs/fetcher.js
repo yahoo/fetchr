@@ -77,6 +77,9 @@ function getErrorResponse(err) {
  * @param {Object} options configuration options for Request
  * @param {Object} [options.req] The request object from express/connect.  It can contain per-request/context data.
  * @param {Array} [options.serviceMeta] Array to hold per-request/session metadata from all service calls.
+ * @param {Function} [options.statsCollector] The function will be invoked with 1 argument:
+ *      the stats object, which contains resource, operation, params (request params),
+ *      statusCode, err, and time (elapsed time)
  * @constructor
  */
 function Request (operation, resource, options) {
@@ -92,6 +95,8 @@ function Request (operation, resource, options) {
     this._params = {};
     this._body = null;
     this._clientConfig = {};
+    this._startTime = 0;
+    this._statsCollector = options.statsCollector;
 }
 
 /**
@@ -130,6 +135,34 @@ Request.prototype.clientConfig = function (config) {
 };
 
 /**
+ * capture meta data; capture stats for this request and pass stats data
+ * to options.statsCollector
+ * @method _captureMetaAndStats
+ * @param {Object} errData  The error response for failed request
+ * @param {Object} result  The response data for successful request
+ */
+Request.prototype._captureMetaAndStats = function (errData, result) {
+    var self = this;
+    var meta = (errData && errData.meta) || (result && result.meta);
+    if (meta) {
+        self.serviceMeta.push(meta);
+    }
+    var statsCollector = self._statsCollector;
+    if (typeof statsCollector === 'function') {
+        var err = errData && errData.err;
+        var stats = {
+            resource: self.resource,
+            operation: self.operation,
+            params: self._params,
+            statusCode: err ? err.statusCode : (result && result.meta && result.meta.statusCode || 200),
+            err: err,
+            time: Date.now() - self._startTime
+        };
+        statsCollector(stats);
+    }
+};
+
+/**
  * Execute this fetcher request and call callback.
  * @method end
  * @memberof Request
@@ -137,26 +170,24 @@ Request.prototype.clientConfig = function (config) {
  */
 Request.prototype.end = function (callback) {
     var self = this;
-    var promise = new Promise(function (resolve, reject) {
+    self._startTime = Date.now();
+
+    var promise = new Promise(function requestExecutor(resolve, reject) {
         setImmediate(executeRequest, self, resolve, reject);
     });
 
-    promise = promise.then(function (result) {
-        if (result.meta) {
-            self.serviceMeta.push(result.meta);
-        }
+    promise = promise.then(function requestSucceeded(result) {
+        self._captureMetaAndStats(null, result);
         return result;
-    }, function(errData) {
-        if (errData.meta) {
-            self.serviceMeta.push(errData.meta);
-        }
+    }, function requestFailed(errData) {
+        self._captureMetaAndStats(errData);
         throw errData.err;
     });
 
     if (callback) {
-        promise.then(function (result) {
+        promise.then(function requestSucceeded(result) {
             setImmediate(callback, null, result.data, result.meta);
-        }, function (err) {
+        }, function requestFailed(err) {
             setImmediate(callback, err);
         });
     } else {
@@ -207,13 +238,15 @@ function executeRequest (request, resolve, reject) {
  * @param {Object} options configuration options for Fetcher
  * @param {Object} [options.req] The express request object.  It can contain per-request/context data.
  * @param {string} [options.xhrPath="/api"] The path for XHR requests. Will be ignored server side.
+ * @param {Function} [options.statsCollector] The function will be invoked with 1 argument:
+ *      the stats object, which contains resource, operation, params (request params),
+ *      statusCode, err, and time (elapsed time)
  * @constructor
  */
 function Fetcher (options) {
     this.options = options || {};
     this.req = this.options.req || {};
     this._serviceMeta = [];
-
 }
 
 Fetcher.services = {};
@@ -301,6 +334,9 @@ Fetcher.isRegistered = function (name) {
  * @param {Function} [options.responseFormatter=no op function] Function to modify the response
             before sending to client. First argument is the HTTP request object,
             second argument is the HTTP response object and the third argument is the service data object.
+ * @param {Function} [options.statsCollector] The function will be invoked with 1 argument:
+           the stats object, which contains resource, operation, params (request params),
+           statusCode, err, and time (elapsed time)
  * @returns {Function} middleware
  *     @param {Object} req
  *     @param {Object} res
@@ -330,7 +366,8 @@ Fetcher.middleware = function (options) {
             serviceMeta = [];
             request = new Request(OP_READ, resource, {
                 req: req,
-                serviceMeta: serviceMeta
+                serviceMeta: serviceMeta,
+                statsCollector: options.statsCollector
             });
             request
                 .params(parseParamValues(qs.parse(path.join('&'))))
@@ -385,7 +422,8 @@ Fetcher.middleware = function (options) {
             serviceMeta = [];
             request = new Request(singleRequest.operation, singleRequest.resource, {
                 req: req,
-                serviceMeta: serviceMeta
+                serviceMeta: serviceMeta,
+                statsCollector: options.statsCollector
             });
             request
                 .params(singleRequest.params)
@@ -431,7 +469,8 @@ Fetcher.middleware = function (options) {
 Fetcher.prototype.read = function (resource, params, config, callback) {
     var request = new Request('read', resource, {
         req: this.req,
-        serviceMeta: this._serviceMeta
+        serviceMeta: this._serviceMeta,
+        statsCollector: this.options.statsCollector
     });
     if (1 === arguments.length) {
         return request;
@@ -466,7 +505,8 @@ Fetcher.prototype.read = function (resource, params, config, callback) {
 Fetcher.prototype.create = function (resource, params, body, config, callback) {
     var request = new Request('create', resource, {
         req: this.req,
-        serviceMeta: this._serviceMeta
+        serviceMeta: this._serviceMeta,
+        statsCollector: this.options.statsCollector
     });
     if (1 === arguments.length) {
         return request;
@@ -502,7 +542,8 @@ Fetcher.prototype.create = function (resource, params, body, config, callback) {
 Fetcher.prototype.update = function (resource, params, body, config, callback) {
     var request = new Request('update', resource, {
         req: this.req,
-        serviceMeta: this._serviceMeta
+        serviceMeta: this._serviceMeta,
+        statsCollector: this.options.statsCollector
     });
     if (1 === arguments.length) {
         return request;
@@ -537,7 +578,8 @@ Fetcher.prototype.update = function (resource, params, body, config, callback) {
 Fetcher.prototype['delete'] = function (resource, params, config, callback) {
     var request = new Request('delete', resource, {
         req: this.req,
-        serviceMeta: this._serviceMeta
+        serviceMeta: this._serviceMeta,
+        statsCollector: this.options.statsCollector
     });
     if (1 === arguments.length) {
         return request;

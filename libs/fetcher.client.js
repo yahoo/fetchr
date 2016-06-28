@@ -79,11 +79,13 @@ function Request (operation, resource, options) {
         corsPath: options.corsPath,
         context: options.context || {},
         contextPicker: options.contextPicker || {},
+        statsCollector: options.statsCollector,
         _serviceMeta: options._serviceMeta || []
     };
     this._params = {};
     this._body = null;
     this._clientConfig = {};
+    this._startTime = 0;
 }
 
 /**
@@ -124,6 +126,33 @@ Request.prototype.clientConfig = function (config) {
 };
 
 /**
+ * capture meta data; capture stats for this request and pass stats data
+ * to options.statsCollector
+ * @method _captureMetaAndStats
+ * @param {Object} err  The error response for failed request
+ * @param {Object} result  The response data for successful request
+ */
+Request.prototype._captureMetaAndStats = function (err, result) {
+    var self = this;
+    var meta = (err && err.meta) || (result && result.meta);
+    if (meta) {
+        self.options._serviceMeta.push(meta);
+    }
+    var statsCollector = self.options.statsCollector;
+    if (typeof statsCollector === 'function') {
+        var stats = {
+            resource: self.resource,
+            operation: self.operation,
+            params: self._params,
+            statusCode: err ? err.statusCode : 200,
+            err: err,
+            time: Date.now() - self._startTime
+        };
+        statsCollector(stats);
+    }
+};
+
+/**
  * Execute this fetcher request and call callback.
  * @method end
  * @memberof Request
@@ -132,28 +161,27 @@ Request.prototype.clientConfig = function (config) {
  */
 Request.prototype.end = function (callback) {
     var self = this;
-    function captureMeta (data) {
-        if (data.meta) {
-            self.options._serviceMeta.push(data.meta);
-        }
-        return data;
-    }
+    self._startTime = Date.now();
 
     if (callback) {
-        return executeRequest(self, function (result) {
-            captureMeta(result);
+        return executeRequest(self, function requestSucceeded(result) {
+            self._captureMetaAndStats(null, result);
             setImmediate(callback, null, result.data, result.meta);
-        }, function (err) {
-            captureMeta(err);
+        }, function requestFailed(err) {
+            self._captureMetaAndStats(err);
             setImmediate(callback, err);
         });
     } else {
-        var promise = new Promise(function (resolve, reject) {
+        var promise = new Promise(function requestExecutor(resolve, reject) {
             debug('Executing request %s.%s with params %o and body %o', self.resource, self.operation, self._params, self._body);
             setImmediate(executeRequest, self, resolve, reject);
         });
-        promise = promise.then(captureMeta, function (err) {
-            throw captureMeta(err);
+        promise = promise.then(function requestSucceeded(result) {
+            self._captureMetaAndStats(null, result);
+            return result;
+        }, function requestFailed(err) {
+            self._captureMetaAndStats(err);
+            throw err;
         });
         return promise;
     }
@@ -284,6 +312,9 @@ Request.prototype._constructGroupUri = function (uri) {
  *      lodash pick predicate function with three arguments (value, key, object)
  * @param {Function|String|String[]} [options.contextPicker.GET] GET context picker
  * @param {Function|String|String[]} [options.contextPicker.POST] POST context picker
+ * @param {Function} [options.statsCollector] The function will be invoked with 1 argument:
+ *      the stats object, which contains resource, operation, params (request params),
+ *      statusCode, err, and time (elapsed time)
  */
 
 function Fetcher (options) {
@@ -294,6 +325,7 @@ function Fetcher (options) {
         corsPath: options.corsPath,
         context: options.context,
         contextPicker: options.contextPicker,
+        statsCollector: options.statsCollector,
         _serviceMeta: this._serviceMeta
     };
 }
