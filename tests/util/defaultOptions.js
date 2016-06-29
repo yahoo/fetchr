@@ -18,7 +18,7 @@ var config = {};
 var callback = function (operation, done) {
         return function (err, data, meta) {
             if (err){
-                done(err);
+                return done(err);
             }
             expect(data.operation).to.exist;
             expect(data.operation.name).to.equal(operation);

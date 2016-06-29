@@ -148,7 +148,7 @@ module.exports = function testCrud (params, body, config, callback, resolve, rej
                         .then(denySuccess(done), allowFailure(done));
                 });
                 it('should throw if no resource is given', function () {
-                    expect(this.fetcher.read).to.throw('Resource is required for a fetcher request');
+                    expect(this.fetcher.read.bind(this.fetcher)).to.throw('Resource is required for a fetcher request');
                 });
             });
         });

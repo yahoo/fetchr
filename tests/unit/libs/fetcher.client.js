@@ -66,6 +66,7 @@ function handleFakeXhr (request) {
         request.respond(res.status, JSON.stringify(res.headers), res.text);
     });
 }
+
 var context = {_csrf: 'stuff'};
 var resource = defaultOptions.resource;
 var params = defaultOptions.params;
@@ -75,12 +76,30 @@ var callback = defaultOptions.callback;
 var resolve = defaultOptions.resolve;
 var reject = defaultOptions.reject;
 
-describe('Client Fetcher', function () {
+var stats = null;
 
+function statsCollector(s) {
+    stats = s;
+}
+
+var callbackWithStats = function (operation, done) {
+        return function (err, data, meta) {
+            expect(stats.resource).to.eql(resource);
+            expect(stats.operation).to.eql(operation);
+            expect(stats.time).to.be.at.least(0);
+            expect(stats.err).to.eql(err);
+            expect(stats.statusCode).to.eql((err && err.statusCode) || 200);
+            expect(stats.params).to.eql(params);
+            callback(operation, done)(err, data, meta);
+        };
+    };
+
+describe('Client Fetcher', function () {
     describe('DEFAULT', function () {
         before(function () {
             this.fetcher = new Fetcher({
-                context: context
+                context: context,
+                statsCollector: statsCollector
             });
             validateXhr = function (req) {
                 if (req.method === 'GET') {
@@ -92,7 +111,10 @@ describe('Client Fetcher', function () {
                 }
             };
         });
-        testCrud(params, body, config, callback, resolve, reject);
+        beforeEach(function () {
+            stats = null;
+        });
+        testCrud(params, body, config, callbackWithStats, resolve, reject);
         after(function () {
             validateXhr = null;
         });
@@ -133,7 +155,7 @@ describe('Client Fetcher', function () {
         });
         after(function () {
             validateXhr = null;
-        })
+        });
     });
 
     describe('xhr', function () {

@@ -3,7 +3,7 @@
  * Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
  */
 /*jshint expr:true*/
-/*globals before,describe,it */
+/*globals before,beforeEach,afterEach,describe,it */
 "use strict";
 
 var chai = require('chai');
@@ -82,6 +82,13 @@ describe('Server Fetcher', function () {
 
     describe('#middleware', function () {
         describe('#POST', function() {
+            var stats = null;
+            var statsCollector = function (s) {
+                stats = s;
+            };
+            beforeEach(function () {
+                stats = null;
+            });
             it('should respond to POST api request', function (done) {
                 var operation = 'create',
                     statusCodeSet = false,
@@ -116,6 +123,11 @@ describe('Server Fetcher', function () {
                             expect(data.args).to.contain.keys('params');
                             expect(data.args.params).to.equal(req.body.requests.g0.params);
                             expect(statusCodeSet).to.be.true;
+                            expect(stats.resource).to.eql(mockService.name);
+                            expect(stats.operation).to.eql(operation);
+                            expect(stats.statusCode).to.eql(200);
+                            expect(stats.time).to.be.at.least(0);
+                            expect(stats.params).to.eql(req.body.requests.g0.params);
                             done();
                         },
                         status: function(code) {
@@ -130,7 +142,9 @@ describe('Server Fetcher', function () {
                     next = function () {
                         console.log('Not Expected: middleware skipped request');
                     },
-                    middleware = Fetcher.middleware();
+                    middleware = Fetcher.middleware({
+                        statsCollector: statsCollector
+                    });
 
                 middleware(req, res, next);
             });
@@ -173,6 +187,12 @@ describe('Server Fetcher', function () {
                             expect(data.args.params).to.equal(req.body.requests.g0.params);
                             expect(headersSet).to.eql(responseHeaders);
                             expect(statusCodeSet).to.be.true;
+                            expect(stats.resource).to.eql(mockService.name);
+                            expect(stats.operation).to.eql(operation);
+                            expect(stats.statusCode).to.eql(201);
+                            expect(stats.time).to.be.at.least(0);
+                            expect(stats.params).to.eql(req.body.requests.g0.params);
+                            expect(stats.err).to.eql(null);
                             done();
                         },
                         status: function(code) {
@@ -191,7 +211,10 @@ describe('Server Fetcher', function () {
                     next = function () {
                         console.log('Not Expected: middleware skipped request');
                     },
-                    middleware = Fetcher.middleware({pathPrefix: '/api'});
+                    middleware = Fetcher.middleware({
+                        pathPrefix: '/api',
+                        statsCollector: statsCollector
+                    });
 
                 mockService.meta = {
                     headers: responseHeaders,
@@ -729,13 +752,32 @@ describe('Server Fetcher', function () {
                 done(err);
             };
         };
+        var stats = null;
+        var statsCollector = function(s) {
+            stats = s;
+        };
+        var callbackWithStats = function (operation, done) {
+            return function (err, data, meta) {
+                expect(stats.resource).to.eql(resource);
+                expect(stats.operation).to.eql(operation);
+                expect(stats.time).to.be.at.least(0);
+                expect(stats.err).to.eql(err);
+                expect(stats.statusCode).to.eql((err && err.statusCode) || 200);
+                expect(stats.params).to.eql(params);
+                callback(operation, done)(err, data, meta);
+            };
+        };
         before(function () {
             this.fetcher = new Fetcher ({
-                req: {}
+                req: {},
+                statsCollector: statsCollector
             });
         });
+        beforeEach(function () {
+            stats = null;
+        });
         // CRUD
-        testCrud(params, body, config, callback, resolve, reject);
+        testCrud(params, body, config, callbackWithStats, resolve, reject);
     });
 
 });

@@ -445,6 +445,49 @@ var fetcher = new Fetcher({
 });
 ```
 
+## Stats Monitoring & Analysis
+
+To collect fetcher service's success/failure/latency stats, you can configure `statsCollector` for `Fetchr`.  The `statsCollector` function will be invoked with one argumment: `stats`.  The `stats` object will contain the following fields:
+
+* **resource:** The name of the resource for the request
+* **operation:** The name of the operation, `create|read|update|delete`
+* **params:** The params object for the resource
+* **statusCode:** The status code of the response
+* **err:** The error object of failed request; null if request was successful
+* **time:** The time spent for this request, in milliseconds
+
+### Fetcher Instance
+
+```js
+var Fetcher = require('fetchr');
+var fetcher = new Fetcher({
+    xhrPath: '/myCustomAPIEndpoint',
+    statsCollector: function (stats) {
+        // just console logging as a naive example.  there is a lot more you can do here,
+        // like aggregating stats or filtering out stats you don't want to monitor
+        console.log('Request for resource', stats.resource,
+            'with', stats.operation,
+            'returned statusCode:', stats.statusCode,
+            ' within', stats.time, 'ms');
+    }
+});
+```
+
+### Server Middleware
+
+```js
+app.use('/myCustomAPIEndpoint', Fetcher.middleware({
+    statsCollector: function (stats) {
+        // just console logging as a naive example.  there is a lot more you can do here,
+        // like aggregating stats or filtering out stats you don't want to monitor
+        console.log('Request for resource', stats.resource,
+            'with', stats.operation,
+            'returned statusCode:', stats.statusCode,
+            ' within', stats.time, 'ms');
+    }
+}));
+```
+
 ## API
 
 - [Fetchr](https://github.com/yahoo/fetchr/blob/master/docs/fetchr.md)
