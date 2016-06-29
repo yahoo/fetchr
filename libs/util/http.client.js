@@ -117,6 +117,10 @@ function mergeConfig(config) {
             }
         }
 
+        if (config.withCredentials) {
+            cfg.withCredentials = config.withCredentials;
+        }
+
         // tmp stores transient state data, such as retry count
         if (config.tmp) {
             cfg.tmp = config.tmp;
@@ -140,6 +144,7 @@ function doXhr(method, url, headers, data, config, callback) {
         timeout : timeout,
         headers: headers,
         useXDR: config.useXDR,
+        withCredentials: config.withCredentials,
         on : {
             success : function (err, response) {
                 callback(NULL, response);
@@ -169,7 +174,8 @@ function io(url, options) {
         timeout: options.timeout,
         headers: options.headers,
         body: options.data,
-        useXDR: options.cors
+        useXDR: options.cors,
+        withCredentials: options.withCredentials
     }, function (err, resp, body) {
         var status = resp.statusCode;
         var errMessage, errBody;

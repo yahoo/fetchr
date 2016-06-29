@@ -107,13 +107,14 @@ describe('Client HTTP', function () {
         });
 
         it('GET', function (done) {
-            http.get('/url', {'X-Foo': 'foo'}, {cors: true}, function (err, response) {
+            http.get('/url', {'X-Foo': 'foo'}, {cors: true, withCredentials: true}, function (err, response) {
                 expect(xhrOptions.length).to.equal(1);
                 var options = xhrOptions[0];
                 expect(options.url).to.equal('/url');
                 expect(options.headers).to.not.have.property('X-Requested-With');
                 expect(options.headers['X-Foo']).to.equal('foo');
                 expect(options.method).to.equal('GET');
+                expect(options.withCredentials).to.equal(true);
                 expect(err).to.equal(null);
                 expect(response.statusCode).to.equal(200);
                 expect(response.responseText).to.equal('BODY');
@@ -213,7 +214,7 @@ describe('Client HTTP', function () {
         });
 
         // Need to test plain text response
-        // as some servers (e.g. node running in IIS) 
+        // as some servers (e.g. node running in IIS)
         // may remove body content
         // and replace it with 'Bad Request'
         // if not configured to allow content throughput
