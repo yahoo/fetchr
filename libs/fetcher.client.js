@@ -166,7 +166,7 @@ Request.prototype.end = function (callback) {
     if (callback) {
         return executeRequest(self, function requestSucceeded(result) {
             self._captureMetaAndStats(null, result);
-            setImmediate(callback, null, result.data, result.meta);
+            setImmediate(callback, null, result && result.data, result && result.meta);
         }, function requestFailed(err) {
             self._captureMetaAndStats(err);
             setImmediate(callback, err);
