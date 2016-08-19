@@ -18,12 +18,11 @@ function parseValue(value) {
     // take care of value of type: array, object
     try {
         var ret = JSON.parse(value);
-        // Numbers larger than MAX_SAFE_INTEGER will contain rounding errors so,
-        // we will just leave them as strings instead. The length > 15 check is because
-        // the MAX_SAFE_INTEGER in javascript is 9007199254740991 which has a length of 16.
-        // Using a length > 15 check is still safe and faster than trying to use another
-        // library that supports big integers.
-        if (typeof ret === 'number' && value.length > 15) {
+        // Big interger, big decimal and the number in exponential notations will results
+        // in unexpected form. e.g. 1234e1234 will be parsed into Infinity and the
+        // number > MAX_SAFE_INTEGER will cause a rounding error.
+        // So we will just leave them as strings instead.
+        if (typeof ret === 'number' && String(value) !== String(ret)) {
             ret = value;
         }
         return ret;
