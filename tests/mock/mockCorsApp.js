@@ -9,8 +9,10 @@ var app = express();
 var FetcherServer = require('../../libs/fetcher');
 var mockService = require('./MockService');
 var mockErrorService = require('./MockErrorService');
+var mockNoopService = require('./MockNoopService');
 FetcherServer.registerService(mockService);
 FetcherServer.registerService(mockErrorService);
+FetcherServer.registerService(mockNoopService);
 
 app.use(bodyParser.json());
 app.use(function cors (req, res, next) {

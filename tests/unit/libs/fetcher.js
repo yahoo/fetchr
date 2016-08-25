@@ -13,6 +13,7 @@ var Fetcher = require('../../../libs/fetcher');
 var fetcher;
 var mockService = require('../../mock/MockService');
 var mockErrorService = require('../../mock/MockErrorService');
+var mockNoopService = require('../../mock/MockNoopService');
 var qs = require('querystring');
 var testCrud = require('../../util/testCrud');
 
@@ -20,6 +21,7 @@ describe('Server Fetcher', function () {
     beforeEach(function () {
         Fetcher.registerService(mockService);
         Fetcher.registerService(mockErrorService);
+        Fetcher.registerService(mockNoopService);
     });
     afterEach(function () {
         Fetcher.services = {}; // reset services

@@ -3,6 +3,7 @@ var defaultOptions = require('./defaultOptions');
 var resource = defaultOptions.resource;
 var invalidResource = 'invalid_resource';
 var mockErrorService = require('../mock/MockErrorService');
+var mockNoopService = require('../mock/MockNoopService');
 var _ = require('lodash');
 module.exports = function testCrud (params, body, config, callback, resolve, reject) {
     var options = {};
@@ -317,6 +318,31 @@ module.exports = function testCrud (params, body, config, callback, resolve, rej
                       }
                   });
             });
+        });
+    });
+    describe('should reject no operation service', function() {
+        it('with callback', function(done) {
+            var fetcher = this.fetcher;
+            fetcher
+              .read(mockNoopService.name)
+              .clientConfig(config)
+              .end(function(err) {
+                expect(err.name).to.equal('Error');
+                expect(err.message).to.contain('operation: read is undefined on service: mock_noop_service');
+                done();
+              });
+        });
+        it('with Promise', function(done) {
+            var fetcher = this.fetcher;
+            fetcher
+              .read(mockNoopService.name)
+              .clientConfig(config)
+              .end()
+              .catch(function (err) {
+                expect(err.name).to.equal('Error');
+                expect(err.message).to.contain('operation: read is undefined on service: mock_noop_service');
+                done();
+              });
         });
     });
 };
