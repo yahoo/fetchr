@@ -223,11 +223,13 @@ function executeRequest (request, resolve, reject) {
     var service;
     try {
         service = Fetcher.getService(request.resource);
+        if (!service[op]) {
+          throw new Error('operation: ' + op + ' is undefined on service: ' + request.resource);
+        }
+        service[op].apply(service, args);
     } catch (err) {
         reject({err: err});
-        return;
     }
-    service[op].apply(service, args);
 }
 
 /**
