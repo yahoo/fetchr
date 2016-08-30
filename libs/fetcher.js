@@ -6,6 +6,7 @@
 var OP_READ = 'read';
 var OP_CREATE = 'create';
 var OP_UPDATE = 'update';
+var OP_DELETE = 'delete';
 var GET = 'GET';
 var qs = require('querystring');
 var debug = require('debug')('Fetchr');
@@ -223,7 +224,7 @@ function executeRequest (request, resolve, reject) {
     var service;
     try {
         service = Fetcher.getService(request.resource);
-        if (!service[op]) {
+        if ([OP_CREATE,OP_READ,OP_UPDATE,OP_DELETE].indexOf(op) < 0 || !service[op]) {
           throw new Error('operation: ' + op + ' is undefined on service: ' + request.resource);
         }
         service[op].apply(service, args);
