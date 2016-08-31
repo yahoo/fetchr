@@ -88,6 +88,13 @@ function Request (operation, resource, options) {
         throw new Error('Resource is required for a fetcher request');
     }
 
+    if(operation) {
+        if (operation !== OP_CREATE && operation !== OP_READ
+            && operation !== OP_UPDATE && operation !== OP_DELETE) {
+            throw new Error('Unsupported operation');
+        }
+    }
+
     this.operation = operation || OP_READ;
     this.resource = resource;
     options = options || {};
@@ -224,7 +231,7 @@ function executeRequest (request, resolve, reject) {
     var service;
     try {
         service = Fetcher.getService(request.resource);
-        if ([OP_CREATE,OP_READ,OP_UPDATE,OP_DELETE].indexOf(op) < 0 || !service[op]) {
+        if (!service[op]) {
           throw new Error('operation: ' + op + ' is undefined on service: ' + request.resource);
         }
         service[op].apply(service, args);
@@ -423,11 +430,19 @@ Fetcher.middleware = function (options) {
                 return next(error);
             }
             serviceMeta = [];
-            request = new Request(singleRequest.operation, singleRequest.resource, {
-                req: req,
-                serviceMeta: serviceMeta,
-                statsCollector: options.statsCollector
-            });
+            try {
+                request = new Request(singleRequest.operation, singleRequest.resource, {
+                    req: req,
+                    serviceMeta: serviceMeta,
+                    statsCollector: options.statsCollector
+                });
+            }catch(err){
+                error = fumble.http.badRequest('Invalid Fetchr Access', {
+                    debug: err.message
+                });
+                error.source = 'fetchr';
+                return next(error);
+            }
             request
                 .params(singleRequest.params)
                 .body(singleRequest.body || {})

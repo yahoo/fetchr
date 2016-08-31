@@ -599,6 +599,16 @@ describe('Server Fetcher', function () {
                     }
                 }}, 'Bad resource invalid*Service', done);
             });
+            it('should handle unsupported operation', function (done) {
+                makeInvalidReqTest({method: 'POST', body: {
+                    requests: {
+                        g0: {
+                            resource: mockErrorService.name,
+                            operation: 'constructor'
+                        }
+                    }
+                }}, 'Unsupported operation', done);
+            });
             it('should skip POST request with empty req.body.requests object', function (done) {
                 makeInvalidReqTest({method: 'POST', body: { requests: {}}}, 'No resources', done);
             });
