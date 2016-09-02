@@ -33,15 +33,15 @@
     "chai": "^3.0.0",
     "coveralls": "^2.11.1",
     "express": "^4.12.3",
-    "istanbul": "^0.3.2",
+    "istanbul": "^0.4.5",
     "jshint": "^2.5.1",
-    "mocha": "^2.0.1",
+    "mocha": "^3.0.2",
     "mockery": "^1.4.0",
     "pre-commit": "^1.0.0",
-    "qs": "^4.0.0",
+    "qs": "^6.2.1",
     "request": "^2.61.0",
     "sinon": "^1.17.3",
-    "supertest": "^1.0.1"
+    "supertest": "^2.0.0"
   },
   "jshintConfig": {
     "node": true
