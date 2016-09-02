@@ -370,6 +370,81 @@ describe('Client Fetcher', function () {
         });
     });
 
+    describe('Custom request headers', function () {
+        var VERSION = '1.0.0';
+
+        describe('should be configurable globally', function () {
+            before(function () {
+                mockery.registerMock('./util/http.client', {
+                    get: function (url, headers, config, callback) {
+                        expect(headers['X-APP-VERSION']).to.equal(VERSION);
+                        REST.get(url, headers, config, callback);
+                    },
+                    post: function (url, headers, body, config, callback) {
+                        expect(headers['X-APP-VERSION']).to.equal(VERSION);
+                        REST.post(url, headers, body, config, callback);
+                    }
+                });
+                mockery.enable({
+                    useCleanCache: true,
+                    warnOnUnregistered: false
+                });
+                Fetcher = require('../../../libs/fetcher.client');
+                this.fetcher = new Fetcher({
+                    context: context,
+                    headers: {
+                        'X-APP-VERSION': VERSION
+                    }
+                });
+            });
+            testCrud(params, body, config, callback, resolve, reject);
+            after(function () {
+                mockery.deregisterMock('./util/http.client');
+                mockery.disable();
+            });
+        });
+
+        describe('should be configurable per request', function () {
+            before(function () {
+                mockery.registerMock('./util/http.client', {
+                    get: function (url, headers, config, callback) {
+                        expect(headers['X-APP-VERSION']).to.equal(VERSION);
+                        REST.get(url, headers, config, callback);
+                    },
+                    post: function (url, headers, body, config, callback) {
+                        expect(headers['X-APP-VERSION']).to.equal(VERSION);
+                        REST.post(url, headers, body, config, callback);
+                    }
+                });
+                mockery.enable({
+                    useCleanCache: true,
+                    warnOnUnregistered: false
+                });
+                Fetcher = require('../../../libs/fetcher.client');
+                this.fetcher = new Fetcher({
+                    context: context
+                });
+            });
+            var customConfig = {
+                headers: {
+                    'X-APP-VERSION': VERSION
+                }
+            };
+            testCrud({
+                disableNoConfigTests: true,
+                params: params,
+                body: body,
+                config: customConfig,
+                callback: callback,
+                resolve: resolve,
+                reject: reject
+            });
+            after(function () {
+                mockery.deregisterMock('./util/http.client');
+                mockery.disable();
+            });
+        });
+    });
 
     describe('Utils', function () {
         it('should able to update options', function () {
