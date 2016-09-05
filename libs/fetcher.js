@@ -88,13 +88,6 @@ function Request (operation, resource, options) {
         throw new Error('Resource is required for a fetcher request');
     }
 
-    if(operation) {
-        if (operation !== OP_CREATE && operation !== OP_READ
-            && operation !== OP_UPDATE && operation !== OP_DELETE) {
-            throw new Error('Unsupported operation');
-        }
-    }
-
     this.operation = operation || OP_READ;
     this.resource = resource;
     options = options || {};
@@ -429,20 +422,20 @@ Fetcher.middleware = function (options) {
                 error.source = 'fetchr';
                 return next(error);
             }
-            serviceMeta = [];
-            try {
-                request = new Request(singleRequest.operation, singleRequest.resource, {
-                    req: req,
-                    serviceMeta: serviceMeta,
-                    statsCollector: options.statsCollector
-                });
-            }catch(err){
+            var operation = singleRequest.operation;
+            if(operation !== OP_CREATE && operation !== OP_UPDATE && operation !== OP_DELETE && operation !== OP_READ) {
                 error = fumble.http.badRequest('Invalid Fetchr Access', {
-                    debug: err.message
+                    debug: 'Unsupported operation : operation must be create or read or update or delete'
                 });
                 error.source = 'fetchr';
                 return next(error);
             }
+            serviceMeta = [];
+            request = new Request(operation, singleRequest.resource, {
+                req: req,
+                serviceMeta: serviceMeta,
+                statsCollector: options.statsCollector
+            });
             request
                 .params(singleRequest.params)
                 .body(singleRequest.body || {})

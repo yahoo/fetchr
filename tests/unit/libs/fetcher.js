@@ -607,7 +607,7 @@ describe('Server Fetcher', function () {
                             operation: 'constructor'
                         }
                     }
-                }}, 'Unsupported operation', done);
+                }}, 'Unsupported operation : operation must be create or read or update or delete', done);
             });
             it('should skip POST request with empty req.body.requests object', function (done) {
                 makeInvalidReqTest({method: 'POST', body: { requests: {}}}, 'No resources', done);
