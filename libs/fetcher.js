@@ -6,6 +6,7 @@
 var OP_READ = 'read';
 var OP_CREATE = 'create';
 var OP_UPDATE = 'update';
+var OP_DELETE = 'delete';
 var GET = 'GET';
 var qs = require('querystring');
 var debug = require('debug')('Fetchr');
@@ -421,8 +422,16 @@ Fetcher.middleware = function (options) {
                 error.source = 'fetchr';
                 return next(error);
             }
+            var operation = singleRequest.operation;
+            if(operation !== OP_CREATE && operation !== OP_UPDATE && operation !== OP_DELETE && operation !== OP_READ) {
+                error = fumble.http.badRequest('Invalid Fetchr Access', {
+                    debug: 'Unsupported operation : operation must be create or read or update or delete'
+                });
+                error.source = 'fetchr';
+                return next(error);
+            }
             serviceMeta = [];
-            request = new Request(singleRequest.operation, singleRequest.resource, {
+            request = new Request(operation, singleRequest.resource, {
                 req: req,
                 serviceMeta: serviceMeta,
                 statsCollector: options.statsCollector
