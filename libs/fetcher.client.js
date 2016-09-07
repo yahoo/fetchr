@@ -74,6 +74,7 @@ function Request (operation, resource, options) {
     this.operation = operation || OP_READ;
     this.resource = resource;
     this.options = {
+        headers: options.headers,
         xhrPath: options.xhrPath || DEFAULT_XHR_PATH,
         xhrTimeout: options.xhrTimeout || DEFAULT_XHR_TIMEOUT,
         corsPath: options.corsPath,
@@ -239,8 +240,9 @@ function executeRequest (request, resolve, reject) {
         }
     }
 
+    var customHeaders = clientConfig.headers || request.options.headers || {};
     if (!use_post) {
-        return REST.get(uri, {}, lodash.merge({xhrTimeout: request.options.xhrTimeout}, clientConfig), function getDone(err, response) {
+        return REST.get(uri, customHeaders, lodash.merge({xhrTimeout: request.options.xhrTimeout}, clientConfig), function getDone(err, response) {
             if (err) {
                 debug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info');
                 return reject(err);
@@ -265,7 +267,7 @@ function executeRequest (request, resolve, reject) {
     }; // TODO: remove. leave here for now for backward compatibility
     uri = request._constructGroupUri(uri);
     allow_retry_post = (request.operation === OP_READ);
-    return REST.post(uri, {}, data, lodash.merge({unsafeAllowRetry: allow_retry_post, xhrTimeout: request.options.xhrTimeout}, clientConfig), function postDone(err, response) {
+    return REST.post(uri, customHeaders, data, lodash.merge({unsafeAllowRetry: allow_retry_post, xhrTimeout: request.options.xhrTimeout}, clientConfig), function postDone(err, response) {
         if (err) {
             debug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info');
             return reject(err);
@@ -320,6 +322,7 @@ Request.prototype._constructGroupUri = function (uri) {
 function Fetcher (options) {
     this._serviceMeta = [];
     this.options = {
+        headers: options.headers,
         xhrPath: options.xhrPath,
         xhrTimeout: options.xhrTimeout,
         corsPath: options.corsPath,
