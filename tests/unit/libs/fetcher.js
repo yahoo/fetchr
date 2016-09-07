@@ -490,6 +490,97 @@ describe('Server Fetcher', function () {
                 middleware(req, res, next);
             });
 
+            it('should leave big decimal in query params as strings', function (done) {
+                var operation = 'read',
+                    statusCodeSet = false,
+                    params = {
+                        decimal: '9007199254740991', // will not cause rounding errors
+                        bigDecimal: '9007199254740991.11111' // will cause rounding erros
+                    },
+                    req = {
+                        method: 'GET',
+                        path: '/' + mockService.name + ';' + qs.stringify(params, ';'),
+                        query: {
+                            returnMeta: true
+                        }
+                    },
+                    res = {
+                        json: function(response) {
+                            expect(response).to.exist;
+                            expect(response).to.not.be.empty;
+                            expect(response).to.contain.keys('data', 'meta');
+                            expect(response.data).to.contain.keys('operation', 'args');
+                            expect(response.data.operation.name).to.equal(operation);
+                            expect(response.data.operation.success).to.be.true;
+                            expect(response.data.args).to.contain.keys('params');
+                            expect(response.data.args.params.decimal).to.be.a.number;
+                            expect(response.data.args.params.decimal.toString()).to.equal('9007199254740991');
+                            expect(response.data.args.params.bigDecimal).to.be.a.String;
+                            expect(response.data.args.params.bigDecimal.toString()).to.equal('9007199254740991.11111');
+                            expect(statusCodeSet).to.be.true;
+                            done();
+                        },
+                        status: function(code) {
+                            expect(code).to.equal(200);
+                            statusCodeSet = true;
+                            return this;
+                        },
+                        send: function (code) {
+                            console.log('Not Expected: middleware responded with', code);
+                        }
+                    },
+                    next = function () {
+                        console.log('Not Expected: middleware skipped request');
+                    },
+                    middleware = Fetcher.middleware({pathPrefix: '/api'});
+
+                middleware(req, res, next);
+            });
+
+            it('should leave exponential notation in query params as strings', function (done) {
+                var operation = 'read',
+                    statusCodeSet = false,
+                    params = {
+                        num: '1234e1234',
+                    },
+                    req = {
+                        method: 'GET',
+                        path: '/' + mockService.name + ';' + qs.stringify(params, ';'),
+                        query: {
+                            returnMeta: true
+                        }
+                    },
+                    res = {
+                        json: function(response) {
+                            expect(response).to.exist;
+                            expect(response).to.not.be.empty;
+                            expect(response).to.contain.keys('data', 'meta');
+                            expect(response.data).to.contain.keys('operation', 'args');
+                            expect(response.data.operation.name).to.equal(operation);
+                            expect(response.data.operation.success).to.be.true;
+                            expect(response.data.args).to.contain.keys('params');
+                            expect(response.data.args.params.num).to.be.a.String;
+                            expect(response.data.args.params.num.toString()).to.equal('1234e1234');
+                            expect(statusCodeSet).to.be.true;
+                            done();
+                        },
+                        status: function(code) {
+                            expect(code).to.equal(200);
+                            statusCodeSet = true;
+                            return this;
+                        },
+                        send: function (code) {
+                            console.log('Not Expected: middleware responded with', code);
+                        }
+                    },
+                    next = function () {
+                        console.log('Not Expected: middleware skipped request');
+                    },
+                    middleware = Fetcher.middleware({pathPrefix: '/api'});
+
+                middleware(req, res, next);
+            });
+
             var paramsToQuerystring = function(params) {
                 var str = '';
                 for (var key in params) {
