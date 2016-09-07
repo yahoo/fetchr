@@ -445,6 +445,38 @@ var fetcher = new Fetcher({
 });
 ```
 
+## Custom Request Headers
+
+When calling a Fetcher service you can add custom request headers.
+
+A request contains custom headers when you add `headers` option to 'clientConfig'.
+
+```js
+var config = {
+    headers: {
+        'X-VERSION': '1.0.0'
+    }
+};
+
+fetcher
+    .read('service')
+    .params({ id: 1 })
+    .clientConfig(config)
+    .end(callbackFn);
+```
+
+All requests contain custom headers when you add `headers` option to constructor arguments of 'Fetcher'.
+
+```js
+var Fetcher = require('fetchr');
+var fetcher = new Fetcher({
+    headers: {
+        'X-VERSION': '1.0.0'
+    }
+});
+```
+
+
 ## Stats Monitoring & Analysis
 
 To collect fetcher service's success/failure/latency stats, you can configure `statsCollector` for `Fetchr`.  The `statsCollector` function will be invoked with one argumment: `stats`.  The `stats` object will contain the following fields:
