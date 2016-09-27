@@ -22,7 +22,7 @@
   ],
   "dependencies": {
     "debug": "^2.0.0",
-    "es6-promise": "^3.0.2",
+    "es6-promise": "^4.0.3",
     "fumble": "^0.1.0",
     "lodash": "^4.0.1",
     "object-assign": "^4.0.1",
