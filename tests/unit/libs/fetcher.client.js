@@ -177,7 +177,6 @@ describe('Client Fetcher', function () {
                         done(err);
                         return;
                     }
-                    console.log(xhr.readyState);
                     expect(xhr.readyState).to.exist;
                     expect(xhr.abort).to.exist;
                     expect(xhr.open).to.exist;
@@ -185,7 +184,7 @@ describe('Client Fetcher', function () {
                     done();
                 }));
         });
-        it('should be able to abort xhr when calling end w/ callback', function (done) {
+        it('should be able to abort xhr when calling end w/ callback', function () {
             var operation = 'create';
             var xhr = this.fetcher
                 [operation](resource)
