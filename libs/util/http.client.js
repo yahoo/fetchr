@@ -211,6 +211,9 @@ function io(url, options) {
         resp.responseText = body;
 
         if (err) {
+            if (err.message === 'XMLHttpRequest timeout') {
+                err = new Error('XMLHttpRequest timeout: failed to load ' + resp.url + ' in ' + options.timeout + 'ms');
+            }
             // getting detail info from xhr module
             err.rawRequest = resp.rawRequest;
             err.url = resp.url;
