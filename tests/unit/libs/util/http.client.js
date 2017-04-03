@@ -12,6 +12,7 @@ var http;
 var xhrOptions;
 var mockResponse;
 var mockBody = '';
+var mockError = null;
 
 describe('Client HTTP', function () {
 
@@ -24,7 +25,7 @@ describe('Client HTTP', function () {
         mockBody = '';
         mockery.registerMock('xhr', function mockXhr(options, callback) {
             xhrOptions.push(options);
-            callback(null, mockResponse, mockBody);
+            callback(mockError, mockResponse, mockBody);
         });
         http = require('../../../../libs/util/http.client.js');
     });
@@ -32,6 +33,10 @@ describe('Client HTTP', function () {
     after(function() {
         mockBody = '';
         mockery.deregisterAll();
+    });
+
+    afterEach(function () {
+        mockError = null;
     });
 
     describe('#Successful requests', function () {
@@ -361,6 +366,34 @@ describe('Client HTTP', function () {
                     expect(options.timeout).to.equal(6000);
                     done();
                 });
+            });
+        });
+    });
+
+    describe('xhr errors', function () {
+        it('should pass-through any xhr error', function (done) {
+            mockError = new Error('AnyError');
+            xhrOptions = [];
+            mockResponse = { statusCode: 0 };
+
+            http.get('/url', {}, {}, function (err, response) {
+                expect(response).to.equal(undefined);
+                expect(err.message).to.equal('AnyError');
+
+                done();
+            });
+        });
+
+        it('should extend "XMLHttpRequest timeout" errors', function (done) {
+            mockError = new Error('XMLHttpRequest timeout');
+            xhrOptions = [];
+            mockResponse = { statusCode: 0, url: '/url' };
+
+            http.get('/url', {}, { xhrTimeout: 42 }, function (err, response) {
+                expect(response).to.equal(undefined);
+                expect(err.message).to.equal('XMLHttpRequest timeout: failed to load /url in 42ms');
+
+                done();
             });
         });
     });
