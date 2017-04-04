@@ -203,9 +203,6 @@ function io(url, options) {
                 err.output = err.body.output;
                 err.meta = err.body.meta;
             }
-            if (408 === status || 0 === status) {
-                err.timeout = options.timeout;
-            }
         }
 
         resp.responseText = body;
@@ -214,6 +211,8 @@ function io(url, options) {
             // getting detail info from xhr module
             err.rawRequest = resp.rawRequest;
             err.url = resp.url;
+            err.timeout = options.timeout;
+
             options.on.failure.call(null, err, resp);
         } else {
             options.on.success.call(null, null, resp);
