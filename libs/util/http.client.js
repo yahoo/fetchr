@@ -196,7 +196,11 @@ function io(url, options) {
                 errMessage = status ? 'Error ' + status : 'Internal Fetchr XMLHttpRequest Error';
             }
 
-            err = new Error(errMessage);
+            try {
+                err = JSON.parse(errMessage);
+            } catch (e) {
+                err = new Error(errMessage);
+            }
             err.statusCode = status;
             err.body = errBody || body;
             if (err.body) {
