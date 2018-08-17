@@ -5,9 +5,9 @@
   "main": "index.js",
   "browser": "./libs/fetcher.client.js",
   "scripts": {
-    "cover": "istanbul cover --dir artifacts -- ./node_modules/mocha/bin/_mocha tests/unit/ --recursive --reporter spec --timeout 20000",
+    "cover": "istanbul cover --dir artifacts -- ./node_modules/mocha/bin/_mocha tests/unit/ --recursive --reporter spec --timeout 20000 --exit",
     "lint": "jshint libs tests",
-    "test": "NODE_ENV=test mocha tests/unit/ --recursive --reporter spec --timeout 20000"
+    "test": "NODE_ENV=test mocha tests/unit/ --recursive --reporter spec --timeout 20000 --exit"
   },
   "repository": {
     "type": "git",
@@ -31,11 +31,11 @@
   "devDependencies": {
     "body-parser": "^1.17.0",
     "chai": "^3.0.0",
-    "coveralls": "^2.11.1",
+    "coveralls": "^3.0.2",
     "express": "^4.15.0",
     "istanbul": "^0.4.5",
     "jshint": "^2.5.1",
-    "mocha": "^3.0.2",
+    "mocha": "^5.2.0",
     "mockery": "^2.0.0",
     "pre-commit": "^1.0.0",
     "qs": "^6.2.1",
