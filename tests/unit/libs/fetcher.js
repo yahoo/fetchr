@@ -466,9 +466,9 @@ describe('Server Fetcher', function () {
                             expect(response.data.operation.name).to.equal(operation);
                             expect(response.data.operation.success).to.be.true;
                             expect(response.data.args).to.contain.keys('params');
-                            expect(response.data.args.params.id).to.be.a.number;
+                            expect(response.data.args.params.id).to.be.an('number');
                             expect(response.data.args.params.id.toString()).to.equal(params.id);
-                            expect(response.data.args.params.bigId).to.be.a.String;
+                            expect(response.data.args.params.bigId).to.be.an('string');
                             expect(response.data.args.params.bigId.toString()).to.equal(params.bigId);
                             expect(statusCodeSet).to.be.true;
                             done();
@@ -513,9 +513,9 @@ describe('Server Fetcher', function () {
                             expect(response.data.operation.name).to.equal(operation);
                             expect(response.data.operation.success).to.be.true;
                             expect(response.data.args).to.contain.keys('params');
-                            expect(response.data.args.params.decimal).to.be.a.number;
+                            expect(response.data.args.params.decimal).to.be.an('number');
                             expect(response.data.args.params.decimal.toString()).to.equal('9007199254740991');
-                            expect(response.data.args.params.bigDecimal).to.be.a.String;
+                            expect(response.data.args.params.bigDecimal).to.be.an('string');
                             expect(response.data.args.params.bigDecimal.toString()).to.equal('9007199254740991.11111');
                             expect(statusCodeSet).to.be.true;
                             done();
@@ -559,7 +559,7 @@ describe('Server Fetcher', function () {
                             expect(response.data.operation.name).to.equal(operation);
                             expect(response.data.operation.success).to.be.true;
                             expect(response.data.args).to.contain.keys('params');
-                            expect(response.data.args.params.num).to.be.a.String;
+                            expect(response.data.args.params.num).to.be.an('string');
                             expect(response.data.args.params.num.toString()).to.equal('1234e1234');
                             expect(statusCodeSet).to.be.true;
                             done();
@@ -653,7 +653,7 @@ describe('Server Fetcher', function () {
                 var res = {};
                 var next = function (err) {
                     expect(err).to.exist;
-                    expect(err).to.be.an.object;
+                    expect(err).to.be.an('object');
                     expect(err.debug).to.contain(debugMsg);
                     expect(err.message).to.equal('Invalid Fetchr Access');
                     expect(err.statusCode).to.equal(400);
