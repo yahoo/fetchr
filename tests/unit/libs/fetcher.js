@@ -820,6 +820,118 @@ describe('Server Fetcher', function () {
         });
     });
 
+    describe('Params Processor', function () {
+        it('GET: should process the params object', function (done) {
+            var operation = 'read';
+            var statusCodeSet = false;
+            var params = {
+                    uuids: ['cd7240d6-aeed-3fed-b63c-d7e99e21ca17', 'cd7240d6-aeed-3fed-b63c-d7e99e21ca17'],
+                    id: 'asdf'
+                };
+            var req = {
+                     method: 'GET',
+                     path: '/' + mockService.name + ';' + qs.stringify(params, ';'),
+                     query: {
+                         returnMeta: true
+                     }
+                };
+            var res = {
+                    json: function(response) {
+                        expect(response).to.exist;
+                        expect(response).to.not.be.empty;
+                        expect(response).to.contain.keys('data', 'meta');
+                        expect(response.data).to.contain.keys('operation', 'args');
+                        expect(response.data.operation.name).to.equal(operation);
+                        expect(response.data.operation.success).to.be.true;
+                        expect(response.data.args).to.contain.keys('params');
+                        expect(response.data.args.params.uuids).to.deep.equal(params.uuids);
+                        expect(response.data.args.params.id).to.equal(params.id);
+                        expect(response.data.args.params.newParam).to.equal('YES!', JSON.stringify(response.data.args.params));
+                        // expect(response.meta).to.be.empty;
+                        expect(statusCodeSet).to.be.true;
+                        done();
+                    },
+                    status: function(code) {
+                        expect(code).to.equal(200);
+                        statusCodeSet = true;
+                        return this;
+                    },
+                    send: function (code) {
+                        console.log('Not Expected: middleware responded with', code);
+                    }
+                };
+            var next = function () {
+                    console.log('Not Expected: middleware skipped request');
+                };
+            var middleware = Fetcher.middleware({paramsProcessor: function (req, serviceInfo, params) {
+                    return Object.assign({}, params, {newParam: 'YES!'});
+                }});
+
+            middleware(req, res, next);
+        });
+
+        it('POST: should process the params object', function (done) {
+            var operation = 'create';
+            var statusCodeSet = false;
+            var params = {
+                    uuids: ['cd7240d6-aeed-3fed-b63c-d7e99e21ca17', 'cd7240d6-aeed-3fed-b63c-d7e99e21ca17'],
+                    id: 'asdf'
+                };
+            var req = {
+                     method: 'POST',
+                     path: '/' + mockService.name + ';' + qs.stringify(params, ';'),
+                     body: {
+                         requests: {
+                             g0: {
+                                 resource: mockService.name,
+                                 operation: operation,
+                                 params: {
+                                     uuids: ['cd7240d6-aeed-3fed-b63c-d7e99e21ca17', 'cd7240d6-aeed-3fed-b63c-d7e99e21ca17'],
+                                     id: 'asdf'
+                                 }
+                             }
+                         },
+                         context: {
+                             site: '',
+                             device: ''
+                         }
+                     }
+                };
+            var res = {
+                    json: function(response) {
+                        expect(response).to.exist;
+                        expect(response).to.not.be.empty;
+                        expect(response.g0).to.contain.keys('data', 'meta');
+                        var data = response.g0.data;
+                        expect(data).to.contain.keys('operation', 'args');
+                        expect(data.operation.name).to.equal(operation);
+                        expect(data.operation.success).to.be.true;
+                        expect(data.args).to.contain.keys('params');
+                        expect(data.args.params).to.include(req.body.requests.g0.params);
+                        expect(data.args.params.newParam).to.include('YES!');
+                        expect(statusCodeSet).to.be.true;
+                        done();
+                    },
+                    status: function(code) {
+                        expect(code).to.equal(200);
+                        statusCodeSet = true;
+                        return this;
+                    },
+                    send: function (code) {
+                        console.log('Not Expected: middleware responded with', code);
+                    }
+                };
+            var next = function () {
+                    console.log('Not Expected: middleware skipped request');
+                };
+            var middleware = Fetcher.middleware({paramsProcessor: function (req, serviceInfo, params) {
+                    return Object.assign({}, params, {newParam: 'YES!'});
+                }});
+
+            middleware(req, res, next);
+        });
+    });
+
     describe('CRUD', function () {
         var resource = mockService.name;
         var params = {};

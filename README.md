@@ -297,6 +297,27 @@ fetcher
     });
 ```
 
+## XHR Params Processing
+
+For some applications, there may be a situation where you need to process the service params passed in XHR request before params are sent to the actual service. Typically, you would process these params in the service itself. However, if you want to perform processing across many services (i.e. sanitization for security), then you can use the `paramsProcessor` option.
+
+`paramsProcessor` is a function that is passed into the `Fetcher.middleware` method. It is passed three arguments, the request object, the serviceInfo object, and the service params object. The `paramsProcessor` function can then modify the service params if needed.
+
+Here is an example:
+
+```js
+/**
+    Using the app.js from above, you can modify the Fetcher.middleware
+    method to pass in the paramsProcessor function.
+ */
+app.use('/myCustomAPIEndpoint', Fetcher.middleware({
+    paramsProcessor: function (req, serviceInfo, params) {
+        console.log(serviceInfo.resource, serviceInfo.operation);
+        return Object.assign({foo: 'fillDefaultValueForFoo'}, params);
+    }
+}));
+```
+
 ## XHR Response Formatting
 
 For some applications, there may be a situation where you need to modify an XHR response before it is passed to the client. Typically, you would apply your modifications in the service itself. However, if you want to modify the XHR responses across many services (i.e. add debug information), then you can use the `responseFormatter` option.
