@@ -80,6 +80,8 @@ function getErrorResponse(err) {
  * @param {Function} [options.statsCollector] The function will be invoked with 1 argument:
  *      the stats object, which contains resource, operation, params (request params),
  *      statusCode, err, and time (elapsed time)
+ * @param {Function} [options.paramsProcessor] The function will be invoked with 3 arguments:
+ *      the req object, the serviceInfo object, and the params object.  It is expected to return the processed params object.
  * @constructor
  */
 function Request (operation, resource, options) {
@@ -97,6 +99,7 @@ function Request (operation, resource, options) {
     this._clientConfig = {};
     this._startTime = 0;
     this._statsCollector = options.statsCollector;
+    this._paramsProcessor = options.paramsProcessor;
 }
 
 /**
@@ -107,7 +110,9 @@ function Request (operation, resource, options) {
  * @chainable
  */
 Request.prototype.params = function (params) {
-    this._params = params;
+    this._params = (typeof this._paramsProcessor === 'function')
+         ? this._paramsProcessor(this.req, {operation: this.operation, resource: this.resource}, params)
+         : params;
     return this;
 };
 /**
@@ -243,6 +248,8 @@ function executeRequest (request, resolve, reject) {
  * @param {Function} [options.statsCollector] The function will be invoked with 1 argument:
  *      the stats object, which contains resource, operation, params (request params),
  *      statusCode, err, and time (elapsed time)
+ * @param {Function} [options.paramsProcessor] The function will be invoked with 3 arguments:
+ *      the req object, the serviceInfo object, and the params object.  It is expected to return the processed params object.
  * @constructor
  */
 function Fetcher (options) {
@@ -339,6 +346,8 @@ Fetcher.isRegistered = function (name) {
  * @param {Function} [options.statsCollector] The function will be invoked with 1 argument:
            the stats object, which contains resource, operation, params (request params),
            statusCode, err, and time (elapsed time)
+ * @param {Function} [options.paramsProcessor] The function will be invoked with 3 arguments:
+ *         the req object, the serviceInfo object, and the params object.  It is expected to return the processed params object.
  * @returns {Function} middleware
  *     @param {Object} req
  *     @param {Object} res
@@ -348,6 +357,9 @@ Fetcher.middleware = function (options) {
     options = options || {};
     var responseFormatter = options.responseFormatter || function noOp(req, res, data) {
         return data;
+    };
+    var paramsProcessor = options.paramsProcessor || function noOp(req, params) {
+        return params;
     };
     return function (req, res, next) {
         var request;
@@ -369,7 +381,8 @@ Fetcher.middleware = function (options) {
             request = new Request(OP_READ, resource, {
                 req: req,
                 serviceMeta: serviceMeta,
-                statsCollector: options.statsCollector
+                statsCollector: options.statsCollector,
+                paramsProcessor: options.paramsProcessor
             });
             request
                 .params(parseParamValues(qs.parse(path.join('&'))))
@@ -433,7 +446,8 @@ Fetcher.middleware = function (options) {
             request = new Request(operation, singleRequest.resource, {
                 req: req,
                 serviceMeta: serviceMeta,
-                statsCollector: options.statsCollector
+                statsCollector: options.statsCollector,
+                paramsProcessor: options.paramsProcessor
             });
             request
                 .params(singleRequest.params)
