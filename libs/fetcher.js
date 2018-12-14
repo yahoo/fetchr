@@ -358,9 +358,6 @@ Fetcher.middleware = function (options) {
     var responseFormatter = options.responseFormatter || function noOp(req, res, data) {
         return data;
     };
-    var paramsProcessor = options.paramsProcessor || function noOp(req, params) {
-        return params;
-    };
     return function (req, res, next) {
         var request;
         var error;
