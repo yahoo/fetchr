@@ -22,26 +22,26 @@
   ],
   "dependencies": {
     "debug": "^2.6.3",
-    "es6-promise": "^4.0.2",
+    "es6-promise": "^4.2.8",
     "fumble": "^0.1.0",
-    "lodash": "^4.0.1",
+    "lodash": "^4.17.15",
     "object-assign": "^4.0.1",
     "xhr": "^2.4.0"
   },
   "devDependencies": {
-    "body-parser": "^1.17.0",
-    "chai": "^4.1.2",
-    "coveralls": "^3.0.2",
-    "express": "^4.15.0",
+    "body-parser": "^1.19.0",
+    "chai": "^4.2.0",
+    "coveralls": "^3.0.5",
+    "express": "^4.17.1",
     "istanbul": "^0.4.5",
-    "jshint": "^2.5.1",
+    "jshint": "^2.10.2",
     "mocha": "^5.2.0",
     "mockery": "^2.0.0",
     "pre-commit": "^1.0.0",
-    "qs": "^6.2.1",
+    "qs": "^6.7.0",
     "request": "^2.81.0",
     "sinon": "^2.0.0",
-    "supertest": "^3.0.0"
+    "supertest": "^3.4.2"
   },
   "jshintConfig": {
     "node": true
