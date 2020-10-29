@@ -41,7 +41,7 @@
     "qs": "^6.7.0",
     "request": "^2.81.0",
     "sinon": "^9.0.2",
-    "supertest": "^5.0.0"
+    "supertest": "^6.0.0"
   },
   "jshintConfig": {
     "node": true
