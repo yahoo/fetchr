@@ -5,7 +5,7 @@
 var debug = require('debug')('mservice');
 var lodash = require('lodash');
 var MockService = {
-    name: 'mock_service',
+    resource: 'mock_service',
 
     // ------------------------------------------------------------------
     // CRUD Methods

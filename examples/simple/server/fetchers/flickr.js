@@ -9,7 +9,7 @@ var request = require('superagent'),
     FlickrFetcher;
 
 FlickrFetcher = {
-    name: 'flickr',
+    resource: 'flickr',
     //At least one of the CRUD methods is Required
     read: function(req, resource, params, config, callback) {
         var paramsObj = {

@@ -53,9 +53,12 @@ var fetcher = new Fetcher({
 
 ### 3. Register data services
 
-You will need to register any data services that you wish to use in your application.
-The interface for your service will be an object that must define a `name` property and at least one [CRUD](https://en.wikipedia.org/wiki/Create,_read,_update_and_delete) operation.
-The `name` propety will be used when you call one of the CRUD operations.
+You will need to register any data services that you wish to use in
+your application.  The interface for your service will be an object
+that must define a `resource` property and at least one
+[CRUD](https://en.wikipedia.org/wiki/Create,_read,_update_and_delete)
+operation.  The `resource` property will be used when you call one of the
+CRUD operations.
 
 ```js
 // app.js
@@ -67,8 +70,8 @@ Fetcher.registerService(myDataService);
 ```js
 // dataService.js
 module.exports = {
-    // name is required
-    name: 'data_service',
+    // resource is required
+    resource: 'data_service',
     // at least one of the CRUD methods is required
     read: function(req, resource, params, config, callback) {
       //...
@@ -161,7 +164,7 @@ property of the resolved value.
 ```js
 // dataService.js
 module.exports = {
-    name: 'data_service',
+    resource: 'data_service',
     read: function(req, resource, params, config, callback) {
         // business logic
         var data = 'response';
@@ -220,7 +223,7 @@ When an error occurs in your Fetchr CRUD method, you should return an error obje
 
 ```js
 module.exports = {
-    name: 'FooService',
+    resource: 'FooService',
     read: function create(req, resource, params, configs, callback) {
         var err = new Error('it failed');
         err.statusCode = 404;

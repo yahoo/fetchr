@@ -273,7 +273,7 @@ module.exports = function testCrud (params, body, config, callback, resolve, rej
                 var fetcher = this.fetcher;
                 fetcher._serviceMeta.length = 0; // reset serviceMeta to empty array
                 fetcher
-                  .read(mockErrorService.name)
+                  .read(mockErrorService.resource)
                   .params(_.merge({}, params, {
                       meta: {
                           headers: {
@@ -297,7 +297,7 @@ module.exports = function testCrud (params, body, config, callback, resolve, rej
                 var fetcher = this.fetcher;
                 fetcher._serviceMeta.length = 0; // reset serviceMeta to empty array
                 fetcher
-                  .read(mockErrorService.name)
+                  .read(mockErrorService.resource)
                   .params(_.merge({}, params, {
                       meta: {
                           headers: {
@@ -324,7 +324,7 @@ module.exports = function testCrud (params, body, config, callback, resolve, rej
         it('with callback', function(done) {
             var fetcher = this.fetcher;
             fetcher
-              .read(mockNoopService.name)
+              .read(mockNoopService.resource)
               .clientConfig(config)
               .end(function(err) {
                 expect(err.name).to.equal('Error');
@@ -335,7 +335,7 @@ module.exports = function testCrud (params, body, config, callback, resolve, rej
         it('with Promise', function(done) {
             var fetcher = this.fetcher;
             fetcher
-              .read(mockNoopService.name)
+              .read(mockNoopService.resource)
               .clientConfig(config)
               .end()
               .catch(function (err) {
