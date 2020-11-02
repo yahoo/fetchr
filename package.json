@@ -1,6 +1,6 @@
 {
   "name": "fetchr",
-  "version": "0.5.38",
+  "version": "0.5.39",
   "description": "Fetchr augments Flux applications by allowing Flux stores to be used on server and client to fetch data",
   "main": "index.js",
   "browser": "./libs/fetcher.client.js",
@@ -26,6 +26,7 @@
     "fumble": "^0.1.0",
     "lodash": "^4.17.15",
     "object-assign": "^4.0.1",
+    "setimmediate": "^1.0.5",
     "xhr": "^2.4.0"
   },
   "devDependencies": {

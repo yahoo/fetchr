@@ -9,6 +9,7 @@
  * Fetcher is a CRUD interface for your data.
  * @module Fetcher
  */
+require("setimmediate");
 var REST = require('./util/http.client');
 var debug = require('debug')('FetchrClient');
 var lodash = {
