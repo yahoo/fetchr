@@ -655,13 +655,13 @@ describe('Server Fetcher', function () {
         });
 
         describe('Invalid Access', function () {
-            function makeInvalidReqTest(req, debugMsg, done) {
+            function makeInvalidReqTest(req, error, done) {
                 var res = {};
                 var next = function (err) {
                     expect(err).to.exist;
                     expect(err).to.be.an('object');
-                    expect(err.debug).to.contain(debugMsg);
-                    expect(err.message).to.equal('Invalid Fetchr Access');
+                    expect(err.debug).to.equal(error.debug);
+                    expect(err.message).to.equal(error.message);
                     expect(err.statusCode).to.equal(400);
                     expect(err.source).to.equal('fetchr');
                     done();
@@ -669,50 +669,96 @@ describe('Server Fetcher', function () {
                 var middleware = Fetcher.middleware();
                 middleware(req, res, next);
             }
+
             it('should skip empty url', function (done) {
-                makeInvalidReqTest({method: 'GET', path: '/'}, 'Bad resource', done);
-            });
-            it('should skip invalid GET resource', function (done) {
-                makeInvalidReqTest({method: 'GET', path: '/invalidService'}, 'Bad resource invalidService', done);
-            });
-            it('should sanitize resource name for invalid GET resource', function (done) {
-                makeInvalidReqTest({method: 'GET', path: '/invalid&Service'}, 'Bad resource invalid*Service', done);
-            });
-            it('should skip invalid POST request', function (done) {
-                makeInvalidReqTest({method: 'POST', body: {
-                    requests: {
-                        g0: {
-                            resource: 'invalidService'
-                        }
-                    }
-                }}, 'Bad resource invalidService', done);
-            });
-            it('should sanitize invalid POST request', function (done) {
-                makeInvalidReqTest({method: 'POST', body: {
-                    requests: {
-                        g0: {
-                            resource: 'invalid&Service'
-                        }
-                    }
-                }}, 'Bad resource invalid*Service', done);
-            });
-            it('should handle unsupported operation', function (done) {
-                makeInvalidReqTest({method: 'POST', body: {
-                    requests: {
-                        g0: {
-                            resource: mockErrorService.resource,
-                            operation: 'constructor'
-                        }
-                    }
-                }}, 'Unsupported operation : operation must be create or read or update or delete', done);
-            });
-            it('should skip POST request with empty req.body.requests object', function (done) {
-                makeInvalidReqTest({method: 'POST', body: { requests: {}}}, 'No resources', done);
-            });
-            it('should skip POST request with no req.body.requests object', function (done) {
-                makeInvalidReqTest({method: 'POST'}, 'No resources', done);
+                var request = { method: 'GET', path: '/' };
+                var error = { message: 'No resource specified', debug: 'Bad resource' };
+                makeInvalidReqTest(request, error, done);
             });
 
+            it('should skip invalid GET resource', function (done) {
+                var request = { method: 'GET', path: '/invalidService' };
+                var error = {
+                    message: 'Resource "invalidService" is not registered',
+                    debug: 'Bad resource invalidService'
+                };
+                makeInvalidReqTest(request, error, done);
+            });
+
+            it('should sanitize resource name for invalid GET resource', function (done) {
+                var request = { method: 'GET', path: '/invalid&Service' };
+                var error = {
+                    message: 'Resource "invalid*Service" is not registered',
+                    debug: 'Bad resource invalid*Service'
+                };
+                makeInvalidReqTest(request, error, done);
+            });
+
+            it('should skip invalid POST request', function (done) {
+                var request = {
+                    method: 'POST', body: {
+                        requests: {
+                            g0: {
+                                resource: 'invalidService'
+                            }
+                        }
+                    }
+                };
+                var error = {
+                    message: 'Resource "invalidService" is not registered',
+                    debug: 'Bad resource invalidService'
+                };
+                makeInvalidReqTest(request, error, done);
+            });
+
+            it('should sanitize invalid POST request', function (done) {
+                var request = {
+                    method: 'POST',
+                    body: {
+                        requests: {
+                            g0: {
+                                resource: 'invalid&Service'
+                            }
+                        }
+                    }
+                };
+                var error = {
+                    message: 'Resource "invalid*Service" is not registered',
+                    debug: 'Bad resource invalid*Service'
+                };
+                makeInvalidReqTest(request, error, done);
+            });
+
+            it('should handle unsupported operation', function (done) {
+                var request = {
+                    method: 'POST',
+                    body: {
+                        requests: {
+                            g0: {
+                                resource: mockErrorService.resource,
+                                operation: 'constructor'
+                            }
+                        }
+                    }
+                };
+                var error = {
+                    message: 'Unsupported "mock_error_service.constructor" operation',
+                    debug: 'Only "create", "read", "update" or "delete" operations are allowed'
+                };
+                makeInvalidReqTest(request, error, done);
+            });
+
+            it('should skip POST request with empty req.body.requests object', function (done) {
+                var request = { method: 'POST', body: { requests: {} } };
+                var error = { message: 'No resource specified', debug: 'No resources' };
+                makeInvalidReqTest(request, error, done);
+            });
+
+            it('should skip POST request with no req.body.requests object', function (done) {
+                var request = { method: 'POST' };
+                var error = { message: 'No resource specified', debug: 'No resources' };
+                makeInvalidReqTest(request, error, done);
+            });
         });
 
         describe('Response Formatter', function () {
