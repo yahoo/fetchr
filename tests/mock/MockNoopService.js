@@ -5,7 +5,7 @@
 
 var lodash = require('lodash');
 var MockNoopService = {
-    name: 'mock_noop_service',
+    resource: 'mock_noop_service'
 };
 
 module.exports = MockNoopService;

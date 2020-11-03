@@ -9,7 +9,7 @@ Creates a new fetchr plugin instance with the following parameters:
  * `options.xhrPath` (optional): The path for XHR requests. Will be ignored serverside.
  * `options.xhrTimeout` (optional): Timeout in milliseconds for all XHR requests
  * `options.corsPath` (optional): Base CORS path in case CORS is enabled
- * `options.context` (optional): The context object 
+ * `options.context` (optional): The context object
  * `options.contextPicker` (optional): The context predicate functions, it will be applied to lodash/object/pick to pick values from context object
  * `options.contextPicker.GET` (optional): GET predicate function
  * `options.contextPicker.POST` (optional): POST predicate function
@@ -33,7 +33,7 @@ getter for a service by resource
 ```js
 var Fetcher = require('fetchr');
 var myDataService = {
-    name: 'serviceResource', // resource
+    resource: 'serviceResource',
     read: function (){}// custom read logic
 };
 

@@ -30,8 +30,8 @@ describe('Server Fetcher', function () {
         Fetcher.services = {}; // reset services so we can test getService and registerService methods
         var getService = Fetcher.getService.bind(Fetcher);
         expect(getService).to.throw(Error, 'Service "undefined" could not be found');
-        getService = Fetcher.getService.bind(Fetcher, mockService.name);
-        expect(getService).to.throw(Error, 'Service "' + mockService.name + '" could not be found');
+        getService = Fetcher.getService.bind(Fetcher, mockService.resource);
+        expect(getService).to.throw(Error, 'Service "' + mockService.resource + '" could not be found');
         expect(Object.keys(Fetcher.services)).to.have.length(0);
         Fetcher.registerService(mockService);
         expect(Object.keys(Fetcher.services)).to.have.length(1);
@@ -43,18 +43,24 @@ describe('Server Fetcher', function () {
         var invalidService = {not_name: 'test_name'};
         var validService = {name: 'test_name'};
         var registerInvalidService = Fetcher.registerService.bind(Fetcher, undefined);
-        expect(registerInvalidService).to.throw(Error, 'Service is not defined correctly');
+        expect(registerInvalidService).to.throw(
+            Error,
+            'Fetcher.registerService requires a service definition (ex. registerService(service)).'
+        );
         registerInvalidService = Fetcher.registerService.bind(Fetcher, invalidService);
-        expect(registerInvalidService).to.throw(Error, 'Service is not defined correctly');
+        expect(registerInvalidService).to.throw(
+            Error,
+            '"resource" property is missing in service definition.'
+        );
         var registerValidService = Fetcher.registerService.bind(Fetcher, validService);
         expect(registerValidService).to.not.throw;
     });
 
     it('should get services by resource and sub resource', function () {
-        var getService = Fetcher.getService.bind(Fetcher, mockService.name);
+        var getService = Fetcher.getService.bind(Fetcher, mockService.resource);
         expect(getService).to.not.throw;
         expect(getService()).to.deep.equal(mockService);
-        getService = Fetcher.getService.bind(Fetcher, mockService.name + '.subResource');
+        getService = Fetcher.getService.bind(Fetcher, mockService.resource + '.subResource');
         expect(getService).to.not.throw;
         expect(getService()).to.deep.equal(mockService);
     });
@@ -70,12 +76,12 @@ describe('Server Fetcher', function () {
     describe('should be backwards compatible', function () {
         it('#registerFetcher & #getFetcher', function () {
             Fetcher.services = {}; // reset services so we can test getFetcher and registerFetcher methods
-            var getFetcher = Fetcher.getFetcher.bind(Fetcher, mockService.name);
+            var getFetcher = Fetcher.getFetcher.bind(Fetcher, mockService.resource);
             expect(getFetcher).to.throw;
             Fetcher.registerFetcher(mockService);
             expect(getFetcher).to.not.throw;
             expect(getFetcher()).to.deep.equal(mockService);
-            getFetcher = Fetcher.getFetcher.bind(Fetcher, mockService.name + '.subResource');
+            getFetcher = Fetcher.getFetcher.bind(Fetcher, mockService.resource + '.subResource');
             expect(getFetcher).to.not.throw;
             expect(getFetcher()).to.deep.equal(mockService);
         });
@@ -96,11 +102,11 @@ describe('Server Fetcher', function () {
                     statusCodeSet = false,
                     req = {
                         method: 'POST',
-                        path: '/' + mockService.name,
+                        path: '/' + mockService.resource,
                         body: {
                             requests: {
                                 g0: {
-                                    resource: mockService.name,
+                                    resource: mockService.resource,
                                     operation: operation,
                                     params: {
                                         uuids: ['cd7240d6-aeed-3fed-b63c-d7e99e21ca17', 'cd7240d6-aeed-3fed-b63c-d7e99e21ca17'],
@@ -125,7 +131,7 @@ describe('Server Fetcher', function () {
                             expect(data.args).to.contain.keys('params');
                             expect(data.args.params).to.equal(req.body.requests.g0.params);
                             expect(statusCodeSet).to.be.true;
-                            expect(stats.resource).to.eql(mockService.name);
+                            expect(stats.resource).to.eql(mockService.resource);
                             expect(stats.operation).to.eql(operation);
                             expect(stats.statusCode).to.eql(200);
                             expect(stats.time).to.be.at.least(0);
@@ -159,11 +165,11 @@ describe('Server Fetcher', function () {
                     headersSet,
                     req = {
                         method: 'POST',
-                        path: '/' + mockService.name,
+                        path: '/' + mockService.resource,
                         body: {
                             requests: {
                                 g0: {
-                                    resource: mockService.name,
+                                    resource: mockService.resource,
                                     operation: operation,
                                     params: {
                                         uuids: ['cd7240d6-aeed-3fed-b63c-d7e99e21ca17', 'cd7240d6-aeed-3fed-b63c-d7e99e21ca17'],
@@ -189,7 +195,7 @@ describe('Server Fetcher', function () {
                             expect(data.args.params).to.equal(req.body.requests.g0.params);
                             expect(headersSet).to.eql(responseHeaders);
                             expect(statusCodeSet).to.be.true;
-                            expect(stats.resource).to.eql(mockService.name);
+                            expect(stats.resource).to.eql(mockService.resource);
                             expect(stats.operation).to.eql(operation);
                             expect(stats.statusCode).to.eql(201);
                             expect(stats.time).to.be.at.least(0);
@@ -232,11 +238,11 @@ describe('Server Fetcher', function () {
                         statusCodeSet = false,
                         req = {
                             method: 'POST',
-                            path: '/' + mockErrorService.name,
+                            path: '/' + mockErrorService.resource,
                             body: {
                                 requests: {
                                     g0: {
-                                        resource: mockErrorService.name,
+                                        resource: mockErrorService.resource,
                                         operation: operation,
                                         params: params
                                     }
@@ -306,7 +312,7 @@ describe('Server Fetcher', function () {
                     };
                 var req = {
                          method: 'GET',
-                         path: '/' + mockService.name + ';' + qs.stringify(params, ';'),
+                         path: '/' + mockService.resource + ';' + qs.stringify(params, ';'),
                          query: {}
                     };
                 var res = {
@@ -347,7 +353,7 @@ describe('Server Fetcher', function () {
                     },
                     req = {
                         method: 'GET',
-                        path: '/' + mockService.name + ';' + qs.stringify(params, ';'),
+                        path: '/' + mockService.resource + ';' + qs.stringify(params, ';'),
                         query: {
                             returnMeta: true
                         }
@@ -395,7 +401,7 @@ describe('Server Fetcher', function () {
                     },
                     req = {
                         method: 'GET',
-                        path: '/' + mockService.name + ';' + qs.stringify(params, ';'),
+                        path: '/' + mockService.resource + ';' + qs.stringify(params, ';'),
                         query: {
                             returnMeta: true
                         }
@@ -452,7 +458,7 @@ describe('Server Fetcher', function () {
                     },
                     req = {
                         method: 'GET',
-                        path: '/' + mockService.name + ';' + qs.stringify(params, ';'),
+                        path: '/' + mockService.resource + ';' + qs.stringify(params, ';'),
                         query: {
                             returnMeta: true
                         }
@@ -499,7 +505,7 @@ describe('Server Fetcher', function () {
                     },
                     req = {
                         method: 'GET',
-                        path: '/' + mockService.name + ';' + qs.stringify(params, ';'),
+                        path: '/' + mockService.resource + ';' + qs.stringify(params, ';'),
                         query: {
                             returnMeta: true
                         }
@@ -545,7 +551,7 @@ describe('Server Fetcher', function () {
                     },
                     req = {
                         method: 'GET',
-                        path: '/' + mockService.name + ';' + qs.stringify(params, ';'),
+                        path: '/' + mockService.resource + ';' + qs.stringify(params, ';'),
                         query: {
                             returnMeta: true
                         }
@@ -597,7 +603,7 @@ describe('Server Fetcher', function () {
 
                         req = {
                             method: 'GET',
-                            path: '/' + mockErrorService.name + paramsToQuerystring(params),
+                            path: '/' + mockErrorService.resource + paramsToQuerystring(params),
                             params: params,
                         },
 
@@ -694,7 +700,7 @@ describe('Server Fetcher', function () {
                 makeInvalidReqTest({method: 'POST', body: {
                     requests: {
                         g0: {
-                            resource: mockErrorService.name,
+                            resource: mockErrorService.resource,
                             operation: 'constructor'
                         }
                     }
@@ -720,7 +726,7 @@ describe('Server Fetcher', function () {
                         };
                     var req = {
                              method: 'GET',
-                             path: '/' + mockService.name + ';' + qs.stringify(params, ';'),
+                             path: '/' + mockService.resource + ';' + qs.stringify(params, ';'),
                              query: {
                                  returnMeta: true
                              }
@@ -765,11 +771,11 @@ describe('Server Fetcher', function () {
                         statusCodeSet = false,
                         req = {
                             method: 'POST',
-                            path: '/' + mockService.name,
+                            path: '/' + mockService.resource,
                             body: {
                                 requests: {
                                     g0: {
-                                        resource: mockService.name,
+                                        resource: mockService.resource,
                                         operation: operation,
                                         params: {
                                             uuids: ['cd7240d6-aeed-3fed-b63c-d7e99e21ca17', 'cd7240d6-aeed-3fed-b63c-d7e99e21ca17'],
@@ -830,7 +836,7 @@ describe('Server Fetcher', function () {
                 };
             var req = {
                      method: 'GET',
-                     path: '/' + mockService.name + ';' + qs.stringify(params, ';'),
+                     path: '/' + mockService.resource + ';' + qs.stringify(params, ';'),
                      query: {
                          returnMeta: true
                      }
@@ -879,11 +885,11 @@ describe('Server Fetcher', function () {
                 };
             var req = {
                      method: 'POST',
-                     path: '/' + mockService.name + ';' + qs.stringify(params, ';'),
+                     path: '/' + mockService.resource + ';' + qs.stringify(params, ';'),
                      body: {
                          requests: {
                              g0: {
-                                 resource: mockService.name,
+                                 resource: mockService.resource,
                                  operation: operation,
                                  params: {
                                      uuids: ['cd7240d6-aeed-3fed-b63c-d7e99e21ca17', 'cd7240d6-aeed-3fed-b63c-d7e99e21ca17'],
@@ -933,7 +939,7 @@ describe('Server Fetcher', function () {
     });
 
     describe('CRUD', function () {
-        var resource = mockService.name;
+        var resource = mockService.resource;
         var params = {};
         var body = {};
         var config = {};
@@ -994,5 +1000,19 @@ describe('Server Fetcher', function () {
         // CRUD
         testCrud(params, body, config, callbackWithStats, resolve, reject);
     });
+});
 
+describe('Deprecated features support', function () {
+    afterEach(function () {
+        Fetcher.services = {}; // reset services
+    });
+
+    it('can register service with name', function () {
+        var fetcher = { name: 'resource-name' };
+
+        Fetcher.registerService(fetcher);
+
+        var service = Fetcher.getService(fetcher.name);
+        expect(fetcher).to.deep.equal(service);
+    });
 });

@@ -4,7 +4,7 @@
  */
 var lodash = require('lodash');
 var MockErrorService = {
-    name: 'mock_error_service',
+    resource: 'mock_error_service',
 
     // ------------------------------------------------------------------
     // CRUD Methods

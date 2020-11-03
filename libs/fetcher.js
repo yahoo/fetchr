@@ -260,6 +260,8 @@ function Fetcher (options) {
 
 Fetcher.services = {};
 
+Fetcher._deprecatedServicesDefinitions = [];
+
 /**
  * DEPRECATED
  * Register a data fetcher
@@ -282,22 +284,33 @@ Fetcher.registerFetcher = function (fetcher) {
  * @memberof Fetcher
  * @param {Function} service
  */
-Fetcher.registerService = function (fetcher) {
-    if (!fetcher || !fetcher.name) {
-        throw new Error('Service is not defined correctly');
+Fetcher.registerService = function (service) {
+    if (!service) {
+        throw new Error(
+            'Fetcher.registerService requires a service definition (ex. registerService(service)).'
+        );
     }
-    Fetcher.services[fetcher.name] = fetcher;
-    debug('fetcher ' + fetcher.name + ' added');
+
+    var resource;
+    if (typeof service.resource !== 'undefined') {
+        resource = service.resource;
+    } else if (typeof service.name !== 'undefined') {
+        resource = service.name;
+        Fetcher._deprecatedServicesDefinitions.push(resource);
+    } else {
+        throw new Error('"resource" property is missing in service definition.');
+    }
+
+    Fetcher.services[resource] = service;
+    debug('fetcher ' + resource + ' added');
     return;
 };
 
 /**
  * DEPRECATED
  * Retrieve a data fetcher by name
- * @method getFetcher
- * @memberof Fetcher
- * @param {String} name of fetcher
- * @returns {Function} fetcher
+ * @method getFetcheresourceof Fetcher
+ * @param {String} name oresource @returns {Function} fetcher
  */
 Fetcher.getFetcher = function (name) {
     // TODO: Uncomment warnings in next minor release
@@ -358,6 +371,18 @@ Fetcher.middleware = function (options) {
     var responseFormatter = options.responseFormatter || function noOp(req, res, data) {
         return data;
     };
+
+    if (Fetcher._deprecatedServicesDefinitions.length && 'production' !== process.env.NODE_ENV) {
+        var deprecatedServices = Fetcher._deprecatedServicesDefinitions.sort().join(', ');
+
+        console.warn(
+            'You have registered services using a deprecated property. ' +
+                'Please, replace the property "name" by "resource" in the ' +
+                'following services definitions:\n' +
+            deprecatedServices + '.'
+        );
+    }
+
     return function (req, res, next) {
         var request;
         var error;

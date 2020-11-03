@@ -2,7 +2,7 @@ var expect = require('chai').expect;
 var lodash = require('lodash');
 
 var mockService = require('../mock/MockService');
-var resource = mockService.name;
+var resource = mockService.resource;
 
 var params = {
         uuids: ['1','2','3','4','5'],
