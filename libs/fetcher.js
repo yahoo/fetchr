@@ -386,15 +386,25 @@ Fetcher.middleware = function (options) {
     return function (req, res, next) {
         var request;
         var error;
+        var errorMsg;
+        var resourceName;
         var serviceMeta;
 
         if (req.method === GET) {
             var path = req.path.substr(1).split(';');
             var resource = path.shift();
 
+            if (!resource) {
+                error = fumble.http.badRequest('No resource specified', { debug: 'Bad resource' });
+                error.source = 'fetchr';
+                return next(error);
+            }
+
             if (!Fetcher.isRegistered(resource)) {
-                error = fumble.http.badRequest('Invalid Fetchr Access', {
-                    debug: 'Bad resource ' + sanitizeResourceName(resource)
+                resourceName = sanitizeResourceName(resource);
+                errorMsg = 'Resource "' + resourceName + '" is not registered';
+                error = fumble.http.badRequest(errorMsg, {
+                    debug: 'Bad resource ' + resourceName
                 });
                 error.source = 'fetchr';
                 return next(error);
@@ -439,7 +449,7 @@ Fetcher.middleware = function (options) {
             var requests = req.body && req.body.requests;
 
             if (!requests || Object.keys(requests).length === 0) {
-                error = fumble.http.badRequest('Invalid Fetchr Access', {
+                error = fumble.http.badRequest('No resource specified', {
                     debug: 'No resources'
                 });
                 error.source = 'fetchr';
@@ -448,19 +458,22 @@ Fetcher.middleware = function (options) {
 
             var DEFAULT_GUID = 'g0';
             var singleRequest = requests[DEFAULT_GUID];
+            resourceName = sanitizeResourceName(singleRequest.resource);
 
             if (!Fetcher.isRegistered(singleRequest.resource)) {
-                error = fumble.http.badRequest('Invalid Fetchr Access', {
-                    debug: 'Bad resource ' + sanitizeResourceName(singleRequest.resource)
+                errorMsg = 'Resource "' + resourceName + '" is not registered';
+                error = fumble.http.badRequest(errorMsg, {
+                    debug: 'Bad resource ' + resourceName
                 });
                 error.source = 'fetchr';
                 return next(error);
             }
             var operation = singleRequest.operation;
             if(operation !== OP_CREATE && operation !== OP_UPDATE && operation !== OP_DELETE && operation !== OP_READ) {
-                error = fumble.http.badRequest('Invalid Fetchr Access', {
-                    debug: 'Unsupported operation : operation must be create or read or update or delete'
-                });
+                error = fumble.http.badRequest(
+                    'Unsupported "' + resourceName + '.' + operation + '" operation',
+                    { debug: 'Only "create", "read", "update" or "delete" operations are allowed' }
+                );
                 error.source = 'fetchr';
                 return next(error);
             }
