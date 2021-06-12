@@ -14,7 +14,6 @@ var REST = require('./util/http.client');
 var debug = require('debug')('FetchrClient');
 var deepmerge = require('deepmerge');
 var lodash = {
-        isFunction: require('lodash/isFunction'),
         pickBy: require('lodash/pickBy'),
         pick: require('lodash/pick')
     };
@@ -26,6 +25,10 @@ var OP_READ = 'read';
 var defaultConstructGetUri = require('./util/defaultConstructGetUri');
 var forEach = require('./util/forEach');
 var Promise = global.Promise || require('es6-promise').Promise;
+
+function isFunction(value) {
+    return typeof value === 'function';
+}
 
 function parseResponse(response) {
     if (response && response.responseText) {
@@ -48,7 +51,7 @@ function parseResponse(response) {
  */
 function pickContext (context, picker, method) {
     if (picker && picker[method]) {
-        var libPicker = lodash.isFunction(picker[method]) ? lodash.pickBy : lodash.pick;
+        var libPicker = isFunction(picker[method]) ? lodash.pickBy : lodash.pick;
         return libPicker(context, picker[method]);
     }
     return context;
@@ -211,7 +214,7 @@ function executeRequest (request, resolve, reject) {
     // We use GET request by default for READ operation, but you can override that behavior
     // by specifying {post_for_read: true} in your request's clientConfig
     if (!use_post) {
-        var getUriFn = lodash.isFunction(clientConfig.constructGetUri) ? clientConfig.constructGetUri : defaultConstructGetUri;
+        var getUriFn = isFunction(clientConfig.constructGetUri) ? clientConfig.constructGetUri : defaultConstructGetUri;
         var get_uri = getUriFn.call(request, uri, request.resource, request._params, clientConfig, pickContext(request.options.context, request.options.contextPicker, 'GET'));
         /* istanbul ignore next */
         if (!get_uri) {
