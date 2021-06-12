@@ -5,13 +5,15 @@
 'use strict';
 
 var debug = require('debug')('Fetcher:defaultConstructGetUri');
-var lodash = {
-    forEach: require('lodash/forEach'),
-    isObject: require('lodash/isObject')
-};
+var lodash = { forEach: require('lodash/forEach') };
+
+function isObject(value) {
+    var type = typeof value;
+    return value != null && (type == 'object' || type == 'function');
+}
 
 function jsonifyComplexType(value) {
-    if (Array.isArray(value) || lodash.isObject(value)) {
+    if (Array.isArray(value) || isObject(value)) {
         return JSON.stringify(value);
     }
     return value;
