@@ -16,7 +16,6 @@ var lodash = {
         isFunction: require('lodash/isFunction'),
         forEach: require('lodash/forEach'),
         merge: require('lodash/merge'),
-        noop: require('lodash/noop'),
         pickBy: require('lodash/pickBy'),
         pick: require('lodash/pick')
     };
