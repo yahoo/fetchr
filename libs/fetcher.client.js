@@ -12,9 +12,9 @@
 require("setimmediate");
 var REST = require('./util/http.client');
 var debug = require('debug')('FetchrClient');
+var deepmerge = require('deepmerge');
 var lodash = {
         isFunction: require('lodash/isFunction'),
-        merge: require('lodash/merge'),
         pickBy: require('lodash/pickBy'),
         pick: require('lodash/pick')
     };
@@ -241,7 +241,7 @@ function executeRequest (request, resolve, reject) {
 
     var customHeaders = clientConfig.headers || request.options.headers || {};
     if (!use_post) {
-        return REST.get(uri, customHeaders, lodash.merge({xhrTimeout: request.options.xhrTimeout}, clientConfig), function getDone(err, response) {
+        return REST.get(uri, customHeaders, deepmerge({xhrTimeout: request.options.xhrTimeout}, clientConfig), function getDone(err, response) {
             if (err) {
                 debug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info');
                 return reject(err);
@@ -266,7 +266,7 @@ function executeRequest (request, resolve, reject) {
     }; // TODO: remove. leave here for now for backward compatibility
     uri = request._constructGroupUri(uri);
     allow_retry_post = (request.operation === OP_READ);
-    return REST.post(uri, customHeaders, data, lodash.merge({unsafeAllowRetry: allow_retry_post, xhrTimeout: request.options.xhrTimeout}, clientConfig), function postDone(err, response) {
+    return REST.post(uri, customHeaders, data, deepmerge({unsafeAllowRetry: allow_retry_post, xhrTimeout: request.options.xhrTimeout}, clientConfig), function postDone(err, response) {
         if (err) {
             debug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info');
             return reject(err);
@@ -450,7 +450,7 @@ Fetcher.prototype = {
      * @method updateOptions
      */
     updateOptions: function (options) {
-        this.options = lodash.merge(this.options, options);
+        this.options = deepmerge(this.options, options);
     },
 
     /**
