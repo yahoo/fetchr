@@ -14,7 +14,6 @@
  *          Note that only retry only applies on GET.
  */
 var _ = {
-        some: require('lodash/some'),
         delay: require('lodash/delay'),
         isNumber: require('lodash/isNumber')
     },
@@ -70,7 +69,7 @@ function isContentTypeJSON(headers) {
         return false;
     }
 
-    return _.some(headers[CONTENT_TYPE].split(';'), function (part) {
+    return headers[CONTENT_TYPE].split(';').some(function (part) {
         return part.trim().toLowerCase() === TYPE_JSON;
     });
 }
