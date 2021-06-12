@@ -7,12 +7,11 @@
 var debug = require('debug')('Fetcher:defaultConstructGetUri');
 var lodash = {
     forEach: require('lodash/forEach'),
-    isArray: require('lodash/isArray'),
     isObject: require('lodash/isObject')
 };
 
 function jsonifyComplexType(value) {
-    if (lodash.isArray(value) || lodash.isObject(value)) {
+    if (Array.isArray(value) || lodash.isObject(value)) {
         return JSON.stringify(value);
     }
     return value;
