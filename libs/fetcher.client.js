@@ -13,10 +13,6 @@ require("setimmediate");
 var REST = require('./util/http.client');
 var debug = require('debug')('FetchrClient');
 var deepmerge = require('deepmerge');
-var lodash = {
-        pickBy: require('lodash/pickBy'),
-        pick: require('lodash/pick')
-    };
 var DEFAULT_GUID = 'g0';
 var DEFAULT_XHR_PATH = '/api';
 var DEFAULT_XHR_TIMEOUT = 3000;
@@ -45,16 +41,41 @@ function parseResponse(response) {
 /**
  * Pick keys from the context object
  * @method pickContext
- * @param {Object} context context object
- * @param {Function|Array|String} picker picker object w/iteratee for lodash/pickBy|pick
- * @param {String} method method name, get or post
+ * @param {Object} context - context object
+ * @param {Function|Array|String} picker - key, array of keys or
+ * function that return keys to be extracted from context.
+ * @param {String} method - method name, GET or POST
  */
 function pickContext (context, picker, method) {
-    if (picker && picker[method]) {
-        var libPicker = isFunction(picker[method]) ? lodash.pickBy : lodash.pick;
-        return libPicker(context, picker[method]);
+    if (!picker || !picker[method]) {
+        return context;
     }
-    return context;
+
+    var p = picker[method];
+
+    if (typeof p === 'string') {
+        return { [p]: context[p] };
+    }
+
+    if (Array.isArray(p)) {
+        var pc = {}
+        p.forEach(function(key) {
+            pc[key] = context[key];
+        });
+        return pc;
+    }
+
+    if (typeof p === 'function') {
+        var pc = {};
+        forEach(context, function(value, key) {
+            if (p(value, key, context)) {
+                pc[key] = context[key];
+            }
+        })
+        return pc;
+    }
+
+    throw new TypeError('picker must be an string, an array, or a function.');
 }
 
 /**
@@ -312,8 +333,10 @@ Request.prototype._constructGroupUri = function (uri) {
  * @param {Object} [options.context] The context object that is propagated to all outgoing
  *      requests as query params.  It can contain current-session/context data that should
  *      persist to all requests.
- * @param {Object} [options.contextPicker] The context picker for GET and POST, they must be
- *      lodash pick predicate function with three arguments (value, key, object)
+ * @param {Object} [options.contextPicker] The context picker for GET
+ *      and POST, they must be a string, a an array or function with
+ *      three arguments (value, key, object) to extract keys from
+ *      context.
  * @param {Function|String|String[]} [options.contextPicker.GET] GET context picker
  * @param {Function|String|String[]} [options.contextPicker.POST] POST context picker
  * @param {Function} [options.statsCollector] The function will be invoked with 1 argument:
