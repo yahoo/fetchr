@@ -14,7 +14,6 @@ var REST = require('./util/http.client');
 var debug = require('debug')('FetchrClient');
 var lodash = {
         isFunction: require('lodash/isFunction'),
-        forEach: require('lodash/forEach'),
         merge: require('lodash/merge'),
         pickBy: require('lodash/pickBy'),
         pick: require('lodash/pick')
@@ -25,6 +24,7 @@ var DEFAULT_XHR_TIMEOUT = 3000;
 var MAX_URI_LEN = 2048;
 var OP_READ = 'read';
 var defaultConstructGetUri = require('./util/defaultConstructGetUri');
+var forEach = require('./util/forEach');
 var Promise = global.Promise || require('es6-promise').Promise;
 
 function parseResponse(response) {
@@ -290,7 +290,7 @@ function executeRequest (request, resolve, reject) {
 Request.prototype._constructGroupUri = function (uri) {
     var query = [];
     var final_uri = uri;
-    lodash.forEach(pickContext(this.options.context, this.options.contextPicker, 'POST'), function eachContext(v, k) {
+    forEach(pickContext(this.options.context, this.options.contextPicker, 'POST'), function eachContext(v, k) {
         query.push(k + '=' + encodeURIComponent(v));
     });
     if (query.length > 0) {
