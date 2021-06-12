@@ -202,7 +202,6 @@ function executeRequest (request, resolve, reject) {
     var allow_retry_post;
     var uri = clientConfig.uri;
     var requests;
-    var params;
     var data;
 
     if (!uri) {
