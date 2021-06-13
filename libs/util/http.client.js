@@ -14,7 +14,6 @@
  *          Note that only retry only applies on GET.
  */
 var _ = {
-        forEach: require('lodash/forEach'),
         some: require('lodash/some'),
         delay: require('lodash/delay'),
         isNumber: require('lodash/isNumber')
@@ -34,6 +33,8 @@ var _ = {
     NULL = null,
     xhr = require('xhr');
 
+var forEach = require('./forEach');
+
 //trim polyfill, maybe pull from npm later
 if (!String.prototype.trim) {
   String.prototype.trim = function () {
@@ -47,7 +48,7 @@ function normalizeHeaders(headers, method, isCors) {
         normalized['X-Requested-With'] = 'XMLHttpRequest';
     }
     var needContentType = (method === METHOD_PUT || method === METHOD_POST);
-    _.forEach(headers, function (v, field) {
+    forEach(headers, function (v, field) {
         if (field.toLowerCase() === 'content-type') {
             if (needContentType) {
                 normalized[CONTENT_TYPE] = v;
