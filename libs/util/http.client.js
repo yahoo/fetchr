@@ -13,10 +13,7 @@
  *   retry: retry related settings, such as retry interval amount (in ms), max_retries.
  *          Note that only retry only applies on GET.
  */
-var _ = {
-        delay: require('lodash/delay'),
-    },
-    DEFAULT_CONFIG = {
+var DEFAULT_CONFIG = {
         retry: {
             interval: 200,
             max_retries: 0
@@ -152,7 +149,7 @@ function doXhr(method, url, headers, data, config, callback) {
                 if (!shouldRetry(method, config, response.statusCode)) {
                     callback(err);
                 } else {
-                    _.delay(
+                    setTimeout(
                         function retryXHR() { doXhr(method, url, headers, data, config, callback); },
                         config.retry.interval
                     );
