@@ -12,21 +12,19 @@
 require("setimmediate");
 var REST = require('./util/http.client');
 var debug = require('debug')('FetchrClient');
-var lodash = {
-        isFunction: require('lodash/isFunction'),
-        forEach: require('lodash/forEach'),
-        merge: require('lodash/merge'),
-        noop: require('lodash/noop'),
-        pickBy: require('lodash/pickBy'),
-        pick: require('lodash/pick')
-    };
+var deepmerge = require('deepmerge');
 var DEFAULT_GUID = 'g0';
 var DEFAULT_XHR_PATH = '/api';
 var DEFAULT_XHR_TIMEOUT = 3000;
 var MAX_URI_LEN = 2048;
 var OP_READ = 'read';
 var defaultConstructGetUri = require('./util/defaultConstructGetUri');
+var forEach = require('./util/forEach');
 var Promise = global.Promise || require('es6-promise').Promise;
+
+function isFunction(value) {
+    return typeof value === 'function';
+}
 
 function parseResponse(response) {
     if (response && response.responseText) {
@@ -43,16 +41,41 @@ function parseResponse(response) {
 /**
  * Pick keys from the context object
  * @method pickContext
- * @param {Object} context context object
- * @param {Function|Array|String} picker picker object w/iteratee for lodash/pickBy|pick
- * @param {String} method method name, get or post
+ * @param {Object} context - context object
+ * @param {Function|Array|String} picker - key, array of keys or
+ * function that return keys to be extracted from context.
+ * @param {String} method - method name, GET or POST
  */
 function pickContext (context, picker, method) {
-    if (picker && picker[method]) {
-        var libPicker = lodash.isFunction(picker[method]) ? lodash.pickBy : lodash.pick;
-        return libPicker(context, picker[method]);
+    if (!picker || !picker[method]) {
+        return context;
     }
-    return context;
+
+    var p = picker[method];
+
+    if (typeof p === 'string') {
+        return { [p]: context[p] };
+    }
+
+    if (Array.isArray(p)) {
+        var pc = {}
+        p.forEach(function(key) {
+            pc[key] = context[key];
+        });
+        return pc;
+    }
+
+    if (typeof p === 'function') {
+        var pc = {};
+        forEach(context, function(value, key) {
+            if (p(value, key, context)) {
+                pc[key] = context[key];
+            }
+        })
+        return pc;
+    }
+
+    throw new TypeError('picker must be an string, an array, or a function.');
 }
 
 /**
@@ -202,7 +225,6 @@ function executeRequest (request, resolve, reject) {
     var allow_retry_post;
     var uri = clientConfig.uri;
     var requests;
-    var params;
     var data;
 
     if (!uri) {
@@ -213,7 +235,7 @@ function executeRequest (request, resolve, reject) {
     // We use GET request by default for READ operation, but you can override that behavior
     // by specifying {post_for_read: true} in your request's clientConfig
     if (!use_post) {
-        var getUriFn = lodash.isFunction(clientConfig.constructGetUri) ? clientConfig.constructGetUri : defaultConstructGetUri;
+        var getUriFn = isFunction(clientConfig.constructGetUri) ? clientConfig.constructGetUri : defaultConstructGetUri;
         var get_uri = getUriFn.call(request, uri, request.resource, request._params, clientConfig, pickContext(request.options.context, request.options.contextPicker, 'GET'));
         /* istanbul ignore next */
         if (!get_uri) {
@@ -243,7 +265,7 @@ function executeRequest (request, resolve, reject) {
 
     var customHeaders = clientConfig.headers || request.options.headers || {};
     if (!use_post) {
-        return REST.get(uri, customHeaders, lodash.merge({xhrTimeout: request.options.xhrTimeout}, clientConfig), function getDone(err, response) {
+        return REST.get(uri, customHeaders, deepmerge({xhrTimeout: request.options.xhrTimeout}, clientConfig), function getDone(err, response) {
             if (err) {
                 debug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info');
                 return reject(err);
@@ -268,7 +290,7 @@ function executeRequest (request, resolve, reject) {
     }; // TODO: remove. leave here for now for backward compatibility
     uri = request._constructGroupUri(uri);
     allow_retry_post = (request.operation === OP_READ);
-    return REST.post(uri, customHeaders, data, lodash.merge({unsafeAllowRetry: allow_retry_post, xhrTimeout: request.options.xhrTimeout}, clientConfig), function postDone(err, response) {
+    return REST.post(uri, customHeaders, data, deepmerge({unsafeAllowRetry: allow_retry_post, xhrTimeout: request.options.xhrTimeout}, clientConfig), function postDone(err, response) {
         if (err) {
             debug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info');
             return reject(err);
@@ -292,7 +314,7 @@ function executeRequest (request, resolve, reject) {
 Request.prototype._constructGroupUri = function (uri) {
     var query = [];
     var final_uri = uri;
-    lodash.forEach(pickContext(this.options.context, this.options.contextPicker, 'POST'), function eachContext(v, k) {
+    forEach(pickContext(this.options.context, this.options.contextPicker, 'POST'), function eachContext(v, k) {
         query.push(k + '=' + encodeURIComponent(v));
     });
     if (query.length > 0) {
@@ -311,8 +333,10 @@ Request.prototype._constructGroupUri = function (uri) {
  * @param {Object} [options.context] The context object that is propagated to all outgoing
  *      requests as query params.  It can contain current-session/context data that should
  *      persist to all requests.
- * @param {Object} [options.contextPicker] The context picker for GET and POST, they must be
- *      lodash pick predicate function with three arguments (value, key, object)
+ * @param {Object} [options.contextPicker] The context picker for GET
+ *      and POST, they must be a string, a an array or function with
+ *      three arguments (value, key, object) to extract keys from
+ *      context.
  * @param {Function|String|String[]} [options.contextPicker.GET] GET context picker
  * @param {Function|String|String[]} [options.contextPicker.POST] POST context picker
  * @param {Function} [options.statsCollector] The function will be invoked with 1 argument:
@@ -452,7 +476,7 @@ Fetcher.prototype = {
      * @method updateOptions
      */
     updateOptions: function (options) {
-        this.options = lodash.merge(this.options, options);
+        this.options = deepmerge(this.options, options);
     },
 
     /**

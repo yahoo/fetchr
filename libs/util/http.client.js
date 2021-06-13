@@ -13,13 +13,7 @@
  *   retry: retry related settings, such as retry interval amount (in ms), max_retries.
  *          Note that only retry only applies on GET.
  */
-var _ = {
-        forEach: require('lodash/forEach'),
-        some: require('lodash/some'),
-        delay: require('lodash/delay'),
-        isNumber: require('lodash/isNumber')
-    },
-    DEFAULT_CONFIG = {
+var DEFAULT_CONFIG = {
         retry: {
             interval: 200,
             max_retries: 0
@@ -34,6 +28,8 @@ var _ = {
     NULL = null,
     xhr = require('xhr');
 
+var forEach = require('./forEach');
+
 //trim polyfill, maybe pull from npm later
 if (!String.prototype.trim) {
   String.prototype.trim = function () {
@@ -47,7 +43,7 @@ function normalizeHeaders(headers, method, isCors) {
         normalized['X-Requested-With'] = 'XMLHttpRequest';
     }
     var needContentType = (method === METHOD_PUT || method === METHOD_POST);
-    _.forEach(headers, function (v, field) {
+    forEach(headers, function (v, field) {
         if (field.toLowerCase() === 'content-type') {
             if (needContentType) {
                 normalized[CONTENT_TYPE] = v;
@@ -69,7 +65,7 @@ function isContentTypeJSON(headers) {
         return false;
     }
 
-    return _.some(headers[CONTENT_TYPE].split(';'), function (part) {
+    return headers[CONTENT_TYPE].split(';').some(function (part) {
         return part.trim().toLowerCase() === TYPE_JSON;
     });
 }
@@ -102,17 +98,17 @@ function mergeConfig(config) {
     if (config) {
         timeout = config.timeout || config.xhrTimeout;
         timeout = parseInt(timeout, 10);
-        if (_.isNumber(timeout) && timeout > 0) {
+        if (!isNaN(timeout) && timeout > 0) {
             cfg.timeout = timeout;
         }
 
         if (config.retry) {
             interval = parseInt(config.retry && config.retry.interval, 10);
-            if (_.isNumber(interval) && interval > 0) {
+            if (!isNaN(interval) && interval > 0) {
                 cfg.retry.interval = interval;
             }
             maxRetries = parseInt(config.retry && config.retry.max_retries, 10);
-            if (_.isNumber(maxRetries) && maxRetries >= 0) {
+            if (!isNaN(maxRetries) && maxRetries >= 0) {
                 cfg.retry.max_retries = maxRetries;
             }
         }
@@ -153,7 +149,7 @@ function doXhr(method, url, headers, data, config, callback) {
                 if (!shouldRetry(method, config, response.statusCode)) {
                     callback(err);
                 } else {
-                    _.delay(
+                    setTimeout(
                         function retryXHR() { doXhr(method, url, headers, data, config, callback); },
                         config.retry.interval
                     );

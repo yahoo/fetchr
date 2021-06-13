@@ -5,14 +5,15 @@
 'use strict';
 
 var debug = require('debug')('Fetcher:defaultConstructGetUri');
-var lodash = {
-    forEach: require('lodash/forEach'),
-    isArray: require('lodash/isArray'),
-    isObject: require('lodash/isObject')
-};
+var forEach = require('./forEach');
+
+function isObject(value) {
+    var type = typeof value;
+    return value != null && (type == 'object' || type == 'function');
+}
 
 function jsonifyComplexType(value) {
-    if (lodash.isArray(value) || lodash.isObject(value)) {
+    if (Array.isArray(value) || isObject(value)) {
         return JSON.stringify(value);
     }
     return value;
@@ -36,7 +37,7 @@ module.exports = function defaultConstructGetUri(baseUri, resource, params, conf
     var final_uri = baseUri + '/' + resource;
 
     if (params) {
-        lodash.forEach(params, function eachParam(v, k) {
+        forEach(params, function eachParam(v, k) {
             if (k === id_param) {
                 id_val = encodeURIComponent(v);
             } else if (v !== undefined) {
@@ -50,7 +51,7 @@ module.exports = function defaultConstructGetUri(baseUri, resource, params, conf
     }
 
     if (context) {
-        lodash.forEach(context, function eachContext(v, k) {
+        forEach(context, function eachContext(v, k) {
             query.push(k + '=' + encodeURIComponent(jsonifyComplexType(v)));
         });
     }
