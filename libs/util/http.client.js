@@ -15,7 +15,6 @@
  */
 var _ = {
         delay: require('lodash/delay'),
-        isNumber: require('lodash/isNumber')
     },
     DEFAULT_CONFIG = {
         retry: {
@@ -102,17 +101,17 @@ function mergeConfig(config) {
     if (config) {
         timeout = config.timeout || config.xhrTimeout;
         timeout = parseInt(timeout, 10);
-        if (_.isNumber(timeout) && timeout > 0) {
+        if (!isNaN(timeout) && timeout > 0) {
             cfg.timeout = timeout;
         }
 
         if (config.retry) {
             interval = parseInt(config.retry && config.retry.interval, 10);
-            if (_.isNumber(interval) && interval > 0) {
+            if (!isNaN(interval) && interval > 0) {
                 cfg.retry.interval = interval;
             }
             maxRetries = parseInt(config.retry && config.retry.max_retries, 10);
-            if (_.isNumber(maxRetries) && maxRetries >= 0) {
+            if (!isNaN(maxRetries) && maxRetries >= 0) {
                 cfg.retry.max_retries = maxRetries;
             }
         }
