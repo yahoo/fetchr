@@ -52,30 +52,25 @@ function pickContext (context, picker, method) {
     }
 
     var p = picker[method];
+    var result = {};
 
     if (typeof p === 'string') {
-        return { [p]: context[p] };
-    }
-
-    if (Array.isArray(p)) {
-        var pc = {}
+        result[p] = context[p];
+    } else if (Array.isArray(p)) {
         p.forEach(function(key) {
-            pc[key] = context[key];
+            result[key] = context[key];
         });
-        return pc;
-    }
-
-    if (typeof p === 'function') {
-        var pc = {};
+    } else if (typeof p === 'function') {
         forEach(context, function(value, key) {
             if (p(value, key, context)) {
-                pc[key] = context[key];
+                result[key] = context[key];
             }
         })
-        return pc;
+    } else {
+        throw new TypeError('picker must be an string, an array, or a function.');
     }
 
-    throw new TypeError('picker must be an string, an array, or a function.');
+    return result;
 }
 
 /**
