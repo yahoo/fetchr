@@ -4,7 +4,6 @@
  */
 'use strict';
 
-var debug = require('debug')('Fetcher:defaultConstructGetUri');
 var forEach = require('./forEach');
 
 function isObject(value) {
@@ -44,7 +43,7 @@ module.exports = function defaultConstructGetUri(baseUri, resource, params, conf
                 try {
                     matrix.push(k + '=' + encodeURIComponent(jsonifyComplexType(v)));
                 } catch (err) {
-                    debug('jsonifyComplexType failed: ' + err);
+                    console.debug('jsonifyComplexType failed: ' + err)
                 }
             }
         });
@@ -65,6 +64,6 @@ module.exports = function defaultConstructGetUri(baseUri, resource, params, conf
     if (query.length > 0) {
         final_uri += '?' + query.sort().join('&');
     }
-    debug('constructed get uri:', final_uri);
+
     return final_uri;
 };
