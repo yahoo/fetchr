@@ -9,7 +9,6 @@ var OP_UPDATE = 'update';
 var OP_DELETE = 'delete';
 var GET = 'GET';
 var qs = require('querystring');
-var debug = require('debug')('Fetchr');
 var fumble = require('fumble');
 var objectAssign = require('object-assign');
 var Promise = global.Promise || require('es6-promise').Promise;
@@ -302,7 +301,6 @@ Fetcher.registerService = function (service) {
     }
 
     Fetcher.services[resource] = service;
-    debug('fetcher ' + resource + ' added');
     return;
 };
 

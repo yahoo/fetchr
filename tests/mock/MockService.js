@@ -2,7 +2,6 @@
  * Copyright 2014, Yahoo! Inc.
  * Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
  */
-var debug = require('debug')('mservice');
 var lodash = require('lodash');
 var MockService = {
     resource: 'mock_service',
@@ -28,7 +27,6 @@ var MockService = {
             // create params from req.query but omit the context values(i.e. cors & returnMeta)
             params = lodash.omitBy(req.query, function (v, k) { return k === 'cors' || k === 'returnMeta' || k === '_csrf' });
         }
-        debug([].splice.call(arguments, 1));
         callback(null, {
             operation: {
                 name: 'read',

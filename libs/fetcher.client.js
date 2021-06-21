@@ -11,7 +11,6 @@
  */
 require("setimmediate");
 var REST = require('./util/http.client');
-var debug = require('debug')('FetchrClient');
 var deepmerge = require('deepmerge');
 var DEFAULT_GUID = 'g0';
 var DEFAULT_XHR_PATH = '/api';
@@ -31,7 +30,6 @@ function parseResponse(response) {
         try {
             return JSON.parse(response.responseText);
         } catch (e) {
-            debug('json parse failed:' + e, 'error');
             return null;
         }
     }
@@ -193,7 +191,6 @@ Request.prototype.end = function (callback) {
         });
     } else {
         var promise = new Promise(function requestExecutor(resolve, reject) {
-            debug('Executing request %s.%s with params %o and body %o', self.resource, self.operation, self._params, self._body);
             setImmediate(executeRequest, self, resolve, reject);
         });
         promise = promise.then(function requestSucceeded(result) {
@@ -262,7 +259,6 @@ function executeRequest (request, resolve, reject) {
     if (!use_post) {
         return REST.get(uri, customHeaders, deepmerge({xhrTimeout: request.options.xhrTimeout}, clientConfig), function getDone(err, response) {
             if (err) {
-                debug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info');
                 return reject(err);
             }
             resolve(parseResponse(response));
@@ -287,7 +283,6 @@ function executeRequest (request, resolve, reject) {
     allow_retry_post = (request.operation === OP_READ);
     return REST.post(uri, customHeaders, data, deepmerge({unsafeAllowRetry: allow_retry_post, xhrTimeout: request.options.xhrTimeout}, clientConfig), function postDone(err, response) {
         if (err) {
-            debug('Syncing ' + request.resource + ' failed: statusCode=' + err.statusCode, 'info');
             return reject(err);
         }
         var result = parseResponse(response);
