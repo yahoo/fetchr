@@ -1,7 +1,7 @@
 # Fetchr
 
 [![npm version](https://badge.fury.io/js/fetchr.svg)](http://badge.fury.io/js/fetchr)
-[![Build Status](https://travis-ci.org/yahoo/fetchr.svg?branch=master)](https://travis-ci.org/yahoo/fetchr)
+![Build Status](https://github.com/yahoo/fetchr/actions/workflows/node.js.yml/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/yahoo/fetchr/badge.png?branch=master)](https://coveralls.io/r/yahoo/fetchr?branch=master)
 
 Universal data access layer for web applications.
