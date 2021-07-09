@@ -28,7 +28,13 @@ function jsonifyComplexType(value) {
  * @param {String} config.id_param  Name of the id parameter
  * @param {Object} context Context object, which will become query params
  */
-module.exports = function defaultConstructGetUri(baseUri, resource, params, config, context) {
+module.exports = function defaultConstructGetUri(
+    baseUri,
+    resource,
+    params,
+    config,
+    context
+) {
     var query = [];
     var matrix = [];
     var id_param = config.id_param;
@@ -41,9 +47,11 @@ module.exports = function defaultConstructGetUri(baseUri, resource, params, conf
                 id_val = encodeURIComponent(v);
             } else if (v !== undefined) {
                 try {
-                    matrix.push(k + '=' + encodeURIComponent(jsonifyComplexType(v)));
+                    matrix.push(
+                        k + '=' + encodeURIComponent(jsonifyComplexType(v))
+                    );
                 } catch (err) {
-                    console.debug('jsonifyComplexType failed: ' + err)
+                    console.debug('jsonifyComplexType failed: ' + err);
                 }
             }
         });

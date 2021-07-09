@@ -5,7 +5,7 @@
 module.exports = {
     entry: require.resolve('./client/app.js'),
     output: {
-        path: __dirname+'/client/build/',
-        filename: "app.js"
-    }
+        path: __dirname + '/client/build/',
+        filename: 'app.js',
+    },
 };

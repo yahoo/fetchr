@@ -8,12 +8,12 @@ var readFlickr = require('../shared/getFlickrPhotos'),
     Fetcher = require('../../../libs/fetcher.client.js'),
     fetcher = new Fetcher({
         xhrPath: config.xhrPath,
-        requireCrumb: false
+        requireCrumb: false,
     });
 
 //client specific callback
-readFlickrClient = function(err, data) {
-    if(err) {
+readFlickrClient = function (err, data) {
+    if (err) {
         throw err;
     }
     //client specific logic

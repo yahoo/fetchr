@@ -15,7 +15,7 @@ FetcherServer.registerService(mockErrorService);
 FetcherServer.registerService(mockNoopService);
 
 app.use(bodyParser.json());
-app.use(function cors (req, res, next) {
+app.use(function cors(req, res, next) {
     if (req.query.cors) {
         res.set('Access-Control-Allow-Origin', '*');
         next();
