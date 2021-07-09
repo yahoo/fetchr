@@ -12,7 +12,7 @@ Having to write code differently for both environments is duplicative and error 
 
 ## Install
 
-```
+```bash
 npm install fetchr --save
 ```
 
@@ -47,17 +47,17 @@ On the client side, it is necessary for the `xhrPath` option to match the path w
 ```js
 var Fetcher = require('fetchr');
 var fetcher = new Fetcher({
-    xhrPath: '/myCustomAPIEndpoint'
+    xhrPath: '/myCustomAPIEndpoint',
 });
 ```
 
 ### 3. Register data services
 
 You will need to register any data services that you wish to use in
-your application.  The interface for your service will be an object
+your application. The interface for your service will be an object
 that must define a `resource` property and at least one
 [CRUD](https://en.wikipedia.org/wiki/Create,_read,_update_and_delete)
-operation.  The `resource` property will be used when you call one of the
+operation. The `resource` property will be used when you call one of the
 CRUD operations.
 
 ```js
@@ -73,14 +73,14 @@ module.exports = {
     // resource is required
     resource: 'data_service',
     // at least one of the CRUD methods is required
-    read: function(req, resource, params, config, callback) {
-      //...
+    read: function (req, resource, params, config, callback) {
+        //...
     },
     // other methods
     // create: function(req, resource, params, body, config, callback) {},
     // update: function(req, resource, params, body, config, callback) {},
     // delete: function(req, resource, params, config, callback) {}
-}
+};
 ```
 
 ### 4. Instantiating the Fetchr Class
@@ -90,7 +90,6 @@ For this reason, Fetcher will have to be instantiated once per request.
 
 On the serverside, this requires fetcher to be instantiated per request, in express middleware.
 On the clientside, this only needs to happen on page load.
-
 
 ```js
 // app.js - server
@@ -144,8 +143,6 @@ fetcher
     });
 ```
 
-
-
 ## Usage Examples
 
 See the [simple example](https://github.com/yahoo/fetchr/tree/master/examples/simple).
@@ -165,18 +162,18 @@ property of the resolved value.
 // dataService.js
 module.exports = {
     resource: 'data_service',
-    read: function(req, resource, params, config, callback) {
+    read: function (req, resource, params, config, callback) {
         // business logic
         var data = 'response';
         var meta = {
             headers: {
-                'cache-control': 'public, max-age=3600'
+                'cache-control': 'public, max-age=3600',
             },
-            statusCode: 200 // You can even provide a custom statusCode for the xhr response
+            statusCode: 200, // You can even provide a custom statusCode for the xhr response
         };
         callback(null, data, meta);
-    }
-}
+    },
+};
 ```
 
 ```js
@@ -195,7 +192,6 @@ in an array format.
 In the server, this will include all service calls for the current request.
 In the client, this will include all service calls for the current session.
 
-
 ## Updating Configuration
 
 Usually you instantiate fetcher with some default options for the entire browser session,
@@ -207,15 +203,14 @@ You can do that with the `updateOptions` method:
 // Start
 var fetcher = new Fetcher({
     xhrPath: '/myCustomAPIEndpoint',
-    xhrTimeout: 2000
+    xhrTimeout: 2000,
 });
 
 // Later, you may want to update the xhrTimeout
 fetcher.updateOptions({
-    xhrTimeout: 4000
+    xhrTimeout: 4000,
 });
 ```
-
 
 ## Error Handling
 
@@ -227,9 +222,9 @@ module.exports = {
     read: function create(req, resource, params, configs, callback) {
         var err = new Error('it failed');
         err.statusCode = 404;
-        err.output = { message: "Not found", more: "meta data" };
+        err.output = { message: 'Not found', more: 'meta data' };
         return callback(err);
-    }
+    },
 };
 ```
 
@@ -248,7 +243,7 @@ fetcher
 
 ## XHR Object
 
-The xhr object is returned by the `.end()` method as long as you're *not* chaining promises.
+The xhr object is returned by the `.end()` method as long as you're _not_ chaining promises.
 This is useful if you want to abort a request before it is completed.
 
 ```js
@@ -263,6 +258,7 @@ req.abort();
 ```
 
 However, you can't acces the xhr object if using promise chaining like so:
+
 ```js
 var req = fetcher
     .read('someData')
@@ -282,7 +278,7 @@ On the serverside, xhrPath and xhrTimeout are not needed and are ignored.
 var Fetcher = require('fetchr');
 var fetcher = new Fetcher({
     xhrPath: '/myCustomAPIEndpoint',
-    xhrTimeout: 4000
+    xhrTimeout: 4000,
 });
 ```
 
@@ -311,12 +307,15 @@ Here is an example:
     Using the app.js from above, you can modify the Fetcher.middleware
     method to pass in the paramsProcessor function.
  */
-app.use('/myCustomAPIEndpoint', Fetcher.middleware({
-    paramsProcessor: function (req, serviceInfo, params) {
-        console.log(serviceInfo.resource, serviceInfo.operation);
-        return Object.assign({foo: 'fillDefaultValueForFoo'}, params);
-    }
-}));
+app.use(
+    '/myCustomAPIEndpoint',
+    Fetcher.middleware({
+        paramsProcessor: function (req, serviceInfo, params) {
+            console.log(serviceInfo.resource, serviceInfo.operation);
+            return Object.assign({ foo: 'fillDefaultValueForFoo' }, params);
+        },
+    })
+);
 ```
 
 ## XHR Response Formatting
@@ -332,12 +331,15 @@ Take a look at the example below:
     Using the app.js from above, you can modify the Fetcher.middleware
     method to pass in the responseFormatter function.
  */
-app.use('/myCustomAPIEndpoint', Fetcher.middleware({
-    responseFormatter: function (req, res, data) {
-        data.debug = 'some debug information';
-        return data;
-    }
-}));
+app.use(
+    '/myCustomAPIEndpoint',
+    Fetcher.middleware({
+        responseFormatter: function (req, res, data) {
+            data.debug = 'some debug information';
+            return data;
+        },
+    })
+);
 ```
 
 Now when an XHR request is performed, your response will contain the `debug` property added above.
@@ -352,7 +354,7 @@ For example:
 var Fetcher = require('fetchr');
 var fetcher = new Fetcher({
     corsPath: 'http://www.foo.com',
-    xhrPath: '/fooProxy'
+    xhrPath: '/fooProxy',
 });
 fetcher
     .read('service')
@@ -376,18 +378,17 @@ function customConstructGetUri(uri, resource, params, config) {
 var Fetcher = require('fetchr');
 var fetcher = new Fetcher({
     corsPath: 'http://www.foo.com',
-    xhrPath: '/fooProxy'
+    xhrPath: '/fooProxy',
 });
 fetcher
     .read('service')
     .params({ foo: 1 })
     .clientConfig({
         cors: true,
-        constructGetUri: customConstructGetUri
+        constructGetUri: customConstructGetUri,
     })
     .end(callbackFn);
 ```
-
 
 ## CSRF Protection
 
@@ -402,9 +403,10 @@ Next you need to make sure that the CSRF token is being sent with our XHR reques
 ```js
 var fetcher = new Fetcher({
     xhrPath: '/myCustomAPIEndpoint', //xhrPath is REQUIRED on the clientside fetcher instantiation
-    context: { // These context values are persisted with XHR calls as query params
-        _csrf: 'Ax89D94j'
-    }
+    context: {
+        // These context values are persisted with XHR calls as query params
+        _csrf: 'Ax89D94j',
+    },
 });
 ```
 
@@ -420,14 +422,10 @@ When this call is made from the client, the config object is used to define XHR 
 //app.js - client
 var config = {
     timeout: 6000, // Timeout (in ms) for each request
-    unsafeAllowRetry: false // for POST requests, whether to allow retrying this post
+    unsafeAllowRetry: false, // for POST requests, whether to allow retrying this post
 };
 
-fetcher
-    .read('service')
-    .params({ id: 1 })
-    .clientConfig(config)
-    .end(callbackFn);
+fetcher.read('service').params({ id: 1 }).clientConfig(config).end(callbackFn);
 ```
 
 For requests from the server, the config object is simply passed into the service being called.
@@ -440,9 +438,10 @@ By Default, fetchr appends all context values to the xhr url as query params. `c
 
 ```js
 var fetcher = new Fetcher({
-    context: { // These context values are persisted with XHR calls as query params
+    context: {
+        // These context values are persisted with XHR calls as query params
         _csrf: 'Ax89D94j',
-        device: 'desktop'
+        device: 'desktop',
     },
     contextPicker: {
         GET: function (value, key) {
@@ -451,19 +450,20 @@ var fetcher = new Fetcher({
                 return false;
             }
             return true;
-        }
+        },
         // for other method e.g., POST, if you don't define the picker, it will pick the entire context object
-    }
+    },
 });
 
 var fetcher = new Fetcher({
-    context: { // These context values are persisted with XHR calls as query params
+    context: {
+        // These context values are persisted with XHR calls as query params
         _csrf: 'Ax89D94j',
-        device: 'desktop'
+        device: 'desktop',
     },
     contextPicker: {
-        GET: ['device'] // predicate can be an array of strings
-    }
+        GET: ['device'], // predicate can be an array of strings
+    },
 });
 ```
 
@@ -476,15 +476,11 @@ A request contains custom headers when you add `headers` option to 'clientConfig
 ```js
 var config = {
     headers: {
-        'X-VERSION': '1.0.0'
-    }
+        'X-VERSION': '1.0.0',
+    },
 };
 
-fetcher
-    .read('service')
-    .params({ id: 1 })
-    .clientConfig(config)
-    .end(callbackFn);
+fetcher.read('service').params({ id: 1 }).clientConfig(config).end(callbackFn);
 ```
 
 All requests contain custom headers when you add `headers` option to constructor arguments of 'Fetcher'.
@@ -493,22 +489,21 @@ All requests contain custom headers when you add `headers` option to constructor
 var Fetcher = require('fetchr');
 var fetcher = new Fetcher({
     headers: {
-        'X-VERSION': '1.0.0'
-    }
+        'X-VERSION': '1.0.0',
+    },
 });
 ```
 
-
 ## Stats Monitoring & Analysis
 
-To collect fetcher service's success/failure/latency stats, you can configure `statsCollector` for `Fetchr`.  The `statsCollector` function will be invoked with one argumment: `stats`.  The `stats` object will contain the following fields:
+To collect fetcher service's success/failure/latency stats, you can configure `statsCollector` for `Fetchr`. The `statsCollector` function will be invoked with one argumment: `stats`. The `stats` object will contain the following fields:
 
-* **resource:** The name of the resource for the request
-* **operation:** The name of the operation, `create|read|update|delete`
-* **params:** The params object for the resource
-* **statusCode:** The status code of the response
-* **err:** The error object of failed request; null if request was successful
-* **time:** The time spent for this request, in milliseconds
+-   **resource:** The name of the resource for the request
+-   **operation:** The name of the operation, `create|read|update|delete`
+-   **params:** The params object for the resource
+-   **statusCode:** The status code of the response
+-   **err:** The error object of failed request; null if request was successful
+-   **time:** The time spent for this request, in milliseconds
 
 ### Fetcher Instance
 
@@ -519,36 +514,53 @@ var fetcher = new Fetcher({
     statsCollector: function (stats) {
         // just console logging as a naive example.  there is a lot more you can do here,
         // like aggregating stats or filtering out stats you don't want to monitor
-        console.log('Request for resource', stats.resource,
-            'with', stats.operation,
-            'returned statusCode:', stats.statusCode,
-            ' within', stats.time, 'ms');
-    }
+        console.log(
+            'Request for resource',
+            stats.resource,
+            'with',
+            stats.operation,
+            'returned statusCode:',
+            stats.statusCode,
+            ' within',
+            stats.time,
+            'ms'
+        );
+    },
 });
 ```
 
 ### Server Middleware
 
 ```js
-app.use('/myCustomAPIEndpoint', Fetcher.middleware({
-    statsCollector: function (stats) {
-        // just console logging as a naive example.  there is a lot more you can do here,
-        // like aggregating stats or filtering out stats you don't want to monitor
-        console.log('Request for resource', stats.resource,
-            'with', stats.operation,
-            'returned statusCode:', stats.statusCode,
-            ' within', stats.time, 'ms');
-    }
-}));
+app.use(
+    '/myCustomAPIEndpoint',
+    Fetcher.middleware({
+        statsCollector: function (stats) {
+            // just console logging as a naive example.  there is a lot more you can do here,
+            // like aggregating stats or filtering out stats you don't want to monitor
+            console.log(
+                'Request for resource',
+                stats.resource,
+                'with',
+                stats.operation,
+                'returned statusCode:',
+                stats.statusCode,
+                ' within',
+                stats.time,
+                'ms'
+            );
+        },
+    })
+);
 ```
 
 ## API
 
-- [Fetchr](https://github.com/yahoo/fetchr/blob/master/docs/fetchr.md)
+-   [Fetchr](https://github.com/yahoo/fetchr/blob/master/docs/fetchr.md)
 
 ## License
 
 This software is free to use under the Yahoo! Inc. BSD license.
 See the [LICENSE file][] for license text and copyright information.
 
-[LICENSE file]: https://github.com/yahoo/fetchr/blob/master/LICENSE.md
+[license file]: https://github.com/yahoo/fetchr/blob/master/LICENSE.md
