@@ -2,7 +2,7 @@
  * Copyright 2014, Yahoo! Inc.
  * Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
  */
-require("setimmediate");
+require('setimmediate');
 var OP_READ = 'read';
 var OP_CREATE = 'create';
 var OP_UPDATE = 'update';
@@ -12,7 +12,7 @@ var qs = require('querystring');
 var fumble = require('fumble');
 var objectAssign = require('object-assign');
 var Promise = global.Promise || require('es6-promise').Promise;
-var RESOURCE_SANTIZER_REGEXP = /[^\w\.]+/g;
+var RESOURCE_SANTIZER_REGEXP = /[^\w.]+/g;
 
 function parseValue(value) {
     // take care of value of type: array, object
@@ -31,7 +31,7 @@ function parseValue(value) {
     }
 }
 
-function parseParamValues (params) {
+function parseParamValues(params) {
     return Object.keys(params).reduce(function (parsed, curr) {
         parsed[curr] = parseValue(params[curr]);
         return parsed;
@@ -39,7 +39,9 @@ function parseParamValues (params) {
 }
 
 function sanitizeResourceName(resource) {
-    return resource ? resource.replace(RESOURCE_SANTIZER_REGEXP, '*') : resource;
+    return resource
+        ? resource.replace(RESOURCE_SANTIZER_REGEXP, '*')
+        : resource;
 }
 
 /**
@@ -51,7 +53,7 @@ function sanitizeResourceName(resource) {
 function getErrorResponse(err) {
     var statusCode = err.statusCode || 500;
     var output = {
-        message: 'request failed'
+        message: 'request failed',
     };
 
     if (typeof err.output !== 'undefined') {
@@ -62,10 +64,9 @@ function getErrorResponse(err) {
 
     return {
         statusCode: statusCode,
-        output: output
+        output: output,
     };
 }
-
 
 /**
  * A Request instance represents a single fetcher request.
@@ -83,7 +84,7 @@ function getErrorResponse(err) {
  *      the req object, the serviceInfo object, and the params object.  It is expected to return the processed params object.
  * @constructor
  */
-function Request (operation, resource, options) {
+function Request(operation, resource, options) {
     if (!resource) {
         throw new Error('Resource is required for a fetcher request');
     }
@@ -109,9 +110,14 @@ function Request (operation, resource, options) {
  * @chainable
  */
 Request.prototype.params = function (params) {
-    this._params = (typeof this._paramsProcessor === 'function')
-         ? this._paramsProcessor(this.req, {operation: this.operation, resource: this.resource}, params)
-         : params;
+    this._params =
+        typeof this._paramsProcessor === 'function'
+            ? this._paramsProcessor(
+                  this.req,
+                  { operation: this.operation, resource: this.resource },
+                  params
+              )
+            : params;
     return this;
 };
 /**
@@ -158,9 +164,11 @@ Request.prototype._captureMetaAndStats = function (errData, result) {
             resource: self.resource,
             operation: self.operation,
             params: self._params,
-            statusCode: err ? err.statusCode : (result && result.meta && result.meta.statusCode || 200),
+            statusCode: err
+                ? err.statusCode
+                : (result && result.meta && result.meta.statusCode) || 200,
             err: err,
-            time: Date.now() - self._startTime
+            time: Date.now() - self._startTime,
         };
         statsCollector(stats);
     }
@@ -180,20 +188,26 @@ Request.prototype.end = function (callback) {
         setImmediate(executeRequest, self, resolve, reject);
     });
 
-    promise = promise.then(function requestSucceeded(result) {
-        self._captureMetaAndStats(null, result);
-        return result;
-    }, function requestFailed(errData) {
-        self._captureMetaAndStats(errData);
-        throw errData.err;
-    });
+    promise = promise.then(
+        function requestSucceeded(result) {
+            self._captureMetaAndStats(null, result);
+            return result;
+        },
+        function requestFailed(errData) {
+            self._captureMetaAndStats(errData);
+            throw errData.err;
+        }
+    );
 
     if (callback) {
-        promise.then(function requestSucceeded(result) {
-            setImmediate(callback, null, result.data, result.meta);
-        }, function requestFailed(err) {
-            setImmediate(callback, err);
-        });
+        promise.then(
+            function requestSucceeded(result) {
+                setImmediate(callback, null, result.data, result.meta);
+            },
+            function requestFailed(err) {
+                setImmediate(callback, err);
+            }
+        );
     } else {
         return promise;
     }
@@ -206,33 +220,44 @@ Request.prototype.end = function (callback) {
  * @param {Function} resolve function to call when request fulfilled
  * @param {Function} reject function to call when request rejected
  */
-function executeRequest (request, resolve, reject) {
-    var args = [request.req, request.resource, request._params, request._clientConfig, function executeRequestCallback(err, data, meta) {
-        if (err) {
-            reject({
-                err: err,
-                meta: meta
-            });
-        } else {
-            resolve({
-                data: data,
-                meta: meta
-            });
-        }
-    }];
+function executeRequest(request, resolve, reject) {
+    var args = [
+        request.req,
+        request.resource,
+        request._params,
+        request._clientConfig,
+        function executeRequestCallback(err, data, meta) {
+            if (err) {
+                reject({
+                    err: err,
+                    meta: meta,
+                });
+            } else {
+                resolve({
+                    data: data,
+                    meta: meta,
+                });
+            }
+        },
+    ];
     var op = request.operation;
-    if ((op === OP_CREATE) || (op === OP_UPDATE)) {
+    if (op === OP_CREATE || op === OP_UPDATE) {
         args.splice(3, 0, request._body);
     }
     var service;
     try {
         service = Fetcher.getService(request.resource);
         if (!service[op]) {
-          throw new Error('operation: ' + op + ' is undefined on service: ' + request.resource);
+            throw new Error(
+                'operation: ' +
+                    op +
+                    ' is undefined on service: ' +
+                    request.resource
+            );
         }
         service[op].apply(service, args);
     } catch (err) {
-        reject({err: err});
+        reject({ err: err });
     }
 }
 
@@ -251,7 +276,7 @@ function executeRequest (request, resolve, reject) {
  *      the req object, the serviceInfo object, and the params object.  It is expected to return the processed params object.
  * @constructor
  */
-function Fetcher (options) {
+function Fetcher(options) {
     this.options = options || {};
     this.req = this.options.req || {};
     this._serviceMeta = [];
@@ -297,7 +322,9 @@ Fetcher.registerService = function (service) {
         resource = service.name;
         Fetcher._deprecatedServicesDefinitions.push(resource);
     } else {
-        throw new Error('"resource" property is missing in service definition.');
+        throw new Error(
+            '"resource" property is missing in service definition.'
+        );
     }
 
     Fetcher.services[resource] = service;
@@ -330,7 +357,9 @@ Fetcher.getService = function (name) {
     //Access service by name
     var service = Fetcher.isRegistered(name);
     if (!service) {
-        throw new Error('Service "' + sanitizeResourceName(name) + '" could not be found');
+        throw new Error(
+            'Service "' + sanitizeResourceName(name) + '" could not be found'
+        );
     }
     return service;
 };
@@ -366,18 +395,26 @@ Fetcher.isRegistered = function (name) {
  */
 Fetcher.middleware = function (options) {
     options = options || {};
-    var responseFormatter = options.responseFormatter || function noOp(req, res, data) {
-        return data;
-    };
+    var responseFormatter =
+        options.responseFormatter ||
+        function noOp(req, res, data) {
+            return data;
+        };
 
-    if (Fetcher._deprecatedServicesDefinitions.length && 'production' !== process.env.NODE_ENV) {
-        var deprecatedServices = Fetcher._deprecatedServicesDefinitions.sort().join(', ');
+    if (
+        Fetcher._deprecatedServicesDefinitions.length &&
+        'production' !== process.env.NODE_ENV
+    ) {
+        var deprecatedServices = Fetcher._deprecatedServicesDefinitions
+            .sort()
+            .join(', ');
 
         console.warn(
             'You have registered services using a deprecated property. ' +
                 'Please, replace the property "name" by "resource" in the ' +
                 'following services definitions:\n' +
-            deprecatedServices + '.'
+                deprecatedServices +
+                '.'
         );
     }
 
@@ -393,7 +430,9 @@ Fetcher.middleware = function (options) {
             var resource = path.shift();
 
             if (!resource) {
-                error = fumble.http.badRequest('No resource specified', { debug: 'Bad resource' });
+                error = fumble.http.badRequest('No resource specified', {
+                    debug: 'Bad resource',
+                });
                 error.source = 'fetchr';
                 return next(error);
             }
@@ -402,7 +441,7 @@ Fetcher.middleware = function (options) {
                 resourceName = sanitizeResourceName(resource);
                 errorMsg = 'Resource "' + resourceName + '" is not registered';
                 error = fumble.http.badRequest(errorMsg, {
-                    debug: 'Bad resource ' + resourceName
+                    debug: 'Bad resource ' + resourceName,
                 });
                 error.source = 'fetchr';
                 return next(error);
@@ -412,7 +451,7 @@ Fetcher.middleware = function (options) {
                 req: req,
                 serviceMeta: serviceMeta,
                 statsCollector: options.statsCollector,
-                paramsProcessor: options.paramsProcessor
+                paramsProcessor: options.paramsProcessor,
             });
             request
                 .params(parseParamValues(qs.parse(path.join('&'))))
@@ -424,20 +463,26 @@ Fetcher.middleware = function (options) {
                     if (err) {
                         var errResponse = getErrorResponse(err);
                         if (req.query && req.query.returnMeta) {
-                            res.status(errResponse.statusCode).json(responseFormatter(req, res, {
-                                output: errResponse.output,
-                                meta: meta
-                            }));
+                            res.status(errResponse.statusCode).json(
+                                responseFormatter(req, res, {
+                                    output: errResponse.output,
+                                    meta: meta,
+                                })
+                            );
                         } else {
-                            res.status(errResponse.statusCode).json(responseFormatter(req, res, errResponse.output));
+                            res.status(errResponse.statusCode).json(
+                                responseFormatter(req, res, errResponse.output)
+                            );
                         }
                         return;
                     }
                     if (req.query.returnMeta) {
-                        res.status(meta.statusCode || 200).json(responseFormatter(req, res, {
-                            data: data,
-                            meta: meta
-                        }));
+                        res.status(meta.statusCode || 200).json(
+                            responseFormatter(req, res, {
+                                data: data,
+                                meta: meta,
+                            })
+                        );
                     } else {
                         // TODO: Remove `returnMeta` feature flag after next release
                         res.status(meta.statusCode || 200).json(data);
@@ -448,7 +493,7 @@ Fetcher.middleware = function (options) {
 
             if (!requests || Object.keys(requests).length === 0) {
                 error = fumble.http.badRequest('No resource specified', {
-                    debug: 'No resources'
+                    debug: 'No resources',
                 });
                 error.source = 'fetchr';
                 return next(error);
@@ -461,16 +506,27 @@ Fetcher.middleware = function (options) {
             if (!Fetcher.isRegistered(singleRequest.resource)) {
                 errorMsg = 'Resource "' + resourceName + '" is not registered';
                 error = fumble.http.badRequest(errorMsg, {
-                    debug: 'Bad resource ' + resourceName
+                    debug: 'Bad resource ' + resourceName,
                 });
                 error.source = 'fetchr';
                 return next(error);
             }
             var operation = singleRequest.operation;
-            if(operation !== OP_CREATE && operation !== OP_UPDATE && operation !== OP_DELETE && operation !== OP_READ) {
+            if (
+                operation !== OP_CREATE &&
+                operation !== OP_UPDATE &&
+                operation !== OP_DELETE &&
+                operation !== OP_READ
+            ) {
                 error = fumble.http.badRequest(
-                    'Unsupported "' + resourceName + '.' + operation + '" operation',
-                    { debug: 'Only "create", "read", "update" or "delete" operations are allowed' }
+                    'Unsupported "' +
+                        resourceName +
+                        '.' +
+                        operation +
+                        '" operation',
+                    {
+                        debug: 'Only "create", "read", "update" or "delete" operations are allowed',
+                    }
                 );
                 error.source = 'fetchr';
                 return next(error);
@@ -480,25 +536,27 @@ Fetcher.middleware = function (options) {
                 req: req,
                 serviceMeta: serviceMeta,
                 statsCollector: options.statsCollector,
-                paramsProcessor: options.paramsProcessor
+                paramsProcessor: options.paramsProcessor,
             });
             request
                 .params(singleRequest.params)
                 .body(singleRequest.body || {})
-                .end(function(err, data) {
+                .end(function (err, data) {
                     var meta = serviceMeta[0] || {};
                     if (meta.headers) {
                         res.set(meta.headers);
                     }
                     if (err) {
                         var errResponse = getErrorResponse(err);
-                        res.status(errResponse.statusCode).json(responseFormatter(req, res, errResponse.output));
+                        res.status(errResponse.statusCode).json(
+                            responseFormatter(req, res, errResponse.output)
+                        );
                         return;
                     }
                     var responseObj = {};
                     responseObj[DEFAULT_GUID] = responseFormatter(req, res, {
                         data: data,
-                        meta: meta
+                        meta: meta,
                     });
                     res.status(meta.statusCode || 200).json(responseObj);
                 });
@@ -506,7 +564,6 @@ Fetcher.middleware = function (options) {
         // TODO: Batching and multi requests
     };
 };
-
 
 // ------------------------------------------------------------------
 // CRUD Data Access Wrapper Methods
@@ -527,7 +584,7 @@ Fetcher.prototype.read = function (resource, params, config, callback) {
     var request = new Request('read', resource, {
         req: this.req,
         serviceMeta: this._serviceMeta,
-        statsCollector: this.options.statsCollector
+        statsCollector: this.options.statsCollector,
     });
     if (1 === arguments.length) {
         return request;
@@ -542,10 +599,7 @@ Fetcher.prototype.read = function (resource, params, config, callback) {
         callback = config;
         config = {};
     }
-    return request
-        .params(params)
-        .clientConfig(config)
-        .end(callback);
+    return request.params(params).clientConfig(config).end(callback);
 };
 /**
  * create operation (create as in CRUD).
@@ -563,7 +617,7 @@ Fetcher.prototype.create = function (resource, params, body, config, callback) {
     var request = new Request('create', resource, {
         req: this.req,
         serviceMeta: this._serviceMeta,
-        statsCollector: this.options.statsCollector
+        statsCollector: this.options.statsCollector,
     });
     if (1 === arguments.length) {
         return request;
@@ -578,11 +632,7 @@ Fetcher.prototype.create = function (resource, params, body, config, callback) {
         callback = config;
         config = {};
     }
-    return request
-        .params(params)
-        .body(body)
-        .clientConfig(config)
-        .end(callback);
+    return request.params(params).body(body).clientConfig(config).end(callback);
 };
 /**
  * update operation (update as in CRUD).
@@ -600,7 +650,7 @@ Fetcher.prototype.update = function (resource, params, body, config, callback) {
     var request = new Request('update', resource, {
         req: this.req,
         serviceMeta: this._serviceMeta,
-        statsCollector: this.options.statsCollector
+        statsCollector: this.options.statsCollector,
     });
     if (1 === arguments.length) {
         return request;
@@ -615,11 +665,7 @@ Fetcher.prototype.update = function (resource, params, body, config, callback) {
         callback = config;
         config = {};
     }
-    return request
-        .params(params)
-        .body(body)
-        .clientConfig(config)
-        .end(callback);
+    return request.params(params).body(body).clientConfig(config).end(callback);
 };
 /**
  * delete operation (delete as in CRUD).
@@ -636,7 +682,7 @@ Fetcher.prototype['delete'] = function (resource, params, config, callback) {
     var request = new Request('delete', resource, {
         req: this.req,
         serviceMeta: this._serviceMeta,
-        statsCollector: this.options.statsCollector
+        statsCollector: this.options.statsCollector,
     });
     if (1 === arguments.length) {
         return request;
@@ -652,10 +698,7 @@ Fetcher.prototype['delete'] = function (resource, params, config, callback) {
         callback = config;
         config = {};
     }
-    return request
-        .params(params)
-        .clientConfig(config)
-        .end(callback);
+    return request.params(params).clientConfig(config).end(callback);
 };
 
 /**

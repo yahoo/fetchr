@@ -9,7 +9,7 @@
  * Fetcher is a CRUD interface for your data.
  * @module Fetcher
  */
-require("setimmediate");
+require('setimmediate');
 var REST = require('./util/http.client');
 var deepmerge = require('deepmerge');
 var DEFAULT_GUID = 'g0';
@@ -44,7 +44,7 @@ function parseResponse(response) {
  * function that return keys to be extracted from context.
  * @param {String} method - method name, GET or POST
  */
-function pickContext (context, picker, method) {
+function pickContext(context, picker, method) {
     if (!picker || !picker[method]) {
         return context;
     }
@@ -55,17 +55,19 @@ function pickContext (context, picker, method) {
     if (typeof p === 'string') {
         result[p] = context[p];
     } else if (Array.isArray(p)) {
-        p.forEach(function(key) {
+        p.forEach(function (key) {
             result[key] = context[key];
         });
     } else if (typeof p === 'function') {
-        forEach(context, function(value, key) {
+        forEach(context, function (value, key) {
             if (p(value, key, context)) {
                 result[key] = context[key];
             }
-        })
+        });
     } else {
-        throw new TypeError('picker must be an string, an array, or a function.');
+        throw new TypeError(
+            'picker must be an string, an array, or a function.'
+        );
     }
 
     return result;
@@ -83,7 +85,7 @@ function pickContext (context, picker, method) {
  *
  * @constructor
  */
-function Request (operation, resource, options) {
+function Request(operation, resource, options) {
     if (!resource) {
         throw new Error('Resource is required for a fetcher request');
     }
@@ -98,7 +100,7 @@ function Request (operation, resource, options) {
         context: options.context || {},
         contextPicker: options.contextPicker || {},
         statsCollector: options.statsCollector,
-        _serviceMeta: options._serviceMeta || []
+        _serviceMeta: options._serviceMeta || [],
     };
     this._params = {};
     this._body = null;
@@ -164,7 +166,7 @@ Request.prototype._captureMetaAndStats = function (err, result) {
             params: self._params,
             statusCode: err ? err.statusCode : 200,
             err: err,
-            time: Date.now() - self._startTime
+            time: Date.now() - self._startTime,
         };
         statsCollector(stats);
     }
@@ -182,24 +184,36 @@ Request.prototype.end = function (callback) {
     self._startTime = Date.now();
 
     if (callback) {
-        return executeRequest(self, function requestSucceeded(result) {
-            self._captureMetaAndStats(null, result);
-            setImmediate(callback, null, result && result.data, result && result.meta);
-        }, function requestFailed(err) {
-            self._captureMetaAndStats(err);
-            setImmediate(callback, err);
-        });
+        return executeRequest(
+            self,
+            function requestSucceeded(result) {
+                self._captureMetaAndStats(null, result);
+                setImmediate(
+                    callback,
+                    null,
+                    result && result.data,
+                    result && result.meta
+                );
+            },
+            function requestFailed(err) {
+                self._captureMetaAndStats(err);
+                setImmediate(callback, err);
+            }
+        );
     } else {
         var promise = new Promise(function requestExecutor(resolve, reject) {
             setImmediate(executeRequest, self, resolve, reject);
         });
-        promise = promise.then(function requestSucceeded(result) {
-            self._captureMetaAndStats(null, result);
-            return result;
-        }, function requestFailed(err) {
-            self._captureMetaAndStats(err);
-            throw err;
-        });
+        promise = promise.then(
+            function requestSucceeded(result) {
+                self._captureMetaAndStats(null, result);
+                return result;
+            },
+            function requestFailed(err) {
+                self._captureMetaAndStats(err);
+                throw err;
+            }
+        );
         return promise;
     }
 };
@@ -211,7 +225,7 @@ Request.prototype.end = function (callback) {
  * @param {Function} resolve function to call when request fulfilled
  * @param {Function} reject function to call when request rejected
  */
-function executeRequest (request, resolve, reject) {
+function executeRequest(request, resolve, reject) {
     var clientConfig = request._clientConfig;
     var use_post;
     var allow_retry_post;
@@ -220,20 +234,42 @@ function executeRequest (request, resolve, reject) {
     var data;
 
     if (!uri) {
-        uri = clientConfig.cors ? request.options.corsPath : request.options.xhrPath;
+        uri = clientConfig.cors
+            ? request.options.corsPath
+            : request.options.xhrPath;
     }
 
     use_post = request.operation !== OP_READ || clientConfig.post_for_read;
     // We use GET request by default for READ operation, but you can override that behavior
     // by specifying {post_for_read: true} in your request's clientConfig
     if (!use_post) {
-        var getUriFn = isFunction(clientConfig.constructGetUri) ? clientConfig.constructGetUri : defaultConstructGetUri;
-        var get_uri = getUriFn.call(request, uri, request.resource, request._params, clientConfig, pickContext(request.options.context, request.options.contextPicker, 'GET'));
+        var getUriFn = isFunction(clientConfig.constructGetUri)
+            ? clientConfig.constructGetUri
+            : defaultConstructGetUri;
+        var get_uri = getUriFn.call(
+            request,
+            uri,
+            request.resource,
+            request._params,
+            clientConfig,
+            pickContext(
+                request.options.context,
+                request.options.contextPicker,
+                'GET'
+            )
+        );
         /* istanbul ignore next */
         if (!get_uri) {
             // If a custom getUriFn returns falsy value, we should run defaultConstructGetUri
             // TODO: Add test for this fallback
-            get_uri = defaultConstructGetUri.call(request, uri, request.resource, request._params, clientConfig, request.options.context);
+            get_uri = defaultConstructGetUri.call(
+                request,
+                uri,
+                request.resource,
+                request._params,
+                clientConfig,
+                request.options.context
+            );
         }
         // TODO: Remove `returnMeta` feature flag after next release
         // This feature flag will enable the new return format for GET api requests
@@ -246,7 +282,7 @@ function executeRequest (request, resolve, reject) {
         // easily fixed by refreshing the browser, but the feature flag will ensure
         // old fetcher clients will receive the old format and the new client will
         // receive the new format
-        get_uri += (get_uri.indexOf('?') !== -1) ? '&' : '?';
+        get_uri += get_uri.indexOf('?') !== -1 ? '&' : '?';
         get_uri += 'returnMeta=true';
         if (get_uri.length <= MAX_URI_LEN) {
             uri = get_uri;
@@ -257,12 +293,17 @@ function executeRequest (request, resolve, reject) {
 
     var customHeaders = clientConfig.headers || request.options.headers || {};
     if (!use_post) {
-        return REST.get(uri, customHeaders, deepmerge({xhrTimeout: request.options.xhrTimeout}, clientConfig), function getDone(err, response) {
-            if (err) {
-                return reject(err);
+        return REST.get(
+            uri,
+            customHeaders,
+            deepmerge({ xhrTimeout: request.options.xhrTimeout }, clientConfig),
+            function getDone(err, response) {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(parseResponse(response));
             }
-            resolve(parseResponse(response));
-        });
+        );
     }
 
     // individual request is also normalized into a request hash to pass to api
@@ -270,29 +311,41 @@ function executeRequest (request, resolve, reject) {
     requests[DEFAULT_GUID] = {
         resource: request.resource,
         operation: request.operation,
-        params: request._params
+        params: request._params,
     };
     if (request._body) {
         requests[DEFAULT_GUID].body = request._body;
     }
     data = {
         requests: requests,
-        context: request.options.context
+        context: request.options.context,
     }; // TODO: remove. leave here for now for backward compatibility
     uri = request._constructGroupUri(uri);
-    allow_retry_post = (request.operation === OP_READ);
-    return REST.post(uri, customHeaders, data, deepmerge({unsafeAllowRetry: allow_retry_post, xhrTimeout: request.options.xhrTimeout}, clientConfig), function postDone(err, response) {
-        if (err) {
-            return reject(err);
+    allow_retry_post = request.operation === OP_READ;
+    return REST.post(
+        uri,
+        customHeaders,
+        data,
+        deepmerge(
+            {
+                unsafeAllowRetry: allow_retry_post,
+                xhrTimeout: request.options.xhrTimeout,
+            },
+            clientConfig
+        ),
+        function postDone(err, response) {
+            if (err) {
+                return reject(err);
+            }
+            var result = parseResponse(response);
+            if (result) {
+                result = result[DEFAULT_GUID] || {};
+            } else {
+                result = {};
+            }
+            resolve(result);
         }
-        var result = parseResponse(response);
-        if (result) {
-            result = result[DEFAULT_GUID] || {};
-        } else {
-            result = {};
-        }
-        resolve(result);
-    });
+    );
 }
 
 /**
@@ -304,9 +357,12 @@ function executeRequest (request, resolve, reject) {
 Request.prototype._constructGroupUri = function (uri) {
     var query = [];
     var final_uri = uri;
-    forEach(pickContext(this.options.context, this.options.contextPicker, 'POST'), function eachContext(v, k) {
-        query.push(k + '=' + encodeURIComponent(v));
-    });
+    forEach(
+        pickContext(this.options.context, this.options.contextPicker, 'POST'),
+        function eachContext(v, k) {
+            query.push(k + '=' + encodeURIComponent(v));
+        }
+    );
     if (query.length > 0) {
         final_uri += '?' + query.sort().join('&');
     }
@@ -334,7 +390,7 @@ Request.prototype._constructGroupUri = function (uri) {
  *      statusCode, err, and time (elapsed time)
  */
 
-function Fetcher (options) {
+function Fetcher(options) {
     this._serviceMeta = [];
     this.options = {
         headers: options.headers,
@@ -344,7 +400,7 @@ function Fetcher (options) {
         context: options.context,
         contextPicker: options.contextPicker,
         statsCollector: options.statsCollector,
-        _serviceMeta: this._serviceMeta
+        _serviceMeta: this._serviceMeta,
     };
 }
 
@@ -401,10 +457,7 @@ Fetcher.prototype = {
             callback = clientConfig;
             clientConfig = {};
         }
-        return request
-            .params(params)
-            .clientConfig(clientConfig)
-            .end(callback);
+        return request.params(params).clientConfig(clientConfig).end(callback);
     },
 
     /**
@@ -445,7 +498,7 @@ Fetcher.prototype = {
      * @param {Function} callback   callback convention is the same as Node.js
      * @static
      */
-    'delete': function (resource, params, clientConfig, callback) {
+    delete: function (resource, params, clientConfig, callback) {
         var request = new Request('delete', resource, this.options);
         if (1 === arguments.length) {
             return request;
@@ -455,10 +508,7 @@ Fetcher.prototype = {
             callback = clientConfig;
             clientConfig = {};
         }
-        return request
-            .params(params)
-            .clientConfig(clientConfig)
-            .end(callback);
+        return request.params(params).clientConfig(clientConfig).end(callback);
     },
 
     /**
@@ -478,7 +528,7 @@ Fetcher.prototype = {
      */
     getServiceMeta: function () {
         return this._serviceMeta;
-    }
+    },
 };
 
 module.exports = Fetcher;

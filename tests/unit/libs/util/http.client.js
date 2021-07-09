@@ -2,8 +2,7 @@
  * Copyright 2015, Yahoo! Inc.
  * Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
  */
-/*jshint expr:true*/
-/*globals before,after,describe,it,beforeEach */
+
 'use strict';
 
 var expect = require('chai').expect;
@@ -15,11 +14,10 @@ var mockBody = '';
 var mockError = null;
 
 describe('Client HTTP', function () {
-
     before(function () {
         mockery.enable({
             useCleanCache: true,
-            warnOnUnregistered: false
+            warnOnUnregistered: false,
         });
         mockery.resetCache();
         mockBody = '';
@@ -30,7 +28,7 @@ describe('Client HTTP', function () {
         http = require('../../../../libs/util/http.client.js');
     });
 
-    after(function() {
+    after(function () {
         mockBody = '';
         mockery.deregisterAll();
     });
@@ -42,18 +40,20 @@ describe('Client HTTP', function () {
     describe('#Successful requests', function () {
         beforeEach(function () {
             mockResponse = {
-                statusCode: 200
+                statusCode: 200,
             };
             mockBody = 'BODY';
             xhrOptions = [];
         });
 
         it('GET', function (done) {
-            http.get('/url', {'X-Foo': 'foo'}, {}, function (err, response) {
+            http.get('/url', { 'X-Foo': 'foo' }, {}, function (err, response) {
                 expect(xhrOptions.length).to.equal(1);
                 var options = xhrOptions[0];
                 expect(options.url).to.equal('/url');
-                expect(options.headers['X-Requested-With']).to.equal('XMLHttpRequest');
+                expect(options.headers['X-Requested-With']).to.equal(
+                    'XMLHttpRequest'
+                );
                 expect(options.headers['X-Foo']).to.equal('foo');
                 expect(options.method).to.equal('GET');
                 expect(err).to.equal(null);
@@ -64,37 +64,55 @@ describe('Client HTTP', function () {
         });
 
         it('PUT', function (done) {
-            http.put('/url', {'X-Foo': 'foo'}, {data: 'data'}, {}, function () {
-                expect(xhrOptions.length).to.equal(1);
-                var options = xhrOptions[0];
-                expect(options.url).to.equal('/url');
-                expect(options.headers['X-Requested-With']).to.equal('XMLHttpRequest');
-                expect(options.headers['X-Foo']).to.equal('foo');
-                expect(options.method).to.equal('PUT');
-                expect(options.body).to.eql('{"data":"data"}');
-                done();
-            });
+            http.put(
+                '/url',
+                { 'X-Foo': 'foo' },
+                { data: 'data' },
+                {},
+                function () {
+                    expect(xhrOptions.length).to.equal(1);
+                    var options = xhrOptions[0];
+                    expect(options.url).to.equal('/url');
+                    expect(options.headers['X-Requested-With']).to.equal(
+                        'XMLHttpRequest'
+                    );
+                    expect(options.headers['X-Foo']).to.equal('foo');
+                    expect(options.method).to.equal('PUT');
+                    expect(options.body).to.eql('{"data":"data"}');
+                    done();
+                }
+            );
         });
 
         it('POST', function (done) {
-            http.post('/url', {'X-Foo': 'foo'}, {data: 'data'}, {}, function () {
-                expect(xhrOptions.length).to.equal(1);
-                var options = xhrOptions[0];
-                expect(options.url).to.equal('/url');
-                expect(options.headers['X-Requested-With']).to.equal('XMLHttpRequest');
-                expect(options.headers['X-Foo']).to.equal('foo');
-                expect(options.method).to.equal('POST');
-                expect(options.body).to.eql('{"data":"data"}');
-                done();
-            });
+            http.post(
+                '/url',
+                { 'X-Foo': 'foo' },
+                { data: 'data' },
+                {},
+                function () {
+                    expect(xhrOptions.length).to.equal(1);
+                    var options = xhrOptions[0];
+                    expect(options.url).to.equal('/url');
+                    expect(options.headers['X-Requested-With']).to.equal(
+                        'XMLHttpRequest'
+                    );
+                    expect(options.headers['X-Foo']).to.equal('foo');
+                    expect(options.method).to.equal('POST');
+                    expect(options.body).to.eql('{"data":"data"}');
+                    done();
+                }
+            );
         });
 
         it('DELETE', function (done) {
-            http['delete']('/url', {'X-Foo': 'foo'}, {}, function () {
+            http['delete']('/url', { 'X-Foo': 'foo' }, {}, function () {
                 expect(xhrOptions.length).to.equal(1);
                 var options = xhrOptions[0];
                 expect(options.url).to.equal('/url');
-                expect(options.headers['X-Requested-With']).to.equal('XMLHttpRequest');
+                expect(options.headers['X-Requested-With']).to.equal(
+                    'XMLHttpRequest'
+                );
                 expect(options.headers['X-Foo']).to.equal('foo');
                 expect(options.method).to.equal('DELETE');
                 done();
@@ -105,64 +123,94 @@ describe('Client HTTP', function () {
     describe('#Successful CORS requests', function () {
         beforeEach(function () {
             mockResponse = {
-                statusCode: 200
+                statusCode: 200,
             };
             mockBody = 'BODY';
             xhrOptions = [];
         });
 
         it('GET', function (done) {
-            http.get('/url', {'X-Foo': 'foo'}, {cors: true, withCredentials: true}, function (err, response) {
-                expect(xhrOptions.length).to.equal(1);
-                var options = xhrOptions[0];
-                expect(options.url).to.equal('/url');
-                expect(options.headers).to.not.have.property('X-Requested-With');
-                expect(options.headers['X-Foo']).to.equal('foo');
-                expect(options.method).to.equal('GET');
-                expect(options.withCredentials).to.equal(true);
-                expect(err).to.equal(null);
-                expect(response.statusCode).to.equal(200);
-                expect(response.responseText).to.equal('BODY');
-                done();
-            });
+            http.get(
+                '/url',
+                { 'X-Foo': 'foo' },
+                { cors: true, withCredentials: true },
+                function (err, response) {
+                    expect(xhrOptions.length).to.equal(1);
+                    var options = xhrOptions[0];
+                    expect(options.url).to.equal('/url');
+                    expect(options.headers).to.not.have.property(
+                        'X-Requested-With'
+                    );
+                    expect(options.headers['X-Foo']).to.equal('foo');
+                    expect(options.method).to.equal('GET');
+                    expect(options.withCredentials).to.equal(true);
+                    expect(err).to.equal(null);
+                    expect(response.statusCode).to.equal(200);
+                    expect(response.responseText).to.equal('BODY');
+                    done();
+                }
+            );
         });
 
         it('PUT', function (done) {
-            http.put('/url', {'X-Foo': 'foo'}, {data: 'data'}, {cors: true}, function () {
-                expect(xhrOptions.length).to.equal(1);
-                var options = xhrOptions[0];
-                expect(options.url).to.equal('/url');
-                expect(options.headers).to.not.have.property('X-Requested-With');
-                expect(options.headers['X-Foo']).to.equal('foo');
-                expect(options.method).to.equal('PUT');
-                expect(options.body).to.eql('{"data":"data"}');
-                done();
-            });
+            http.put(
+                '/url',
+                { 'X-Foo': 'foo' },
+                { data: 'data' },
+                { cors: true },
+                function () {
+                    expect(xhrOptions.length).to.equal(1);
+                    var options = xhrOptions[0];
+                    expect(options.url).to.equal('/url');
+                    expect(options.headers).to.not.have.property(
+                        'X-Requested-With'
+                    );
+                    expect(options.headers['X-Foo']).to.equal('foo');
+                    expect(options.method).to.equal('PUT');
+                    expect(options.body).to.eql('{"data":"data"}');
+                    done();
+                }
+            );
         });
 
         it('POST', function (done) {
-            http.post('/url', {'X-Foo': 'foo'}, {data: 'data'}, {cors: true}, function () {
-                expect(xhrOptions.length).to.equal(1);
-                var options = xhrOptions[0];
-                expect(options.url).to.equal('/url');
-                expect(options.headers).to.not.have.property('X-Requested-With');
-                expect(options.headers['X-Foo']).to.equal('foo');
-                expect(options.method).to.equal('POST');
-                expect(options.body).to.eql('{"data":"data"}');
-                done();
-            });
+            http.post(
+                '/url',
+                { 'X-Foo': 'foo' },
+                { data: 'data' },
+                { cors: true },
+                function () {
+                    expect(xhrOptions.length).to.equal(1);
+                    var options = xhrOptions[0];
+                    expect(options.url).to.equal('/url');
+                    expect(options.headers).to.not.have.property(
+                        'X-Requested-With'
+                    );
+                    expect(options.headers['X-Foo']).to.equal('foo');
+                    expect(options.method).to.equal('POST');
+                    expect(options.body).to.eql('{"data":"data"}');
+                    done();
+                }
+            );
         });
 
         it('DELETE', function (done) {
-            http['delete']('/url', {'X-Foo': 'foo'}, {cors: true}, function () {
-                expect(xhrOptions.length).to.equal(1);
-                var options = xhrOptions[0];
-                expect(options.url).to.equal('/url');
-                expect(options.headers).to.not.have.property('X-Requested-With');
-                expect(options.headers['X-Foo']).to.equal('foo');
-                expect(options.method).to.equal('DELETE');
-                done();
-            });
+            http['delete'](
+                '/url',
+                { 'X-Foo': 'foo' },
+                { cors: true },
+                function () {
+                    expect(xhrOptions.length).to.equal(1);
+                    var options = xhrOptions[0];
+                    expect(options.url).to.equal('/url');
+                    expect(options.headers).to.not.have.property(
+                        'X-Requested-With'
+                    );
+                    expect(options.headers['X-Foo']).to.equal('foo');
+                    expect(options.method).to.equal('DELETE');
+                    done();
+                }
+            );
         });
     });
 
@@ -170,13 +218,13 @@ describe('Client HTTP', function () {
         beforeEach(function () {
             xhrOptions = [];
             mockResponse = {
-                statusCode: 400
+                statusCode: 400,
             };
         });
 
         it('GET with no response', function (done) {
             mockBody = undefined;
-            http.get('/url', {'X-Foo': 'foo'}, {}, function (err, response, body) {
+            http.get('/url', { 'X-Foo': 'foo' }, {}, function (err) {
                 expect(err.message).to.equal('Error 400');
                 expect(err.statusCode).to.equal(400);
                 expect(err.body).to.equal(undefined);
@@ -186,7 +234,7 @@ describe('Client HTTP', function () {
 
         it('GET with empty response', function (done) {
             mockBody = '';
-            http.get('/url', {'X-Foo': 'foo'}, {}, function (err, response, body) {
+            http.get('/url', { 'X-Foo': 'foo' }, {}, function (err) {
                 expect(err.message).to.equal('');
                 expect(err.statusCode).to.equal(400);
                 expect(err.body).to.equal('');
@@ -196,11 +244,11 @@ describe('Client HTTP', function () {
 
         it('GET with JSON response containing message attribute', function (done) {
             mockBody = '{"message":"some body content"}';
-            http.get('/url', {'X-Foo': 'foo'}, {}, function (err, response, body) {
+            http.get('/url', { 'X-Foo': 'foo' }, {}, function (err) {
                 expect(err.message).to.equal('some body content');
                 expect(err.statusCode).to.equal(400);
                 expect(err.body).to.deep.equal({
-                    message: 'some body content'
+                    message: 'some body content',
                 });
                 done();
             });
@@ -208,11 +256,11 @@ describe('Client HTTP', function () {
 
         it('GET with JSON response not containing message attribute', function (done) {
             mockBody = '{"other":"some body content"}';
-            http.get('/url', {'X-Foo': 'foo'}, {}, function (err, response, body) {
+            http.get('/url', { 'X-Foo': 'foo' }, {}, function (err) {
                 expect(err.message).to.equal(mockBody);
                 expect(err.statusCode).to.equal(400);
                 expect(err.body).to.deep.equal({
-                    other: "some body content"
+                    other: 'some body content',
                 });
                 done();
             });
@@ -225,7 +273,7 @@ describe('Client HTTP', function () {
         // if not configured to allow content throughput
         it('GET with plain text', function (done) {
             mockBody = 'Bad Request';
-            http.get('/url', {'X-Foo': 'foo'}, {}, function (err, response, body) {
+            http.get('/url', { 'X-Foo': 'foo' }, {}, function (err) {
                 expect(err.message).to.equal(mockBody);
                 expect(err.statusCode).to.equal(400);
                 expect(err.body).to.equal(mockBody);
@@ -239,16 +287,18 @@ describe('Client HTTP', function () {
             xhrOptions = [];
             mockBody = 'BODY';
             mockResponse = {
-                statusCode: 408
+                statusCode: 408,
             };
         });
 
         it('GET with no retry', function (done) {
-            http.get('/url', {'X-Foo': 'foo'}, {}, function (err, response, body) {
+            http.get('/url', { 'X-Foo': 'foo' }, {}, function (err) {
                 var options = xhrOptions[0];
                 expect(xhrOptions.length).to.equal(1);
                 expect(options.url).to.equal('/url');
-                expect(options.headers['X-Requested-With']).to.equal('XMLHttpRequest');
+                expect(options.headers['X-Requested-With']).to.equal(
+                    'XMLHttpRequest'
+                );
                 expect(options.headers['X-Foo']).to.equal('foo');
                 expect(options.method).to.equal('GET');
                 expect(err.message).to.equal('BODY');
@@ -259,26 +309,33 @@ describe('Client HTTP', function () {
         });
 
         it('GET with retry', function (done) {
-            http.get('/url', {'X-Foo': 'foo'}, {
-                timeout: 2000,
-                retry: {
-                    interval: 200,
-                    max_retries: 1
+            http.get(
+                '/url',
+                { 'X-Foo': 'foo' },
+                {
+                    timeout: 2000,
+                    retry: {
+                        interval: 200,
+                        max_retries: 1,
+                    },
+                },
+                function (err) {
+                    expect(xhrOptions.length).to.equal(2);
+                    var options = xhrOptions[0];
+                    expect(options.url).to.equal('/url');
+                    expect(options.headers['X-Requested-With']).to.equal(
+                        'XMLHttpRequest'
+                    );
+                    expect(options.headers['X-Foo']).to.equal('foo');
+                    expect(options.method).to.equal('GET');
+                    expect(options.timeout).to.equal(2000);
+                    expect(err.message).to.equal('BODY');
+                    expect(err.statusCode).to.equal(408);
+                    expect(err.body).to.equal('BODY');
+                    expect(xhrOptions[0]).to.eql(xhrOptions[1]);
+                    done();
                 }
-            }, function (err, response, body) {
-                expect(xhrOptions.length).to.equal(2);
-                var options = xhrOptions[0];
-                expect(options.url).to.equal('/url');
-                expect(options.headers['X-Requested-With']).to.equal('XMLHttpRequest');
-                expect(options.headers['X-Foo']).to.equal('foo');
-                expect(options.method).to.equal('GET');
-                expect(options.timeout).to.equal(2000);
-                expect(err.message).to.equal('BODY');
-                expect(err.statusCode).to.equal(408);
-                expect(err.body).to.equal('BODY');
-                expect(xhrOptions[0]).to.eql(xhrOptions[1]);
-                done();
-            });
+            );
         });
     });
 
@@ -287,7 +344,7 @@ describe('Client HTTP', function () {
 
         beforeEach(function () {
             mockResponse = {
-                statusCode: 200
+                statusCode: 200,
             };
             mockBody = 'BODY';
             xhrOptions = [];
@@ -295,11 +352,11 @@ describe('Client HTTP', function () {
 
         describe('#No timeout set for individual call', function () {
             beforeEach(function () {
-                config = {xhrTimeout: 3000};
+                config = { xhrTimeout: 3000 };
             });
 
             it('should use xhrTimeout for GET', function (done) {
-                http.get('/url', {'X-Foo': 'foo'}, config, function (err, response) {
+                http.get('/url', { 'X-Foo': 'foo' }, config, function () {
                     var options = xhrOptions[0];
                     expect(options.timeout).to.equal(3000);
                     done();
@@ -307,23 +364,35 @@ describe('Client HTTP', function () {
             });
 
             it('should use xhrTimeout for PUT', function (done) {
-                http.put('/url', {'X-Foo': 'foo'}, {data: 'data'}, config, function () {
-                    var options = xhrOptions[0];
-                    expect(options.timeout).to.equal(3000);
-                    done();
-                });
+                http.put(
+                    '/url',
+                    { 'X-Foo': 'foo' },
+                    { data: 'data' },
+                    config,
+                    function () {
+                        var options = xhrOptions[0];
+                        expect(options.timeout).to.equal(3000);
+                        done();
+                    }
+                );
             });
 
             it('should use xhrTimeout for POST', function (done) {
-                http.post('/url', {'X-Foo': 'foo'}, {data: 'data'}, config, function () {
-                    var options = xhrOptions[0];
-                    expect(options.timeout).to.equal(3000);
-                    done();
-                });
+                http.post(
+                    '/url',
+                    { 'X-Foo': 'foo' },
+                    { data: 'data' },
+                    config,
+                    function () {
+                        var options = xhrOptions[0];
+                        expect(options.timeout).to.equal(3000);
+                        done();
+                    }
+                );
             });
 
             it('should use xhrTimeout for DELETE', function (done) {
-                http['delete']('/url', {'X-Foo': 'foo'}, config, function () {
+                http['delete']('/url', { 'X-Foo': 'foo' }, config, function () {
                     var options = xhrOptions[0];
                     expect(options.timeout).to.equal(3000);
                     done();
@@ -333,11 +402,11 @@ describe('Client HTTP', function () {
 
         describe('#Timeout set for individual call', function () {
             beforeEach(function () {
-                config = {xhrTimeout: 3000, timeout: 6000};
+                config = { xhrTimeout: 3000, timeout: 6000 };
             });
 
             it('should override default xhrTimeout for GET', function (done) {
-                http.get('/url', {'X-Foo': 'foo'}, config, function (err, response) {
+                http.get('/url', { 'X-Foo': 'foo' }, config, function () {
                     var options = xhrOptions[0];
                     expect(options.timeout).to.equal(6000);
                     done();
@@ -345,23 +414,35 @@ describe('Client HTTP', function () {
             });
 
             it('should override default xhrTimeout for PUT', function (done) {
-                http.put('/url', {'X-Foo': 'foo'}, {data: 'data'}, config, function () {
-                    var options = xhrOptions[0];
-                    expect(options.timeout).to.equal(6000);
-                    done();
-                });
+                http.put(
+                    '/url',
+                    { 'X-Foo': 'foo' },
+                    { data: 'data' },
+                    config,
+                    function () {
+                        var options = xhrOptions[0];
+                        expect(options.timeout).to.equal(6000);
+                        done();
+                    }
+                );
             });
 
             it('should override default xhrTimeout for POST', function (done) {
-                http.post('/url', {'X-Foo': 'foo'}, {data: 'data'}, config, function () {
-                    var options = xhrOptions[0];
-                    expect(options.timeout).to.equal(6000);
-                    done();
-                });
+                http.post(
+                    '/url',
+                    { 'X-Foo': 'foo' },
+                    { data: 'data' },
+                    config,
+                    function () {
+                        var options = xhrOptions[0];
+                        expect(options.timeout).to.equal(6000);
+                        done();
+                    }
+                );
             });
 
             it('should override default xhrTimeout for DELETE', function (done) {
-                http['delete']('/url', {'X-Foo': 'foo'}, config, function () {
+                http['delete']('/url', { 'X-Foo': 'foo' }, config, function () {
                     var options = xhrOptions[0];
                     expect(options.timeout).to.equal(6000);
                     done();

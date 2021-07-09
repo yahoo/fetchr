@@ -1,3 +1,3 @@
 module.exports = {
-    xhrPath: '/myapi'
+    xhrPath: '/myapi',
 };

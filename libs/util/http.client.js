@@ -16,8 +16,8 @@
 var DEFAULT_CONFIG = {
         retry: {
             interval: 200,
-            max_retries: 0
-        }
+            max_retries: 0,
+        },
     },
     CONTENT_TYPE = 'Content-Type',
     TYPE_JSON = 'application/json',
@@ -32,9 +32,9 @@ var forEach = require('./forEach');
 
 //trim polyfill, maybe pull from npm later
 if (!String.prototype.trim) {
-  String.prototype.trim = function () {
-    return this.replace(/^\s+|\s+$/g, '');
-  };
+    String.prototype.trim = function () {
+        return this.replace(/^\s+|\s+$/g, '');
+    };
 }
 
 function normalizeHeaders(headers, method, isCors) {
@@ -42,7 +42,7 @@ function normalizeHeaders(headers, method, isCors) {
     if (!isCors) {
         normalized['X-Requested-With'] = 'XMLHttpRequest';
     }
-    var needContentType = (method === METHOD_PUT || method === METHOD_POST);
+    var needContentType = method === METHOD_PUT || method === METHOD_POST;
     forEach(headers, function (v, field) {
         if (field.toLowerCase() === 'content-type') {
             if (needContentType) {
@@ -71,15 +71,21 @@ function isContentTypeJSON(headers) {
 }
 
 function shouldRetry(method, config, statusCode) {
-    var isIdempotent = (method === METHOD_GET || method === METHOD_PUT || method === METHOD_DELETE);
+    var isIdempotent =
+        method === METHOD_GET ||
+        method === METHOD_PUT ||
+        method === METHOD_DELETE;
     if (!isIdempotent && !config.unsafeAllowRetry) {
         return false;
     }
-    if ((statusCode !== 0 && statusCode !== 408 && statusCode !== 999) || config.tmp.retry_counter >= config.retry.max_retries) {
+    if (
+        (statusCode !== 0 && statusCode !== 408 && statusCode !== 999) ||
+        config.tmp.retry_counter >= config.retry.max_retries
+    ) {
         return false;
     }
     config.tmp.retry_counter++;
-    config.retry.interval =  config.retry.interval * 2;
+    config.retry.interval = config.retry.interval * 2;
     return true;
 }
 
@@ -88,8 +94,8 @@ function mergeConfig(config) {
             unsafeAllowRetry: config.unsafeAllowRetry || false,
             retry: {
                 interval: DEFAULT_CONFIG.retry.interval,
-                max_retries: DEFAULT_CONFIG.retry.max_retries
-            }
+                max_retries: DEFAULT_CONFIG.retry.max_retries,
+            },
         }, // Performant-but-verbose way of cloning the default config as base
         timeout,
         interval,
@@ -132,30 +138,29 @@ function doXhr(method, url, headers, data, config, callback) {
     headers = normalizeHeaders(headers, method, config.cors);
     config = mergeConfig(config);
     // use config.tmp to store temporary values
-    config.tmp = config.tmp || {retry_counter: 0};
+    config.tmp = config.tmp || { retry_counter: 0 };
 
     timeout = config.timeout;
     options = {
-        method : method,
-        timeout : timeout,
+        method: method,
+        timeout: timeout,
         headers: headers,
         useXDR: config.useXDR,
         withCredentials: config.withCredentials,
-        on : {
-            success : function (err, response) {
+        on: {
+            success: function (err, response) {
                 callback(NULL, response);
             },
-            failure : function (err, response) {
+            failure: function (err, response) {
                 if (!shouldRetry(method, config, response.statusCode)) {
                     callback(err);
                 } else {
-                    setTimeout(
-                        function retryXHR() { doXhr(method, url, headers, data, config, callback); },
-                        config.retry.interval
-                    );
+                    setTimeout(function retryXHR() {
+                        doXhr(method, url, headers, data, config, callback);
+                    }, config.retry.interval);
                 }
-            }
-        }
+            },
+        },
     };
     if (data !== undefined && data !== NULL) {
         options.data = isContentTypeJSON(headers) ? JSON.stringify(data) : data;
@@ -164,56 +169,61 @@ function doXhr(method, url, headers, data, config, callback) {
 }
 
 function io(url, options) {
-    return xhr({
-        url: url,
-        method: options.method || METHOD_GET,
-        timeout: options.timeout,
-        headers: options.headers,
-        body: options.data,
-        useXDR: options.cors,
-        withCredentials: options.withCredentials
-    }, function (err, resp, body) {
-        var status = resp.statusCode;
-        var errMessage, errBody;
+    return xhr(
+        {
+            url: url,
+            method: options.method || METHOD_GET,
+            timeout: options.timeout,
+            headers: options.headers,
+            body: options.data,
+            useXDR: options.cors,
+            withCredentials: options.withCredentials,
+        },
+        function (err, resp, body) {
+            var status = resp.statusCode;
+            var errMessage, errBody;
 
-        if (!err && (status === 0 || (status >= 400 && status < 600))) {
-            if (typeof body === 'string') {
-                try {
-                    errBody = JSON.parse(body);
-                    if (errBody.message) {
-                        errMessage = errBody.message;
-                    } else {
+            if (!err && (status === 0 || (status >= 400 && status < 600))) {
+                if (typeof body === 'string') {
+                    try {
+                        errBody = JSON.parse(body);
+                        if (errBody.message) {
+                            errMessage = errBody.message;
+                        } else {
+                            errMessage = body;
+                        }
+                    } catch (e) {
                         errMessage = body;
                     }
-                } catch(e) {
-                    errMessage = body;
+                } else {
+                    errMessage = status
+                        ? 'Error ' + status
+                        : 'Internal Fetchr XMLHttpRequest Error';
                 }
+
+                err = new Error(errMessage);
+                err.statusCode = status;
+                err.body = errBody || body;
+                if (err.body) {
+                    err.output = err.body.output;
+                    err.meta = err.body.meta;
+                }
+            }
+
+            resp.responseText = body;
+
+            if (err) {
+                // getting detail info from xhr module
+                err.rawRequest = resp.rawRequest;
+                err.url = resp.url;
+                err.timeout = options.timeout;
+
+                options.on.failure.call(null, err, resp);
             } else {
-                errMessage = status ? 'Error ' + status : 'Internal Fetchr XMLHttpRequest Error';
-            }
-
-            err = new Error(errMessage);
-            err.statusCode = status;
-            err.body = errBody || body;
-            if (err.body) {
-                err.output = err.body.output;
-                err.meta = err.body.meta;
+                options.on.success.call(null, null, resp);
             }
         }
-
-        resp.responseText = body;
-
-        if (err) {
-            // getting detail info from xhr module
-            err.rawRequest = resp.rawRequest;
-            err.url = resp.url;
-            err.timeout = options.timeout;
-
-            options.on.failure.call(null, err, resp);
-        } else {
-            options.on.success.call(null, null, resp);
-        }
-    });
+    );
 }
 
 /**
@@ -233,7 +243,7 @@ module.exports = {
      * @param {Boolean} [config.cors] Whether to enable CORS & use XDR on IE8/9.
      * @param {Function} callback The callback function, with two params (error, response)
      */
-    get : function (url, headers, config, callback) {
+    get: function (url, headers, config, callback) {
         return doXhr(METHOD_GET, url, headers, NULL, config, callback);
     },
 
@@ -249,7 +259,7 @@ module.exports = {
      * @param {Boolean} [config.cors] Whether to enable CORS & use XDR on IE8/9.
      * @param {Function} callback The callback function, with two params (error, response)
      */
-    put : function (url, headers, data, config, callback) {
+    put: function (url, headers, data, config, callback) {
         return doXhr(METHOD_PUT, url, headers, data, config, callback);
     },
 
@@ -266,7 +276,7 @@ module.exports = {
      * @param {Boolean} [config.cors] Whether to enable CORS & use XDR on IE8/9.
      * @param {Function} callback The callback function, with two params (error, response)
      */
-    post : function (url, headers, data, config, callback) {
+    post: function (url, headers, data, config, callback) {
         return doXhr(METHOD_POST, url, headers, data, config, callback);
     },
 
@@ -281,7 +291,7 @@ module.exports = {
      * @param {Boolean} [config.cors] Whether to enable CORS & use XDR on IE8/9.
      * @param {Function} callback The callback function, with two params (error, response)
      */
-    'delete' : function (url, headers, config, callback) {
+    delete: function (url, headers, config, callback) {
         return doXhr(METHOD_DELETE, url, headers, NULL, config, callback);
-    }
+    },
 };
