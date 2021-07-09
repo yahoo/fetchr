@@ -8,7 +8,7 @@
     "cover": "istanbul cover --dir artifacts -- ./node_modules/mocha/bin/_mocha tests/unit/ --recursive --reporter spec --timeout 20000 --exit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "eslint . && format:check",
+    "lint": "eslint . && npm run format:check",
     "test": "NODE_ENV=test mocha tests/unit/ --recursive --reporter spec --timeout 20000 --exit"
   },
   "repository": {
