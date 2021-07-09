@@ -27,10 +27,10 @@ On the server side, add the Fetchr middleware into your express app at a custom 
 Fetchr middleware expects that you're using the [`body-parser`](https://github.com/expressjs/body-parser) middleware (or an alternative middleware that populates `req.body`) before you use Fetchr middleware.
 
 ```js
-var express = require('express');
-var Fetcher = require('fetchr');
-var bodyParser = require('body-parser');
-var app = express();
+import express from 'express';
+import Fetcher from 'fetchr';
+import bodyParser from 'body-parser';
+const app = express();
 
 // you need to use body-parser middleware before fetcher middleware
 app.use(bodyParser.json());
@@ -45,8 +45,8 @@ On the client side, it is necessary for the `xhrPath` option to match the path w
 `xhrPath` is an optional config property that allows you to customize the endpoint to your services, defaults to `/api`.
 
 ```js
-var Fetcher = require('fetchr');
-var fetcher = new Fetcher({
+import Fetcher from 'fetchr';
+const fetcher = new Fetcher({
     xhrPath: '/myCustomAPIEndpoint',
 });
 ```
@@ -62,14 +62,14 @@ CRUD operations.
 
 ```js
 // app.js
-var Fetcher = require('fetchr');
-var myDataService = require('./dataService');
+import Fetcher from 'fetchr';
+import myDataService from './dataService';
 Fetcher.registerService(myDataService);
 ```
 
 ```js
 // dataService.js
-module.exports = {
+export default {
     // resource is required
     resource: 'data_service',
     // at least one of the CRUD methods is required
@@ -93,10 +93,10 @@ On the clientside, this only needs to happen on page load.
 
 ```js
 // app.js - server
-var express = require('express');
-var Fetcher = require('fetchr');
-var app = express();
-var myDataService = require('./dataService');
+import express from 'express';
+import Fetcher from 'fetchr';
+import myDataService from './dataService';
+const app = express();
 
 // register the service
 Fetcher.registerService(myDataService);
@@ -106,7 +106,7 @@ app.use('/myCustomAPIEndpoint', Fetcher.middleware());
 
 app.use(function(req, res, next) {
     // instantiated fetcher with access to req object
-    var fetcher = new Fetcher({
+    const fetcher = new Fetcher({
         xhrPath: '/myCustomAPIEndpoint', // xhrPath will be ignored on the serverside fetcher instantiation
         req: req
     });
@@ -123,8 +123,8 @@ app.use(function(req, res, next) {
 
 ```js
 // app.js - client
-var Fetcher = require('fetchr');
-var fetcher = new Fetcher({
+import Fetcher from 'fetchr';
+const fetcher = new Fetcher({
     xhrPath: '/myCustomAPIEndpoint' // xhrPath is REQUIRED on the clientside fetcher instantiation
 });
 fetcher
@@ -160,12 +160,12 @@ property of the resolved value.
 
 ```js
 // dataService.js
-module.exports = {
+export default {
     resource: 'data_service',
     read: function (req, resource, params, config, callback) {
         // business logic
-        var data = 'response';
-        var meta = {
+        const data = 'response';
+        const meta = {
             headers: {
                 'cache-control': 'public, max-age=3600',
             },
@@ -201,7 +201,7 @@ You can do that with the `updateOptions` method:
 
 ```js
 // Start
-var fetcher = new Fetcher({
+const fetcher = new Fetcher({
     xhrPath: '/myCustomAPIEndpoint',
     xhrTimeout: 2000,
 });
@@ -217,10 +217,10 @@ fetcher.updateOptions({
 When an error occurs in your Fetchr CRUD method, you should return an error object to the callback. The error object should contain a `statusCode` (default 500) and `output` property that contains a JSON serializable object which will be sent to the client.
 
 ```js
-module.exports = {
+export default {
     resource: 'FooService',
     read: function create(req, resource, params, configs, callback) {
-        var err = new Error('it failed');
+        const err = new Error('it failed');
         err.statusCode = 404;
         err.output = { message: 'Not found', more: 'meta data' };
         return callback(err);
@@ -247,7 +247,7 @@ The xhr object is returned by the `.end()` method as long as you're _not_ chaini
 This is useful if you want to abort a request before it is completed.
 
 ```js
-var req = fetcher
+const req = fetcher
     .read('someData')
     .params({id: ###})
     .end(function (err, data, meta) {
@@ -260,7 +260,7 @@ req.abort();
 However, you can't acces the xhr object if using promise chaining like so:
 
 ```js
-var req = fetcher
+const req = fetcher
     .read('someData')
     .params({id: ###})
     .end();
@@ -275,8 +275,8 @@ On the clientside, xhrPath and xhrTimeout will be used for XHR requests.
 On the serverside, xhrPath and xhrTimeout are not needed and are ignored.
 
 ```js
-var Fetcher = require('fetchr');
-var fetcher = new Fetcher({
+import Fetcher from 'fetchr';
+const fetcher = new Fetcher({
     xhrPath: '/myCustomAPIEndpoint',
     xhrTimeout: 4000,
 });
@@ -351,8 +351,8 @@ Fetchr provides [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_
 For example:
 
 ```js
-var Fetcher = require('fetchr');
-var fetcher = new Fetcher({
+import Fetcher from 'fetchr';
+const fetcher = new Fetcher({
     corsPath: 'http://www.foo.com',
     xhrPath: '/fooProxy',
 });
@@ -366,7 +366,7 @@ fetcher
 Additionally, you can also customize how the GET URL is constructed by passing in the `constructGetUri` property when you execute your `read` call:
 
 ```js
-var qs = require('qs');
+import qs from 'qs';
 function customConstructGetUri(uri, resource, params, config) {
     // this refers to the Fetcher object itself that this function is invoked with.
     if (config.cors) {
@@ -375,8 +375,8 @@ function customConstructGetUri(uri, resource, params, config) {
     // Return `falsy` value will result in `fetcher` using its internal path construction instead.
 }
 
-var Fetcher = require('fetchr');
-var fetcher = new Fetcher({
+import Fetcher from 'fetchr';
+const fetcher = new Fetcher({
     corsPath: 'http://www.foo.com',
     xhrPath: '/fooProxy',
 });
@@ -401,7 +401,7 @@ You could use https://github.com/expressjs/csurf for this as an example.
 Next you need to make sure that the CSRF token is being sent with our XHR requests so that they can be validated. To do this, pass the token in as a key in the `options.context` object on the client:
 
 ```js
-var fetcher = new Fetcher({
+const fetcher = new Fetcher({
     xhrPath: '/myCustomAPIEndpoint', //xhrPath is REQUIRED on the clientside fetcher instantiation
     context: {
         // These context values are persisted with XHR calls as query params
@@ -420,7 +420,7 @@ When this call is made from the client, the config object is used to define XHR 
 
 ```js
 //app.js - client
-var config = {
+const config = {
     timeout: 6000, // Timeout (in ms) for each request
     unsafeAllowRetry: false, // for POST requests, whether to allow retrying this post
 };
@@ -437,7 +437,7 @@ By Default, fetchr appends all context values to the xhr url as query params. `c
 `contextPicker` follows the same format as the `predicate` parameter in [`lodash/pickBy`](https://lodash.com/docs#pickBy) with two arguments: `(value, key)`.
 
 ```js
-var fetcher = new Fetcher({
+const fetcher = new Fetcher({
     context: {
         // These context values are persisted with XHR calls as query params
         _csrf: 'Ax89D94j',
@@ -455,7 +455,7 @@ var fetcher = new Fetcher({
     },
 });
 
-var fetcher = new Fetcher({
+const fetcher = new Fetcher({
     context: {
         // These context values are persisted with XHR calls as query params
         _csrf: 'Ax89D94j',
@@ -474,7 +474,7 @@ When calling a Fetcher service you can add custom request headers.
 A request contains custom headers when you add `headers` option to 'clientConfig'.
 
 ```js
-var config = {
+const config = {
     headers: {
         'X-VERSION': '1.0.0',
     },
@@ -486,8 +486,8 @@ fetcher.read('service').params({ id: 1 }).clientConfig(config).end(callbackFn);
 All requests contain custom headers when you add `headers` option to constructor arguments of 'Fetcher'.
 
 ```js
-var Fetcher = require('fetchr');
-var fetcher = new Fetcher({
+import Fetcher from 'fetchr';
+const fetcher = new Fetcher({
     headers: {
         'X-VERSION': '1.0.0',
     },
@@ -508,8 +508,8 @@ To collect fetcher service's success/failure/latency stats, you can configure `s
 ### Fetcher Instance
 
 ```js
-var Fetcher = require('fetchr');
-var fetcher = new Fetcher({
+import Fetcher from 'fetchr';
+const fetcher = new Fetcher({
     xhrPath: '/myCustomAPIEndpoint',
     statsCollector: function (stats) {
         // just console logging as a naive example.  there is a lot more you can do here,
