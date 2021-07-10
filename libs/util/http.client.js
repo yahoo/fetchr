@@ -151,6 +151,11 @@ function doXhr(method, url, headers, data, config, attempt, callback) {
                 ) {
                     callback(err);
                 } else {
+                    var delay =
+                        Math.random() *
+                        config.retry.interval *
+                        Math.pow(2, attempt);
+
                     setTimeout(function retryXHR() {
                         doXhr(
                             method,
@@ -161,7 +166,7 @@ function doXhr(method, url, headers, data, config, attempt, callback) {
                             attempt + 1,
                             callback
                         );
-                    }, config.retry.interval * Math.pow(2, attempt));
+                    }, delay);
                 }
             },
         },
