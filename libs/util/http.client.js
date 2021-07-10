@@ -20,6 +20,7 @@ var DEFAULT_CONFIG = {
         retry: {
             interval: 200,
             max_retries: 0,
+            statusCodes: [0, 408, 999],
         },
     },
     CONTENT_TYPE = 'Content-Type',
@@ -85,11 +86,7 @@ function shouldRetry(method, config, statusCode, attempt) {
         return false;
     }
 
-    if (statusCode !== 0 && statusCode !== 408 && statusCode !== 999) {
-        return false;
-    }
-
-    return true;
+    return config.retry.statusCodes.indexOf(statusCode) !== -1;
 }
 
 function mergeConfig(config) {
@@ -98,6 +95,7 @@ function mergeConfig(config) {
             retry: {
                 interval: DEFAULT_CONFIG.retry.interval,
                 max_retries: DEFAULT_CONFIG.retry.max_retries,
+                statusCodes: DEFAULT_CONFIG.retry.statusCodes,
             },
         }, // Performant-but-verbose way of cloning the default config as base
         timeout,
@@ -119,6 +117,9 @@ function mergeConfig(config) {
             maxRetries = parseInt(config.retry.max_retries, 10);
             if (!isNaN(maxRetries) && maxRetries >= 0) {
                 cfg.retry.max_retries = maxRetries;
+            }
+            if (config.retry.statusCodes) {
+                cfg.retry.statusCodes = config.retry.statusCodes;
             }
         }
 
