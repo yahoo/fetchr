@@ -255,9 +255,10 @@ module.exports = {
      * @param {Object} headers
      * @param {Object} config  The config object.
      * @param {Number} [config.timeout=3000] Timeout (in ms) for each request
-     * @param {Object} config.retry   Retry config object.
-     * @param {Number} [config.retry.interval=200]  The start interval unit (in ms).
-     * @param {Number} [config.retry.max_retries=2]   Number of max retries.
+     * @param {Object} config.retry Retry config object.
+     * @param {Number} [config.retry.interval=200] The start interval unit (in ms).
+     * @param {Number} [config.retry.maxRetries=0] Number of max retries.
+     * @param {Number} [config.retry.statusCodes=[0, 408, 999]] Response status codes to be retried.
      * @param {Boolean} [config.cors] Whether to enable CORS & use XDR on IE8/9.
      * @param {Function} callback The callback function, with two params (error, response)
      */
@@ -280,8 +281,9 @@ module.exports = {
      * @param {Mixed}  data
      * @param {Object} config  The config object. No retries for PUT.
      * @param {Number} [config.timeout=3000] Timeout (in ms) for each request
-     * @param {Number} [config.retry.interval=200]  The start interval unit (in ms).
-     * @param {Number} [config.retry.max_retries=2]   Number of max retries.
+     * @param {Number} [config.retry.interval=200] The start interval unit (in ms).
+     * @param {Number} [config.retry.maxRetries=0] Number of max retries.
+     * @param {Number} [config.retry.statusCodes=[0, 408, 999]] Response status codes to be retried.
      * @param {Boolean} [config.cors] Whether to enable CORS & use XDR on IE8/9.
      * @param {Function} callback The callback function, with two params (error, response)
      */
@@ -305,8 +307,9 @@ module.exports = {
      * @param {Object} config  The config object. No retries for POST.
      * @param {Number} [config.timeout=3000] Timeout (in ms) for each request
      * @param {Boolean} [config.unsafeAllowRetry=false] Whether to allow retrying this post.
-     * @param {Number} [config.retry.interval=200]  The start interval unit (in ms).
-     * @param {Number} [config.retry.max_retries=2]   Number of max retries.
+     * @param {Number} [config.retry.interval=200] The start interval unit (in ms).
+     * @param {Number} [config.retry.maxRetries=0] Number of max retries.
+     * @param {Number} [config.retry.statusCodes=[0, 408, 999]] Response status codes to be retried.
      * @param {Boolean} [config.cors] Whether to enable CORS & use XDR on IE8/9.
      * @param {Function} callback The callback function, with two params (error, response)
      */
@@ -328,8 +331,9 @@ module.exports = {
      * @param {Object} headers
      * @param {Object} config  The config object. No retries for DELETE.
      * @param {Number} [config.timeout=3000] Timeout (in ms) for each request
-     * @param {Number} [config.retry.interval=200]  The start interval unit (in ms).
-     * @param {Number} [config.retry.max_retries=2]   Number of max retries.
+     * @param {Number} [config.retry.interval=200] The start interval unit (in ms).
+     * @param {Number} [config.retry.maxRetries=0] Number of max retries.
+     * @param {Number} [config.retry.statusCodes=[0, 408, 999]] Response status codes to be retried.
      * @param {Boolean} [config.cors] Whether to enable CORS & use XDR on IE8/9.
      * @param {Function} callback The callback function, with two params (error, response)
      */

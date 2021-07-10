@@ -430,6 +430,69 @@ fetcher.read('service').params({ id: 1 }).clientConfig(config).end(callbackFn);
 
 For requests from the server, the config object is simply passed into the service being called.
 
+## Retry
+
+You can set Fetchr to retry failed requests automatically by setting a
+`retry` settings in the client configuration:
+
+```js
+fetcher
+    .read('service')
+    .clientConfig({
+        retry: {
+            maxRetries: 2,
+        },
+    })
+    .end();
+```
+
+With this confiugration, Fetchr will retry all requests that fails
+with 408 status code or with a XHR 0 status code for 2 more times
+before returning an error. The interval between each requests respects
+the folowwing formula:
+
+```js
+Math.random() * Math.pow(2, attempt) * interval;
+```
+
+`attempt` is the number of the current retry attempt starting
+from 0. By default `interval` corresponds to 200ms.
+
+You can customize the retry behavior by adding more properties in the
+`retry` object:
+
+```js
+fetcher
+    .read('resource')
+    .clientConfig({
+        retry: {
+            maxRetries: 5,
+            interval: 1000,
+            statusCodes: [408, 502],
+        },
+    })
+    .end();
+```
+
+With the above configuration, Fetchr will retry for at maxiumum of 5
+times all the requests that fails with a 408 or 502 status code. The
+interval between each request will still use the formula from above,
+but the interval of 1000ms will be used instead.
+
+**Note:** Fetchr doesn't retry POST requests for safety reasons. You
+can enable retries for POST requests by setting the `unsafeAllowRetry`
+property to `true`:
+
+```js
+fetcher
+    .create('resource')
+    .clientConfig({
+        retry: { maxRetries: 2 },
+        unsafeAllowRetry: true,
+    })
+    .end();
+```
+
 ## Context Variables
 
 By Default, fetchr appends all context values to the xhr url as query params. `contextPicker` allows you to greater control over which context variables get sent as query params depending on the xhr method (`GET` or `POST`). This is useful when you want to limit the number of variables in a `GET` url in order not to accidentally [cache bust](http://webassets.readthedocs.org/en/latest/expiring.html).
