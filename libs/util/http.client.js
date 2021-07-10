@@ -19,7 +19,7 @@ var forEach = require('./forEach');
 var DEFAULT_CONFIG = {
         retry: {
             interval: 200,
-            max_retries: 0,
+            maxRetries: 0,
             statusCodes: [0, 408, 999],
         },
     },
@@ -74,7 +74,7 @@ function isContentTypeJSON(headers) {
 }
 
 function shouldRetry(method, config, statusCode, attempt) {
-    if (attempt >= config.retry.max_retries) {
+    if (attempt >= config.retry.maxRetries) {
         return false;
     }
 
@@ -91,33 +91,41 @@ function shouldRetry(method, config, statusCode, attempt) {
 
 function mergeConfig(config) {
     var cfg = {
-            unsafeAllowRetry: config.unsafeAllowRetry || false,
-            retry: {
-                interval: DEFAULT_CONFIG.retry.interval,
-                max_retries: DEFAULT_CONFIG.retry.max_retries,
-                statusCodes: DEFAULT_CONFIG.retry.statusCodes,
-            },
-        }, // Performant-but-verbose way of cloning the default config as base
-        timeout,
-        interval,
-        maxRetries;
+        unsafeAllowRetry: config.unsafeAllowRetry || false,
+        retry: {
+            interval: DEFAULT_CONFIG.retry.interval,
+            maxRetries: DEFAULT_CONFIG.retry.maxRetries,
+            statusCodes: DEFAULT_CONFIG.retry.statusCodes,
+        },
+    };
 
     if (config) {
-        timeout = config.timeout || config.xhrTimeout;
+        var timeout = config.timeout || config.xhrTimeout;
         timeout = parseInt(timeout, 10);
         if (!isNaN(timeout) && timeout > 0) {
             cfg.timeout = timeout;
         }
 
         if (config.retry) {
-            interval = parseInt(config.retry.interval, 10);
+            var interval = parseInt(config.retry.interval, 10);
             if (!isNaN(interval) && interval > 0) {
                 cfg.retry.interval = interval;
             }
-            maxRetries = parseInt(config.retry.max_retries, 10);
-            if (!isNaN(maxRetries) && maxRetries >= 0) {
-                cfg.retry.max_retries = maxRetries;
+
+            if (config.retry.max_retries !== undefined) {
+                console.warn(
+                    '"max_retries" is deprecated and will be removed in a future release, use "maxRetries" instead.'
+                );
             }
+
+            var maxRetries = parseInt(
+                config.retry.max_retries || config.retry.maxRetries,
+                10
+            );
+            if (!isNaN(maxRetries) && maxRetries >= 0) {
+                cfg.retry.maxRetries = maxRetries;
+            }
+
             if (config.retry.statusCodes) {
                 cfg.retry.statusCodes = config.retry.statusCodes;
             }

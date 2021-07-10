@@ -316,7 +316,7 @@ describe('Client HTTP', function () {
                     timeout: 2000,
                     retry: {
                         interval: 200,
-                        max_retries: 1,
+                        maxRetries: 1,
                     },
                 },
                 function (err) {
@@ -348,7 +348,7 @@ describe('Client HTTP', function () {
                     timeout: 2000,
                     retry: {
                         interval: 20,
-                        max_retries: 1,
+                        maxRetries: 1,
                         statusCodes: [502],
                     },
                 },
