@@ -2,10 +2,13 @@
  * Copyright 2014, Yahoo! Inc.
  * Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
  */
-/*jslint nomen:true,plusplus:true*/
+
 /**
  * @module rest-http
  */
+
+var xhr = require('xhr');
+var forEach = require('./forEach');
 
 /*
  * Default configurations:
@@ -25,10 +28,9 @@ var DEFAULT_CONFIG = {
     METHOD_PUT = 'PUT',
     METHOD_POST = 'POST',
     METHOD_DELETE = 'DELETE',
-    NULL = null,
-    xhr = require('xhr');
+    NULL = null;
 
-var forEach = require('./forEach');
+var INITIAL_ATTEMPT = 0;
 
 //trim polyfill, maybe pull from npm later
 if (!String.prototype.trim) {
@@ -70,7 +72,11 @@ function isContentTypeJSON(headers) {
     });
 }
 
-function shouldRetry(method, config, statusCode) {
+function shouldRetry(method, config, statusCode, attempt) {
+    if (attempt >= config.retry.max_retries) {
+        return false;
+    }
+
     var isIdempotent =
         method === METHOD_GET ||
         method === METHOD_PUT ||
@@ -78,14 +84,11 @@ function shouldRetry(method, config, statusCode) {
     if (!isIdempotent && !config.unsafeAllowRetry) {
         return false;
     }
-    if (
-        (statusCode !== 0 && statusCode !== 408 && statusCode !== 999) ||
-        config.tmp.retry_counter >= config.retry.max_retries
-    ) {
+
+    if (statusCode !== 0 && statusCode !== 408 && statusCode !== 999) {
         return false;
     }
-    config.tmp.retry_counter++;
-    config.retry.interval = config.retry.interval * 2;
+
     return true;
 }
 
@@ -109,11 +112,11 @@ function mergeConfig(config) {
         }
 
         if (config.retry) {
-            interval = parseInt(config.retry && config.retry.interval, 10);
+            interval = parseInt(config.retry.interval, 10);
             if (!isNaN(interval) && interval > 0) {
                 cfg.retry.interval = interval;
             }
-            maxRetries = parseInt(config.retry && config.retry.max_retries, 10);
+            maxRetries = parseInt(config.retry.max_retries, 10);
             if (!isNaN(maxRetries) && maxRetries >= 0) {
                 cfg.retry.max_retries = maxRetries;
             }
@@ -122,28 +125,18 @@ function mergeConfig(config) {
         if (config.withCredentials) {
             cfg.withCredentials = config.withCredentials;
         }
-
-        // tmp stores transient state data, such as retry count
-        if (config.tmp) {
-            cfg.tmp = config.tmp;
-        }
     }
 
     return cfg;
 }
 
-function doXhr(method, url, headers, data, config, callback) {
-    var options, timeout;
-
+function doXhr(method, url, headers, data, config, attempt, callback) {
     headers = normalizeHeaders(headers, method, config.cors);
     config = mergeConfig(config);
-    // use config.tmp to store temporary values
-    config.tmp = config.tmp || { retry_counter: 0 };
 
-    timeout = config.timeout;
-    options = {
+    var options = {
         method: method,
-        timeout: timeout,
+        timeout: config.timeout,
         headers: headers,
         useXDR: config.useXDR,
         withCredentials: config.withCredentials,
@@ -152,12 +145,22 @@ function doXhr(method, url, headers, data, config, callback) {
                 callback(NULL, response);
             },
             failure: function (err, response) {
-                if (!shouldRetry(method, config, response.statusCode)) {
+                if (
+                    !shouldRetry(method, config, response.statusCode, attempt)
+                ) {
                     callback(err);
                 } else {
                     setTimeout(function retryXHR() {
-                        doXhr(method, url, headers, data, config, callback);
-                    }, config.retry.interval);
+                        doXhr(
+                            method,
+                            url,
+                            headers,
+                            data,
+                            config,
+                            attempt + 1,
+                            callback
+                        );
+                    }, config.retry.interval * Math.pow(2, attempt));
                 }
             },
         },
@@ -244,7 +247,15 @@ module.exports = {
      * @param {Function} callback The callback function, with two params (error, response)
      */
     get: function (url, headers, config, callback) {
-        return doXhr(METHOD_GET, url, headers, NULL, config, callback);
+        return doXhr(
+            METHOD_GET,
+            url,
+            headers,
+            NULL,
+            config,
+            INITIAL_ATTEMPT,
+            callback
+        );
     },
 
     /**
@@ -260,7 +271,15 @@ module.exports = {
      * @param {Function} callback The callback function, with two params (error, response)
      */
     put: function (url, headers, data, config, callback) {
-        return doXhr(METHOD_PUT, url, headers, data, config, callback);
+        return doXhr(
+            METHOD_PUT,
+            url,
+            headers,
+            data,
+            config,
+            INITIAL_ATTEMPT,
+            callback
+        );
     },
 
     /**
@@ -277,7 +296,15 @@ module.exports = {
      * @param {Function} callback The callback function, with two params (error, response)
      */
     post: function (url, headers, data, config, callback) {
-        return doXhr(METHOD_POST, url, headers, data, config, callback);
+        return doXhr(
+            METHOD_POST,
+            url,
+            headers,
+            data,
+            config,
+            INITIAL_ATTEMPT,
+            callback
+        );
     },
 
     /**
@@ -292,6 +319,14 @@ module.exports = {
      * @param {Function} callback The callback function, with two params (error, response)
      */
     delete: function (url, headers, config, callback) {
-        return doXhr(METHOD_DELETE, url, headers, NULL, config, callback);
+        return doXhr(
+            METHOD_DELETE,
+            url,
+            headers,
+            NULL,
+            config,
+            INITIAL_ATTEMPT,
+            callback
+        );
     },
 };
