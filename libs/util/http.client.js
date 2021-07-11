@@ -22,6 +22,7 @@ var DEFAULT_CONFIG = {
             maxRetries: 0,
             statusCodes: [0, 408, 999],
         },
+        unsafeAllowRetry: false,
     },
     CONTENT_TYPE = 'Content-Type',
     TYPE_JSON = 'application/json',
