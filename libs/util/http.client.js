@@ -160,6 +160,7 @@ function doXhr(method, url, headers, data, config, attempt, callback) {
                 ) {
                     callback(err);
                 } else {
+                    // Use exponential backoff and full jitter strategy published in https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
                     var delay =
                         Math.random() *
                         config.retry.interval *
