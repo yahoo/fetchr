@@ -449,7 +449,7 @@ fetcher
 With this confiugration, Fetchr will retry all requests that fails
 with 408 status code or with a XHR 0 status code for 2 more times
 before returning an error. The interval between each requests respects
-the folowwing formula:
+the following formula, based on the exponential backoff and full jitter strategy published in [this AWS architecture blog post](https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/):
 
 ```js
 Math.random() * Math.pow(2, attempt) * interval;
