@@ -472,14 +472,9 @@ fetcher
     .end();
 ```
 
-With the above configuration, Fetchr will retry for at maxiumum of 5
-times all the requests that fails with a 408 or 502 status code. The
-interval between each request will still use the formula from above,
-but the interval of 1000ms will be used instead.
+With the above configuration, Fetchr will retry all failed (408 or 502 status code) requests for a maximum of 5 times. The interval between each request will still use the formula from above, but the interval of 1000ms will be used instead.
 
-**Note:** Fetchr doesn't retry POST requests for safety reasons. You
-can enable retries for POST requests by setting the `unsafeAllowRetry`
-property to `true`:
+**Note:** Fetchr doesn't retry POST requests for safety reasons. You can enable retries for POST requests by setting the `unsafeAllowRetry` property to `true`:
 
 ```js
 fetcher
