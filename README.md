@@ -432,8 +432,7 @@ For requests from the server, the config object is simply passed into the servic
 
 ## Retry
 
-You can set Fetchr to retry failed requests automatically by setting a
-`retry` settings in the client configuration:
+You can set Fetchr to retry failed requests automatically by setting a `retry` settings in the client configuration:
 
 ```js
 fetcher
