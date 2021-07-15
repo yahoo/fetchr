@@ -34,13 +34,6 @@ var DEFAULT_CONFIG = {
 
 var INITIAL_ATTEMPT = 0;
 
-//trim polyfill, maybe pull from npm later
-if (!String.prototype.trim) {
-    String.prototype.trim = function () {
-        return this.replace(/^\s+|\s+$/g, '');
-    };
-}
-
 function normalizeHeaders(headers, method, isCors) {
     var normalized = {};
     if (!isCors) {
