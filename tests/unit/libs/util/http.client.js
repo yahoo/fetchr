@@ -282,7 +282,7 @@ describe('Client HTTP', function () {
         });
     });
 
-    describe('#408 requests', function () {
+    describe('#Retry', function () {
         beforeEach(function () {
             xhrOptions = [];
             mockBody = 'BODY';
@@ -316,7 +316,7 @@ describe('Client HTTP', function () {
                     timeout: 2000,
                     retry: {
                         interval: 200,
-                        max_retries: 1,
+                        maxRetries: 1,
                     },
                 },
                 function (err) {
@@ -332,6 +332,28 @@ describe('Client HTTP', function () {
                     expect(err.message).to.equal('BODY');
                     expect(err.statusCode).to.equal(408);
                     expect(err.body).to.equal('BODY');
+                    expect(xhrOptions[0]).to.eql(xhrOptions[1]);
+                    done();
+                }
+            );
+        });
+
+        it('GET with retry and custom status code', function (done) {
+            mockResponse = { statusCode: 502 };
+
+            http.get(
+                '/url',
+                { 'X-Foo': 'foo' },
+                {
+                    timeout: 2000,
+                    retry: {
+                        interval: 20,
+                        maxRetries: 1,
+                        statusCodes: [502],
+                    },
+                },
+                function () {
+                    expect(xhrOptions.length).to.equal(2);
                     expect(xhrOptions[0]).to.eql(xhrOptions[1]);
                     done();
                 }

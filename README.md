@@ -430,6 +430,61 @@ fetcher.read('service').params({ id: 1 }).clientConfig(config).end(callbackFn);
 
 For requests from the server, the config object is simply passed into the service being called.
 
+## Retry
+
+You can set Fetchr to retry failed requests automatically by setting a `retry` settings in the client configuration:
+
+```js
+fetcher
+    .read('service')
+    .clientConfig({
+        retry: {
+            maxRetries: 2,
+        },
+    })
+    .end();
+```
+
+With this configuration, Fetchr will retry all requests that fail with 408 status code or with an XHR 0 status code two more times before returning an error. The interval between each request respects
+the following formula, based on the exponential backoff and full jitter strategy published in [this AWS architecture blog post](https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/):
+
+```js
+Math.random() * Math.pow(2, attempt) * interval;
+```
+
+`attempt` is the number of the current retry attempt starting
+from 0. By default `interval` corresponds to 200ms.
+
+You can customize the retry behavior by adding more properties in the
+`retry` object:
+
+```js
+fetcher
+    .read('resource')
+    .clientConfig({
+        retry: {
+            maxRetries: 5,
+            interval: 1000,
+            statusCodes: [408, 502],
+        },
+    })
+    .end();
+```
+
+With the above configuration, Fetchr will retry all failed (408 or 502 status code) requests for a maximum of 5 times. The interval between each request will still use the formula from above, but the interval of 1000ms will be used instead.
+
+**Note:** Fetchr doesn't retry POST requests for safety reasons. You can enable retries for POST requests by setting the `unsafeAllowRetry` property to `true`:
+
+```js
+fetcher
+    .create('resource')
+    .clientConfig({
+        retry: { maxRetries: 2 },
+        unsafeAllowRetry: true,
+    })
+    .end();
+```
+
 ## Context Variables
 
 By Default, fetchr appends all context values to the xhr url as query params. `contextPicker` allows you to greater control over which context variables get sent as query params depending on the xhr method (`GET` or `POST`). This is useful when you want to limit the number of variables in a `GET` url in order not to accidentally [cache bust](http://webassets.readthedocs.org/en/latest/expiring.html).
