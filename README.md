@@ -446,9 +446,7 @@ fetcher
     .end();
 ```
 
-With this confiugration, Fetchr will retry all requests that fails
-with 408 status code or with a XHR 0 status code for 2 more times
-before returning an error. The interval between each requests respects
+With this configuration, Fetchr will retry all requests that fail with 408 status code or with an XHR 0 status code two more times before returning an error. The interval between each request respects
 the following formula, based on the exponential backoff and full jitter strategy published in [this AWS architecture blog post](https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/):
 
 ```js
