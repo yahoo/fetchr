@@ -24,7 +24,6 @@
   ],
   "dependencies": {
     "deepmerge": "^4.2.2",
-    "es6-promise": "^4.2.8",
     "fumble": "^0.1.0",
     "object-assign": "^4.0.1",
     "setimmediate": "^1.0.5",
