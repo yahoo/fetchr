@@ -10,4 +10,7 @@ module.exports = {
         'no-unexpected-multiline': 0,
         'dot-notation': [2, { allowKeywords: false }],
     },
+    globals: {
+        Promise: 'readonly',
+    },
 };
