@@ -11,7 +11,6 @@ var GET = 'GET';
 var qs = require('querystring');
 var fumble = require('fumble');
 var objectAssign = require('object-assign');
-var Promise = global.Promise || require('es6-promise').Promise;
 var RESOURCE_SANTIZER_REGEXP = /[^\w.]+/g;
 
 function parseValue(value) {
