@@ -201,10 +201,9 @@ Request.prototype.end = function (callback) {
             }
         );
     } else {
-        var promise = new Promise(function requestExecutor(resolve, reject) {
-            setImmediate(executeRequest, self, resolve, reject);
-        });
-        promise = promise.then(
+        return new Promise(function requestExecutor(resolve, reject) {
+            return executeRequest(self, resolve, reject);
+        }).then(
             function requestSucceeded(result) {
                 self._captureMetaAndStats(null, result);
                 return result;
@@ -214,7 +213,6 @@ Request.prototype.end = function (callback) {
                 throw err;
             }
         );
-        return promise;
     }
 };
 
