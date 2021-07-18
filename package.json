@@ -27,7 +27,6 @@
     "es6-promise": "^4.2.8",
     "fumble": "^0.1.0",
     "object-assign": "^4.0.1",
-    "setimmediate": "^1.0.5",
     "xhr": "^2.4.0"
   },
   "devDependencies": {

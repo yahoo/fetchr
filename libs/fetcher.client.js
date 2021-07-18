@@ -9,7 +9,6 @@
  * Fetcher is a CRUD interface for your data.
  * @module Fetcher
  */
-require('setimmediate');
 var REST = require('./util/http.client');
 var deepmerge = require('deepmerge');
 var DEFAULT_GUID = 'g0';
@@ -188,23 +187,25 @@ Request.prototype.end = function (callback) {
             self,
             function requestSucceeded(result) {
                 self._captureMetaAndStats(null, result);
-                setImmediate(
-                    callback,
-                    null,
-                    result && result.data,
-                    result && result.meta
-                );
+                setTimeout(function () {
+                    callback(
+                        null,
+                        result && result.data,
+                        result && result.meta
+                    );
+                });
             },
             function requestFailed(err) {
                 self._captureMetaAndStats(err);
-                setImmediate(callback, err);
+                setTimeout(function () {
+                    callback(err);
+                });
             }
         );
     } else {
-        var promise = new Promise(function requestExecutor(resolve, reject) {
-            setImmediate(executeRequest, self, resolve, reject);
-        });
-        promise = promise.then(
+        return new Promise(function requestExecutor(resolve, reject) {
+            return executeRequest(self, resolve, reject);
+        }).then(
             function requestSucceeded(result) {
                 self._captureMetaAndStats(null, result);
                 return result;
@@ -214,7 +215,6 @@ Request.prototype.end = function (callback) {
                 throw err;
             }
         );
-        return promise;
     }
 };
 
