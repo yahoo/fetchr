@@ -18,7 +18,6 @@ var MAX_URI_LEN = 2048;
 var OP_READ = 'read';
 var defaultConstructGetUri = require('./util/defaultConstructGetUri');
 var forEach = require('./util/forEach');
-var Promise = global.Promise || require('es6-promise').Promise;
 
 function isFunction(value) {
     return typeof value === 'function';
