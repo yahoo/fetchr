@@ -7,7 +7,7 @@
  * @module rest-http
  */
 
-var xhr = require('xhr');
+var parseHeaders = require('parse-headers');
 var forEach = require('./forEach');
 
 /*
@@ -175,61 +175,74 @@ function doXhr(method, url, headers, data, config, attempt, callback) {
 }
 
 function io(url, options) {
-    return xhr(
-        {
+    var request = new XMLHttpRequest();
+    request.addEventListener('load', function () {
+        var response = {
+            headers: parseHeaders(this.getAllResponseHeaders()),
+            rawRequest: this,
+            responseText: this.responseText,
+            statusCode: this.status,
             url: url,
-            method: options.method || METHOD_GET,
-            timeout: options.timeout,
-            headers: options.headers,
-            body: options.data,
-            useXDR: options.cors,
-            withCredentials: options.withCredentials,
-        },
-        function (err, resp, body) {
-            var status = resp.statusCode;
+            withCredentials: this.withCredentials,
+        };
+
+        if (this.status === 0 || this.status >= 400) {
             var errMessage, errBody;
-
-            if (!err && (status === 0 || (status >= 400 && status < 600))) {
-                if (typeof body === 'string') {
-                    try {
-                        errBody = JSON.parse(body);
-                        if (errBody.message) {
-                            errMessage = errBody.message;
-                        } else {
-                            errMessage = body;
-                        }
-                    } catch (e) {
-                        errMessage = body;
-                    }
-                } else {
-                    errMessage = status
-                        ? 'Error ' + status
-                        : 'Internal Fetchr XMLHttpRequest Error';
+            if (this.responseText) {
+                try {
+                    errBody = JSON.parse(this.response);
+                    errMessage = errBody.message || this.response;
+                } catch (e) {
+                    errMessage = this.response;
                 }
-
-                err = new Error(errMessage);
-                err.statusCode = status;
-                err.body = errBody || body;
-                if (err.body) {
-                    err.output = err.body.output;
-                    err.meta = err.body.meta;
-                }
-            }
-
-            resp.responseText = body;
-
-            if (err) {
-                // getting detail info from xhr module
-                err.rawRequest = resp.rawRequest;
-                err.url = resp.url;
-                err.timeout = options.timeout;
-
-                options.on.failure.call(null, err, resp);
             } else {
-                options.on.success.call(null, null, resp);
+                errMessage = this.status
+                    ? 'Error ' + this.status
+                    : 'Internal Fetchr XMLHttpRequest Error';
             }
+
+            var err = new Error(errMessage);
+            err.statusCode = this.status;
+            err.body = errBody || this.responseText;
+            if (err.body) {
+                err.output = err.body.output;
+                err.meta = err.body.meta;
+            }
+            err.rawRequest = response.rawRequest;
+            err.url = response.url;
+            err.timeout = options.timeout;
+
+            options.on.failure(err, response);
+        } else {
+            options.on.success(null, response);
         }
-    );
+    });
+
+    request.addEventListener('error', function () {
+        var err = new Error('Internal Fetchr XMLHttpRequest Error');
+        options.on.failure(err, {
+            body: undefined,
+            headers: {},
+            statusCode: 0,
+            method: options.method,
+            url: url,
+            rawRequest: this,
+        });
+    });
+
+    request.open(options.method || METHOD_GET, url);
+    request.timeout = options.timeout;
+    request.withCredentials = options.withCredentials;
+
+    for (var headerKey in options.headers || {}) {
+        if (options.headers.hasOwnProperty(headerKey)) {
+            request.setRequestHeader(headerKey, options.headers[headerKey]);
+        }
+    }
+
+    request.send(options.data || null);
+
+    return request;
 }
 
 /**

@@ -5,59 +5,50 @@
 
 'use strict';
 
+const nock = require('nock');
+const sinon = require('sinon');
 const { expect } = require('chai');
-const mockery = require('mockery');
+const { JSDOM } = require('jsdom');
 
-let http;
-let xhrOptions;
-let mockResponse;
+describe('http.client', () => {
+    const url = 'https://example.com/';
 
-let mockBody = '';
-let mockError = null;
+    let http;
+    let mockResponse;
+    let mockBody;
 
-describe('Client HTTP', () => {
     before(() => {
-        mockery.enable({
-            useCleanCache: true,
-            warnOnUnregistered: false,
-        });
-        mockery.resetCache();
-        mockBody = '';
-        mockery.registerMock('xhr', (options, callback) => {
-            xhrOptions.push(options);
-            callback(mockError, mockResponse, mockBody);
-        });
+        const dom = new JSDOM('', { url });
+        global.XMLHttpRequest = dom.window.XMLHttpRequest;
+        global.window = dom.window;
+        sinon.spy(global, 'XMLHttpRequest');
         http = require('../../../../libs/util/http.client.js');
     });
 
     after(() => {
-        mockBody = '';
-        mockery.deregisterAll();
+        delete global.XMLHttpRequest;
+        delete global.window;
     });
 
-    afterEach(() => {
-        mockError = null;
+    beforeEach(() => {
+        XMLHttpRequest.resetHistory();
     });
 
     describe('#Successful requests', () => {
         beforeEach(() => {
-            mockResponse = {
-                statusCode: 200,
-            };
+            mockResponse = { statusCode: 200 };
             mockBody = 'BODY';
-            xhrOptions = [];
         });
 
         it('GET', (done) => {
+            nock(url)
+                .get('/url')
+                .matchHeader('x-foo', 'foo')
+                .matchHeader('X-Requested-With', 'XMLHttpRequest')
+                .reply(mockResponse.statusCode, mockBody);
+
             http.get('/url', { 'X-Foo': 'foo' }, {}, (err, response) => {
-                expect(xhrOptions.length).to.equal(1);
-                const options = xhrOptions[0];
-                expect(options.url).to.equal('/url');
-                expect(options.headers['X-Requested-With']).to.equal(
-                    'XMLHttpRequest'
-                );
-                expect(options.headers['X-Foo']).to.equal('foo');
-                expect(options.method).to.equal('GET');
+                expect(XMLHttpRequest.callCount).to.equal(1);
                 expect(err).to.equal(null);
                 expect(response.statusCode).to.equal(200);
                 expect(response.responseText).to.equal('BODY');
@@ -66,16 +57,19 @@ describe('Client HTTP', () => {
         });
 
         it('POST', (done) => {
-            http.post('/url', { 'X-Foo': 'foo' }, { data: 'data' }, {}, () => {
-                expect(xhrOptions.length).to.equal(1);
-                const options = xhrOptions[0];
-                expect(options.url).to.equal('/url');
-                expect(options.headers['X-Requested-With']).to.equal(
-                    'XMLHttpRequest'
-                );
-                expect(options.headers['X-Foo']).to.equal('foo');
-                expect(options.method).to.equal('POST');
-                expect(options.body).to.eql('{"data":"data"}');
+            const body = { data: 'data' };
+
+            nock(url)
+                .post('/url', body)
+                .matchHeader('x-foo', 'foo')
+                .matchHeader('X-Requested-With', 'XMLHttpRequest')
+                .reply(mockResponse.statusCode, mockBody);
+
+            http.post('/url', { 'X-Foo': 'foo' }, body, {}, (err, response) => {
+                expect(XMLHttpRequest.callCount).to.equal(1);
+                expect(err).to.equal(null);
+                expect(response.statusCode).to.equal(200);
+                expect(response.responseText).to.equal('BODY');
                 done();
             });
         });
@@ -87,25 +81,23 @@ describe('Client HTTP', () => {
                 statusCode: 200,
             };
             mockBody = 'BODY';
-            xhrOptions = [];
         });
 
         it('GET', (done) => {
+            nock(url, { badheaders: ['X-Requested-With', 'XMLHttpRequest'] })
+                .get('/url')
+                .matchHeader('x-foo', 'foo')
+                .reply(mockResponse.statusCode, mockBody);
+
             http.get(
                 '/url',
                 { 'X-Foo': 'foo' },
                 { cors: true, withCredentials: true },
                 (err, response) => {
-                    expect(xhrOptions.length).to.equal(1);
-                    const options = xhrOptions[0];
-                    expect(options.url).to.equal('/url');
-                    expect(options.headers).to.not.have.property(
-                        'X-Requested-With'
-                    );
-                    expect(options.headers['X-Foo']).to.equal('foo');
-                    expect(options.method).to.equal('GET');
-                    expect(options.withCredentials).to.equal(true);
+                    expect(XMLHttpRequest.callCount).to.equal(1);
                     expect(err).to.equal(null);
+                    const options = response.rawRequest;
+                    expect(options.withCredentials).to.equal(true);
                     expect(response.statusCode).to.equal(200);
                     expect(response.responseText).to.equal('BODY');
                     done();
@@ -114,21 +106,25 @@ describe('Client HTTP', () => {
         });
 
         it('POST', (done) => {
+            const body = { data: 'data' };
+
+            nock(url, { badheaders: ['X-Requested-With', 'XMLHttpRequest'] })
+                .post('/url', body)
+                .matchHeader('x-foo', 'foo')
+                .reply(mockResponse.statusCode, mockBody);
+
             http.post(
                 '/url',
                 { 'X-Foo': 'foo' },
-                { data: 'data' },
+                body,
                 { cors: true },
-                () => {
-                    expect(xhrOptions.length).to.equal(1);
-                    const options = xhrOptions[0];
-                    expect(options.url).to.equal('/url');
-                    expect(options.headers).to.not.have.property(
-                        'X-Requested-With'
-                    );
-                    expect(options.headers['X-Foo']).to.equal('foo');
-                    expect(options.method).to.equal('POST');
-                    expect(options.body).to.eql('{"data":"data"}');
+                (err, response) => {
+                    expect(XMLHttpRequest.callCount).to.equal(1);
+                    expect(err).to.equal(null);
+                    const options = response.rawRequest;
+                    expect(options.withCredentials).to.equal(false);
+                    expect(response.statusCode).to.equal(200);
+                    expect(response.responseText).to.equal('BODY');
                     done();
                 }
             );
@@ -137,7 +133,6 @@ describe('Client HTTP', () => {
 
     describe('#400 requests', () => {
         beforeEach(() => {
-            xhrOptions = [];
             mockResponse = {
                 statusCode: 400,
             };
@@ -145,18 +140,22 @@ describe('Client HTTP', () => {
 
         it('GET with no response', (done) => {
             mockBody = undefined;
+            nock(url).get('/url').reply(mockResponse.statusCode, mockBody);
+
             http.get('/url', { 'X-Foo': 'foo' }, {}, (err) => {
                 expect(err.message).to.equal('Error 400');
                 expect(err.statusCode).to.equal(400);
-                expect(err.body).to.equal(undefined);
+                expect(err.body).to.equal('');
                 done();
             });
         });
 
         it('GET with empty response', (done) => {
             mockBody = '';
+            nock(url).get('/url').reply(mockResponse.statusCode, mockBody);
+
             http.get('/url', { 'X-Foo': 'foo' }, {}, (err) => {
-                expect(err.message).to.equal('');
+                expect(err.message).to.equal('Error 400');
                 expect(err.statusCode).to.equal(400);
                 expect(err.body).to.equal('');
                 done();
@@ -165,6 +164,8 @@ describe('Client HTTP', () => {
 
         it('GET with JSON response containing message attribute', (done) => {
             mockBody = '{"message":"some body content"}';
+            nock(url).get('/url').reply(mockResponse.statusCode, mockBody);
+
             http.get('/url', { 'X-Foo': 'foo' }, {}, (err) => {
                 expect(err.message).to.equal('some body content');
                 expect(err.statusCode).to.equal(400);
@@ -177,6 +178,8 @@ describe('Client HTTP', () => {
 
         it('GET with JSON response not containing message attribute', (done) => {
             mockBody = '{"other":"some body content"}';
+            nock(url).get('/url').reply(mockResponse.statusCode, mockBody);
+
             http.get('/url', { 'X-Foo': 'foo' }, {}, (err) => {
                 expect(err.message).to.equal(mockBody);
                 expect(err.statusCode).to.equal(400);
@@ -194,6 +197,8 @@ describe('Client HTTP', () => {
         // if not configured to allow content throughput
         it('GET with plain text', (done) => {
             mockBody = 'Bad Request';
+            nock(url).get('/url').reply(mockResponse.statusCode, mockBody);
+
             http.get('/url', { 'X-Foo': 'foo' }, {}, (err) => {
                 expect(err.message).to.equal(mockBody);
                 expect(err.statusCode).to.equal(400);
@@ -205,7 +210,6 @@ describe('Client HTTP', () => {
 
     describe('#Retry', () => {
         beforeEach(() => {
-            xhrOptions = [];
             mockBody = 'BODY';
             mockResponse = {
                 statusCode: 408,
@@ -213,15 +217,10 @@ describe('Client HTTP', () => {
         });
 
         it('GET with no retry', (done) => {
+            nock(url).get('/url').reply(mockResponse.statusCode, mockBody);
+
             http.get('/url', { 'X-Foo': 'foo' }, {}, (err) => {
-                const options = xhrOptions[0];
-                expect(xhrOptions.length).to.equal(1);
-                expect(options.url).to.equal('/url');
-                expect(options.headers['X-Requested-With']).to.equal(
-                    'XMLHttpRequest'
-                );
-                expect(options.headers['X-Foo']).to.equal('foo');
-                expect(options.method).to.equal('GET');
+                expect(XMLHttpRequest.callCount).to.equal(1);
                 expect(err.message).to.equal('BODY');
                 expect(err.statusCode).to.equal(408);
                 expect(err.body).to.equal('BODY');
@@ -230,6 +229,12 @@ describe('Client HTTP', () => {
         });
 
         it('GET with retry', (done) => {
+            nock(url)
+                .get('/url')
+                .reply(mockResponse.statusCode, mockBody)
+                .get('/url')
+                .reply(mockResponse.statusCode, mockBody);
+
             http.get(
                 '/url',
                 { 'X-Foo': 'foo' },
@@ -241,19 +246,10 @@ describe('Client HTTP', () => {
                     },
                 },
                 (err) => {
-                    expect(xhrOptions.length).to.equal(2);
-                    const options = xhrOptions[0];
-                    expect(options.url).to.equal('/url');
-                    expect(options.headers['X-Requested-With']).to.equal(
-                        'XMLHttpRequest'
-                    );
-                    expect(options.headers['X-Foo']).to.equal('foo');
-                    expect(options.method).to.equal('GET');
-                    expect(options.timeout).to.equal(2000);
+                    expect(XMLHttpRequest.callCount).to.equal(2);
                     expect(err.message).to.equal('BODY');
                     expect(err.statusCode).to.equal(408);
                     expect(err.body).to.equal('BODY');
-                    expect(xhrOptions[0]).to.eql(xhrOptions[1]);
                     done();
                 }
             );
@@ -261,6 +257,12 @@ describe('Client HTTP', () => {
 
         it('GET with retry and custom status code', function (done) {
             mockResponse = { statusCode: 502 };
+
+            nock(url)
+                .get('/url')
+                .reply(mockResponse.statusCode, mockBody)
+                .get('/url')
+                .reply(mockResponse.statusCode, mockBody);
 
             http.get(
                 '/url',
@@ -274,8 +276,7 @@ describe('Client HTTP', () => {
                     },
                 },
                 function () {
-                    expect(xhrOptions.length).to.equal(2);
-                    expect(xhrOptions[0]).to.eql(xhrOptions[1]);
+                    expect(XMLHttpRequest.callCount).to.equal(2);
                     done();
                 }
             );
@@ -286,11 +287,8 @@ describe('Client HTTP', () => {
         let config;
 
         beforeEach(() => {
-            mockResponse = {
-                statusCode: 200,
-            };
+            mockResponse = { statusCode: 200 };
             mockBody = 'BODY';
-            xhrOptions = [];
         });
 
         describe('#No timeout set for individual call', () => {
@@ -299,21 +297,33 @@ describe('Client HTTP', () => {
             });
 
             it('should use xhrTimeout for GET', (done) => {
-                http.get('/url', { 'X-Foo': 'foo' }, config, () => {
-                    const options = xhrOptions[0];
-                    expect(options.timeout).to.equal(3000);
-                    done();
-                });
+                nock(url).get('/url').reply(mockResponse.statusCode, mockBody);
+
+                http.get(
+                    '/url',
+                    { 'X-Foo': 'foo' },
+                    config,
+                    (err, response) => {
+                        const options = response.rawRequest;
+                        expect(options.timeout).to.equal(3000);
+                        done();
+                    }
+                );
             });
 
             it('should use xhrTimeout for POST', (done) => {
+                const body = { data: 'data' };
+                nock(url)
+                    .post('/url', body)
+                    .reply(mockResponse.statusCode, mockBody);
+
                 http.post(
                     '/url',
                     { 'X-Foo': 'foo' },
-                    { data: 'data' },
+                    body,
                     config,
-                    () => {
-                        const options = xhrOptions[0];
+                    (err, response) => {
+                        const options = response.rawRequest;
                         expect(options.timeout).to.equal(3000);
                         done();
                     }
@@ -327,21 +337,33 @@ describe('Client HTTP', () => {
             });
 
             it('should override default xhrTimeout for GET', (done) => {
-                http.get('/url', { 'X-Foo': 'foo' }, config, () => {
-                    const options = xhrOptions[0];
-                    expect(options.timeout).to.equal(6000);
-                    done();
-                });
+                nock(url).get('/url').reply(mockResponse.statusCode, mockBody);
+
+                http.get(
+                    '/url',
+                    { 'X-Foo': 'foo' },
+                    config,
+                    (err, response) => {
+                        const options = response.rawRequest;
+                        expect(options.timeout).to.equal(6000);
+                        done();
+                    }
+                );
             });
 
             it('should override default xhrTimeout for POST', (done) => {
+                const body = { data: 'data' };
+                nock(url)
+                    .post('/url', body)
+                    .reply(mockResponse.statusCode, mockBody);
+
                 http.post(
                     '/url',
                     { 'X-Foo': 'foo' },
-                    { data: 'data' },
+                    body,
                     config,
-                    () => {
-                        const options = xhrOptions[0];
+                    (err, response) => {
+                        const options = response.rawRequest;
                         expect(options.timeout).to.equal(6000);
                         done();
                     }
@@ -352,13 +374,10 @@ describe('Client HTTP', () => {
 
     describe('xhr errors', () => {
         it('should pass-through any xhr error', (done) => {
-            mockError = new Error('AnyError');
-            xhrOptions = [];
-            mockResponse = { statusCode: 0, url: '/url' };
+            mockResponse = { statusCode: 0 };
+            nock(url).get('/url').reply(500);
 
-            http.get('/url', {}, { xhrTimeout: 42 }, (err, response) => {
-                expect(response).to.equal(undefined);
-                expect(err.message).to.equal('AnyError');
+            http.get('/url', {}, { xhrTimeout: 42 }, (err) => {
                 expect(err.timeout).to.equal(42);
                 expect(err.url).to.equal('/url');
                 done();
