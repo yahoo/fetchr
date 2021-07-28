@@ -11,11 +11,10 @@ var mockery = require('mockery');
 var qs = require('qs');
 var sinon = require('sinon');
 var supertest = require('supertest');
-var xhr = require('xhr');
 
 var FakeXMLHttpRequest = sinon.FakeXMLHttpRequest;
 FakeXMLHttpRequest.onCreate = handleFakeXhr;
-xhr.XMLHttpRequest = FakeXMLHttpRequest;
+global.XMLHttpRequest = FakeXMLHttpRequest;
 
 var Fetcher = require('../../../libs/fetcher.client');
 var REST = require('../../../libs/util/http.client');
