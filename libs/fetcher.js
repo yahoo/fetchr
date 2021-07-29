@@ -9,7 +9,6 @@ var OP_DELETE = 'delete';
 var GET = 'GET';
 var qs = require('querystring');
 var fumble = require('fumble');
-var objectAssign = require('object-assign');
 var RESOURCE_SANTIZER_REGEXP = /[^\w.]+/g;
 
 function parseValue(value) {
@@ -708,7 +707,7 @@ Fetcher.prototype['delete'] = function (resource, params, config, callback) {
  * @param {string} [options.xhrPath="/api"] The path for XHR requests. Will be ignored server side.
  */
 Fetcher.prototype.updateOptions = function (options) {
-    this.options = objectAssign(this.options, options);
+    this.options = Object.assign(this.options, options);
     this.req = this.options.req || {};
 };
 
