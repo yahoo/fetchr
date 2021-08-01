@@ -63,27 +63,6 @@ describe('Client HTTP', function () {
             });
         });
 
-        it('PUT', function (done) {
-            http.put(
-                '/url',
-                { 'X-Foo': 'foo' },
-                { data: 'data' },
-                {},
-                function () {
-                    expect(xhrOptions.length).to.equal(1);
-                    var options = xhrOptions[0];
-                    expect(options.url).to.equal('/url');
-                    expect(options.headers['X-Requested-With']).to.equal(
-                        'XMLHttpRequest'
-                    );
-                    expect(options.headers['X-Foo']).to.equal('foo');
-                    expect(options.method).to.equal('PUT');
-                    expect(options.body).to.eql('{"data":"data"}');
-                    done();
-                }
-            );
-        });
-
         it('POST', function (done) {
             http.post(
                 '/url',
@@ -103,20 +82,6 @@ describe('Client HTTP', function () {
                     done();
                 }
             );
-        });
-
-        it('DELETE', function (done) {
-            http['delete']('/url', { 'X-Foo': 'foo' }, {}, function () {
-                expect(xhrOptions.length).to.equal(1);
-                var options = xhrOptions[0];
-                expect(options.url).to.equal('/url');
-                expect(options.headers['X-Requested-With']).to.equal(
-                    'XMLHttpRequest'
-                );
-                expect(options.headers['X-Foo']).to.equal('foo');
-                expect(options.method).to.equal('DELETE');
-                done();
-            });
         });
     });
 
@@ -152,27 +117,6 @@ describe('Client HTTP', function () {
             );
         });
 
-        it('PUT', function (done) {
-            http.put(
-                '/url',
-                { 'X-Foo': 'foo' },
-                { data: 'data' },
-                { cors: true },
-                function () {
-                    expect(xhrOptions.length).to.equal(1);
-                    var options = xhrOptions[0];
-                    expect(options.url).to.equal('/url');
-                    expect(options.headers).to.not.have.property(
-                        'X-Requested-With'
-                    );
-                    expect(options.headers['X-Foo']).to.equal('foo');
-                    expect(options.method).to.equal('PUT');
-                    expect(options.body).to.eql('{"data":"data"}');
-                    done();
-                }
-            );
-        });
-
         it('POST', function (done) {
             http.post(
                 '/url',
@@ -189,25 +133,6 @@ describe('Client HTTP', function () {
                     expect(options.headers['X-Foo']).to.equal('foo');
                     expect(options.method).to.equal('POST');
                     expect(options.body).to.eql('{"data":"data"}');
-                    done();
-                }
-            );
-        });
-
-        it('DELETE', function (done) {
-            http['delete'](
-                '/url',
-                { 'X-Foo': 'foo' },
-                { cors: true },
-                function () {
-                    expect(xhrOptions.length).to.equal(1);
-                    var options = xhrOptions[0];
-                    expect(options.url).to.equal('/url');
-                    expect(options.headers).to.not.have.property(
-                        'X-Requested-With'
-                    );
-                    expect(options.headers['X-Foo']).to.equal('foo');
-                    expect(options.method).to.equal('DELETE');
                     done();
                 }
             );
@@ -385,20 +310,6 @@ describe('Client HTTP', function () {
                 });
             });
 
-            it('should use xhrTimeout for PUT', function (done) {
-                http.put(
-                    '/url',
-                    { 'X-Foo': 'foo' },
-                    { data: 'data' },
-                    config,
-                    function () {
-                        var options = xhrOptions[0];
-                        expect(options.timeout).to.equal(3000);
-                        done();
-                    }
-                );
-            });
-
             it('should use xhrTimeout for POST', function (done) {
                 http.post(
                     '/url',
@@ -411,14 +322,6 @@ describe('Client HTTP', function () {
                         done();
                     }
                 );
-            });
-
-            it('should use xhrTimeout for DELETE', function (done) {
-                http['delete']('/url', { 'X-Foo': 'foo' }, config, function () {
-                    var options = xhrOptions[0];
-                    expect(options.timeout).to.equal(3000);
-                    done();
-                });
             });
         });
 
@@ -435,20 +338,6 @@ describe('Client HTTP', function () {
                 });
             });
 
-            it('should override default xhrTimeout for PUT', function (done) {
-                http.put(
-                    '/url',
-                    { 'X-Foo': 'foo' },
-                    { data: 'data' },
-                    config,
-                    function () {
-                        var options = xhrOptions[0];
-                        expect(options.timeout).to.equal(6000);
-                        done();
-                    }
-                );
-            });
-
             it('should override default xhrTimeout for POST', function (done) {
                 http.post(
                     '/url',
@@ -461,14 +350,6 @@ describe('Client HTTP', function () {
                         done();
                     }
                 );
-            });
-
-            it('should override default xhrTimeout for DELETE', function (done) {
-                http['delete']('/url', { 'X-Foo': 'foo' }, config, function () {
-                    var options = xhrOptions[0];
-                    expect(options.timeout).to.equal(6000);
-                    done();
-                });
             });
         });
     });

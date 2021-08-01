@@ -27,9 +27,7 @@ var DEFAULT_CONFIG = {
     CONTENT_TYPE = 'Content-Type',
     TYPE_JSON = 'application/json',
     METHOD_GET = 'GET',
-    METHOD_PUT = 'PUT',
     METHOD_POST = 'POST',
-    METHOD_DELETE = 'DELETE',
     NULL = null;
 
 var INITIAL_ATTEMPT = 0;
@@ -39,7 +37,7 @@ function normalizeHeaders(headers, method, isCors) {
     if (!isCors) {
         normalized['X-Requested-With'] = 'XMLHttpRequest';
     }
-    var needContentType = method === METHOD_PUT || method === METHOD_POST;
+    var needContentType = method === METHOD_POST;
     forEach(headers, function (v, field) {
         if (field.toLowerCase() === 'content-type') {
             if (needContentType) {
@@ -72,11 +70,7 @@ function shouldRetry(method, config, statusCode, attempt) {
         return false;
     }
 
-    var isIdempotent =
-        method === METHOD_GET ||
-        method === METHOD_PUT ||
-        method === METHOD_DELETE;
-    if (!isIdempotent && !config.unsafeAllowRetry) {
+    if (method === METHOD_POST && !config.unsafeAllowRetry) {
         return false;
     }
 
@@ -269,31 +263,6 @@ module.exports = {
     },
 
     /**
-     * @method put
-     * @param {String} url
-     * @param {Object} headers
-     * @param {Mixed}  data
-     * @param {Object} config  The config object. No retries for PUT.
-     * @param {Number} [config.timeout=3000] Timeout (in ms) for each request
-     * @param {Number} [config.retry.interval=200] The start interval unit (in ms).
-     * @param {Number} [config.retry.maxRetries=0] Number of max retries.
-     * @param {Number} [config.retry.statusCodes=[0, 408, 999]] Response status codes to be retried.
-     * @param {Boolean} [config.cors] Whether to enable CORS & use XDR on IE8/9.
-     * @param {Function} callback The callback function, with two params (error, response)
-     */
-    put: function (url, headers, data, config, callback) {
-        return doXhr(
-            METHOD_PUT,
-            url,
-            headers,
-            data,
-            config,
-            INITIAL_ATTEMPT,
-            callback
-        );
-    },
-
-    /**
      * @method post
      * @param {String} url
      * @param {Object} headers
@@ -313,30 +282,6 @@ module.exports = {
             url,
             headers,
             data,
-            config,
-            INITIAL_ATTEMPT,
-            callback
-        );
-    },
-
-    /**
-     * @method delete
-     * @param {String} url
-     * @param {Object} headers
-     * @param {Object} config  The config object. No retries for DELETE.
-     * @param {Number} [config.timeout=3000] Timeout (in ms) for each request
-     * @param {Number} [config.retry.interval=200] The start interval unit (in ms).
-     * @param {Number} [config.retry.maxRetries=0] Number of max retries.
-     * @param {Number} [config.retry.statusCodes=[0, 408, 999]] Response status codes to be retried.
-     * @param {Boolean} [config.cors] Whether to enable CORS & use XDR on IE8/9.
-     * @param {Function} callback The callback function, with two params (error, response)
-     */
-    delete: function (url, headers, config, callback) {
-        return doXhr(
-            METHOD_DELETE,
-            url,
-            headers,
-            NULL,
             config,
             INITIAL_ATTEMPT,
             callback
