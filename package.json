@@ -9,7 +9,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint . && npm run format:check",
-    "test": "NODE_ENV=test mocha tests/unit/ --recursive --reporter spec --timeout 20000 --exit"
+    "test": "npm run test:unit && npm run test:functional",
+    "test:unit": "NODE_ENV=test mocha tests/unit/ --recursive --reporter spec --timeout 20000 --exit",
+    "test:functional": "NODE_ENV=test mocha tests/functional/*.test.js --reporter spec --exit"
   },
   "repository": {
     "type": "git",
