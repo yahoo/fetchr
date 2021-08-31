@@ -58,7 +58,7 @@ module.exports = function testCrud(
                         .end(callback(operation, done));
                 });
                 it('should throw if no resource is given', function () {
-                    expect(this.fetcher.read.bind(this.fetcher)).to['throw'](
+                    expect(this.fetcher.read.bind(this.fetcher)).to.throw(
                         'Resource is required for a fetcher request'
                     );
                 });
@@ -159,7 +159,7 @@ module.exports = function testCrud(
                         .then(denySuccess(done), allowFailure(done));
                 });
                 it('should throw if no resource is given', function () {
-                    expect(this.fetcher.read.bind(this.fetcher)).to['throw'](
+                    expect(this.fetcher.read.bind(this.fetcher)).to.throw(
                         'Resource is required for a fetcher request'
                     );
                 });
@@ -401,7 +401,7 @@ module.exports = function testCrud(
                     )
                     .clientConfig(config)
                     .end()
-                    ['catch'](function (err) {
+                    .catch(function (err) {
                         if (err) {
                             var serviceMeta = fetcher.getServiceMeta();
                             expect(serviceMeta).to.have.length(1);
@@ -438,7 +438,7 @@ module.exports = function testCrud(
                 .read(mockNoopService.resource)
                 .clientConfig(config)
                 .end()
-                ['catch'](function (err) {
+                .catch(function (err) {
                     expect(err.name).to.equal('Error');
                     expect(err.message).to.contain(
                         'operation: read is undefined on service: mock_noop_service'

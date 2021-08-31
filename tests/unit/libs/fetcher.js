@@ -28,12 +28,12 @@ describe('Server Fetcher', function () {
     it('should register valid services', function () {
         Fetcher.services = {}; // reset services so we can test getService and registerService methods
         var getService = Fetcher.getService.bind(Fetcher);
-        expect(getService).to['throw'](
+        expect(getService).to.throw(
             Error,
             'Service "undefined" could not be found'
         );
         getService = Fetcher.getService.bind(Fetcher, mockService.resource);
-        expect(getService).to['throw'](
+        expect(getService).to.throw(
             Error,
             'Service "' + mockService.resource + '" could not be found'
         );
@@ -51,7 +51,7 @@ describe('Server Fetcher', function () {
             Fetcher,
             undefined
         );
-        expect(registerInvalidService).to['throw'](
+        expect(registerInvalidService).to.throw(
             Error,
             'Fetcher.registerService requires a service definition (ex. registerService(service)).'
         );
@@ -59,7 +59,7 @@ describe('Server Fetcher', function () {
             Fetcher,
             invalidService
         );
-        expect(registerInvalidService).to['throw'](
+        expect(registerInvalidService).to.throw(
             Error,
             '"resource" property is missing in service definition.'
         );
@@ -67,18 +67,18 @@ describe('Server Fetcher', function () {
             Fetcher,
             validService
         );
-        expect(registerValidService).to.not['throw'];
+        expect(registerValidService).to.not.throw;
     });
 
     it('should get services by resource and sub resource', function () {
         var getService = Fetcher.getService.bind(Fetcher, mockService.resource);
-        expect(getService).to.not['throw'];
+        expect(getService).to.not.throw;
         expect(getService()).to.deep.equal(mockService);
         getService = Fetcher.getService.bind(
             Fetcher,
             mockService.resource + '.subResource'
         );
-        expect(getService).to.not['throw'];
+        expect(getService).to.not.throw;
         expect(getService()).to.deep.equal(mockService);
     });
 
@@ -97,15 +97,15 @@ describe('Server Fetcher', function () {
                 Fetcher,
                 mockService.resource
             );
-            expect(getFetcher).to['throw'];
+            expect(getFetcher).to.throw;
             Fetcher.registerFetcher(mockService);
-            expect(getFetcher).to.not['throw'];
+            expect(getFetcher).to.not.throw;
             expect(getFetcher()).to.deep.equal(mockService);
             getFetcher = Fetcher.getFetcher.bind(
                 Fetcher,
                 mockService.resource + '.subResource'
             );
-            expect(getFetcher).to.not['throw'];
+            expect(getFetcher).to.not.throw;
             expect(getFetcher()).to.deep.equal(mockService);
         });
     });
@@ -152,12 +152,12 @@ describe('Server Fetcher', function () {
                             var data = response.g0.data;
                             expect(data).to.contain.keys('operation', 'args');
                             expect(data.operation.name).to.equal(operation);
-                            expect(data.operation.success).to.be['true'];
+                            expect(data.operation.success).to.be.true;
                             expect(data.args).to.contain.keys('params');
                             expect(data.args.params).to.equal(
                                 req.body.requests.g0.params
                             );
-                            expect(statusCodeSet).to.be['true'];
+                            expect(statusCodeSet).to.be.true;
                             expect(stats.resource).to.eql(mockService.resource);
                             expect(stats.operation).to.eql(operation);
                             expect(stats.statusCode).to.eql(200);
@@ -225,13 +225,13 @@ describe('Server Fetcher', function () {
                             var data = response.g0.data;
                             expect(data).to.contain.keys('operation', 'args');
                             expect(data.operation.name).to.equal(operation);
-                            expect(data.operation.success).to.be['true'];
+                            expect(data.operation.success).to.be.true;
                             expect(data.args).to.contain.keys('params');
                             expect(data.args.params).to.equal(
                                 req.body.requests.g0.params
                             );
                             expect(headersSet).to.eql(responseHeaders);
-                            expect(statusCodeSet).to.be['true'];
+                            expect(statusCodeSet).to.be.true;
                             expect(stats.resource).to.eql(mockService.resource);
                             expect(stats.operation).to.eql(operation);
                             expect(stats.statusCode).to.eql(201);
@@ -302,7 +302,7 @@ describe('Server Fetcher', function () {
                         res = {
                             json: function (data) {
                                 expect(data).to.eql(expMessage);
-                                expect(statusCodeSet).to.be['true'];
+                                expect(statusCodeSet).to.be.true;
                                 done();
                             },
                             status: function (code) {
@@ -407,10 +407,10 @@ describe('Server Fetcher', function () {
                         expect(response).to.not.contain.keys('data', 'meta');
                         expect(response).to.contain.keys('operation', 'args');
                         expect(response.operation.name).to.equal(operation);
-                        expect(response.operation.success).to.be['true'];
+                        expect(response.operation.success).to.be.true;
                         expect(response.args).to.contain.keys('params');
                         expect(response.args.params).to.deep.equal(params);
-                        expect(statusCodeSet).to.be['true'];
+                        expect(statusCodeSet).to.be.true;
                         done();
                     },
                     status: function (code) {
@@ -465,9 +465,7 @@ describe('Server Fetcher', function () {
                             expect(response.data.operation.name).to.equal(
                                 operation
                             );
-                            expect(response.data.operation.success).to.be[
-                                'true'
-                            ];
+                            expect(response.data.operation.success).to.be.true;
                             expect(response.data.args).to.contain.keys(
                                 'params'
                             );
@@ -475,7 +473,7 @@ describe('Server Fetcher', function () {
                                 params
                             );
                             expect(response.meta).to.be.empty;
-                            expect(statusCodeSet).to.be['true'];
+                            expect(statusCodeSet).to.be.true;
                             done();
                         },
                         status: function (code) {
@@ -534,9 +532,7 @@ describe('Server Fetcher', function () {
                             expect(response.data.operation.name).to.equal(
                                 operation
                             );
-                            expect(response.data.operation.success).to.be[
-                                'true'
-                            ];
+                            expect(response.data.operation.success).to.be.true;
                             expect(response.data.args).to.contain.keys(
                                 'params'
                             );
@@ -547,7 +543,7 @@ describe('Server Fetcher', function () {
                                 headers: responseHeaders,
                                 statusCode: statusCode,
                             });
-                            expect(statusCodeSet).to.be['true'];
+                            expect(statusCodeSet).to.be.true;
                             expect(headersSet).to.eql(responseHeaders);
                             done();
                         },
@@ -609,9 +605,7 @@ describe('Server Fetcher', function () {
                             expect(response.data.operation.name).to.equal(
                                 operation
                             );
-                            expect(response.data.operation.success).to.be[
-                                'true'
-                            ];
+                            expect(response.data.operation.success).to.be.true;
                             expect(response.data.args).to.contain.keys(
                                 'params'
                             );
@@ -627,7 +621,7 @@ describe('Server Fetcher', function () {
                             expect(
                                 response.data.args.params.bigId.toString()
                             ).to.equal(params.bigId);
-                            expect(statusCodeSet).to.be['true'];
+                            expect(statusCodeSet).to.be.true;
                             done();
                         },
                         status: function (code) {
@@ -680,9 +674,7 @@ describe('Server Fetcher', function () {
                             expect(response.data.operation.name).to.equal(
                                 operation
                             );
-                            expect(response.data.operation.success).to.be[
-                                'true'
-                            ];
+                            expect(response.data.operation.success).to.be.true;
                             expect(response.data.args).to.contain.keys(
                                 'params'
                             );
@@ -698,7 +690,7 @@ describe('Server Fetcher', function () {
                             expect(
                                 response.data.args.params.bigDecimal.toString()
                             ).to.equal('9007199254740991.11111');
-                            expect(statusCodeSet).to.be['true'];
+                            expect(statusCodeSet).to.be.true;
                             done();
                         },
                         status: function (code) {
@@ -750,9 +742,7 @@ describe('Server Fetcher', function () {
                             expect(response.data.operation.name).to.equal(
                                 operation
                             );
-                            expect(response.data.operation.success).to.be[
-                                'true'
-                            ];
+                            expect(response.data.operation.success).to.be.true;
                             expect(response.data.args).to.contain.keys(
                                 'params'
                             );
@@ -762,7 +752,7 @@ describe('Server Fetcher', function () {
                             expect(
                                 response.data.args.params.num.toString()
                             ).to.equal('1234e1234');
-                            expect(statusCodeSet).to.be['true'];
+                            expect(statusCodeSet).to.be.true;
                             done();
                         },
                         status: function (code) {
@@ -812,7 +802,7 @@ describe('Server Fetcher', function () {
                         res = {
                             json: function (data) {
                                 expect(data).to.eql(expMessage);
-                                expect(statusCodeSet).to.be['true'];
+                                expect(statusCodeSet).to.be.true;
                                 done();
                             },
                             status: function (code) {
@@ -1047,9 +1037,7 @@ describe('Server Fetcher', function () {
                             expect(response.data.operation.name).to.equal(
                                 operation
                             );
-                            expect(response.data.operation.success).to.be[
-                                'true'
-                            ];
+                            expect(response.data.operation.success).to.be.true;
                             expect(response.data.args).to.contain.keys(
                                 'params'
                             );
@@ -1057,7 +1045,7 @@ describe('Server Fetcher', function () {
                                 params
                             );
                             expect(response.meta).to.be.empty;
-                            expect(statusCodeSet).to.be['true'];
+                            expect(statusCodeSet).to.be.true;
                             done();
                         },
                         status: function (code) {
@@ -1127,12 +1115,12 @@ describe('Server Fetcher', function () {
                                     'args'
                                 );
                                 expect(data.operation.name).to.equal(operation);
-                                expect(data.operation.success).to.be['true'];
+                                expect(data.operation.success).to.be.true;
                                 expect(data.args).to.contain.keys('params');
                                 expect(data.args.params).to.equal(
                                     req.body.requests.g0.params
                                 );
-                                expect(statusCodeSet).to.be['true'];
+                                expect(statusCodeSet).to.be.true;
                                 done();
                             },
                             status: function (code) {
@@ -1194,7 +1182,7 @@ describe('Server Fetcher', function () {
                     expect(response).to.contain.keys('data', 'meta');
                     expect(response.data).to.contain.keys('operation', 'args');
                     expect(response.data.operation.name).to.equal(operation);
-                    expect(response.data.operation.success).to.be['true'];
+                    expect(response.data.operation.success).to.be.true;
                     expect(response.data.args).to.contain.keys('params');
                     expect(response.data.args.params.uuids).to.deep.equal(
                         params.uuids
@@ -1205,7 +1193,7 @@ describe('Server Fetcher', function () {
                         JSON.stringify(response.data.args.params)
                     );
                     // expect(response.meta).to.be.empty;
-                    expect(statusCodeSet).to.be['true'];
+                    expect(statusCodeSet).to.be.true;
                     done();
                 },
                 status: function (code) {
@@ -1277,13 +1265,13 @@ describe('Server Fetcher', function () {
                     var data = response.g0.data;
                     expect(data).to.contain.keys('operation', 'args');
                     expect(data.operation.name).to.equal(operation);
-                    expect(data.operation.success).to.be['true'];
+                    expect(data.operation.success).to.be.true;
                     expect(data.args).to.contain.keys('params');
                     expect(data.args.params).to.include(
                         req.body.requests.g0.params
                     );
                     expect(data.args.params.newParam).to.include('YES!');
-                    expect(statusCodeSet).to.be['true'];
+                    expect(statusCodeSet).to.be.true;
                     done();
                 },
                 status: function (code) {
@@ -1323,7 +1311,7 @@ describe('Server Fetcher', function () {
                 }
                 expect(data.operation).to.exist;
                 expect(data.operation.name).to.equal(operation);
-                expect(data.operation.success).to.be['true'];
+                expect(data.operation.success).to.be.true;
                 done();
             };
         };
@@ -1333,7 +1321,7 @@ describe('Server Fetcher', function () {
                     expect(result.data).to.exist;
                     expect(result.data.operation).to.exist;
                     expect(result.data.operation.name).to.equal(operation);
-                    expect(result.data.operation.success).to.be['true'];
+                    expect(result.data.operation.success).to.be.true;
                 } catch (e) {
                     done(e);
                     return;
