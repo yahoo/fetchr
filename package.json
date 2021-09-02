@@ -9,7 +9,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint . && npm run format:check",
-    "test": "NODE_ENV=test mocha tests/unit/ --recursive --reporter spec --timeout 20000 --exit"
+    "test": "npm run test:unit && npm run test:functional",
+    "test:unit": "NODE_ENV=test mocha tests/unit/ --recursive --reporter spec --timeout 20000 --exit",
+    "test:functional": "NODE_ENV=test mocha tests/functional/*.test.js --reporter spec --exit"
   },
   "repository": {
     "type": "git",
@@ -39,10 +41,12 @@
     "mockery": "^2.0.0",
     "pre-commit": "^1.0.0",
     "prettier": "^2.3.2",
+    "puppeteer": "^10.2.0",
     "qs": "^6.7.0",
     "request": "^2.81.0",
     "sinon": "^11.1.1",
-    "supertest": "^6.0.0"
+    "supertest": "^6.0.0",
+    "webpack": "^5.51.1"
   },
   "keywords": [
     "yahoo",

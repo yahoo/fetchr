@@ -22,7 +22,7 @@ var callback = function (operation, done) {
         }
         expect(data.operation).to.exist;
         expect(data.operation.name).to.equal(operation);
-        expect(data.operation.success).to.be['true'];
+        expect(data.operation.success).to.be.true;
         expect(data.args).to.exist;
         expect(data.args.resource).to.equal(resource);
         expect(data.args.params).to.eql(
@@ -39,7 +39,7 @@ var resolve = function (operation, done) {
             expect(result).to.have.keys('data', 'meta');
             expect(result.data.operation).to.exist;
             expect(result.data.operation.name).to.equal(operation);
-            expect(result.data.operation.success).to.be['true'];
+            expect(result.data.operation.success).to.be.true;
             expect(result.data.args).to.exist;
             expect(result.data.args.resource).to.equal(resource);
             expect(result.data.args.params).to.eql(

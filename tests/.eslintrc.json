@@ -1,0 +1,6 @@
+{
+    "env": { "es2021": true },
+    "rules": {
+        "dot-notation": [2, { "allowKeywords": true }]
+    }
+}

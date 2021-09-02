@@ -2,3 +2,4 @@
 /artifacts
 /build
 /node_modules
+tests/functional/static
