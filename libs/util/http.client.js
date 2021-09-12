@@ -7,7 +7,6 @@
  * @module rest-http
  */
 
-var xhr = require('xhr');
 var forEach = require('./forEach');
 
 /*
@@ -135,16 +134,13 @@ function doXhr(method, url, headers, data, config, attempt, callback) {
         method: method,
         timeout: config.timeout,
         headers: headers,
-        useXDR: config.useXDR,
         withCredentials: config.withCredentials,
         on: {
             success: function (err, response) {
                 callback(NULL, response);
             },
             failure: function (err, response) {
-                if (
-                    !shouldRetry(method, config, response.statusCode, attempt)
-                ) {
+                if (!shouldRetry(method, config, response.status, attempt)) {
                     callback(err);
                 } else {
                     // Use exponential backoff and full jitter strategy published in https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
@@ -174,62 +170,99 @@ function doXhr(method, url, headers, data, config, attempt, callback) {
     return io(url, options);
 }
 
-function io(url, options) {
-    return xhr(
-        {
-            url: url,
-            method: options.method || METHOD_GET,
-            timeout: options.timeout,
-            headers: options.headers,
-            body: options.data,
-            useXDR: options.cors,
-            withCredentials: options.withCredentials,
-        },
-        function (err, resp, body) {
-            var status = resp.statusCode;
-            var errMessage, errBody;
+function FetchrError(options, request, response, responseBody, originalError) {
+    var err = originalError;
+    var status = response ? response.status : 0;
+    var errMessage, errBody;
 
-            if (!err && (status === 0 || (status >= 400 && status < 600))) {
-                if (typeof body === 'string') {
-                    try {
-                        errBody = JSON.parse(body);
-                        if (errBody.message) {
-                            errMessage = errBody.message;
-                        } else {
-                            errMessage = body;
-                        }
-                    } catch (e) {
-                        errMessage = body;
-                    }
+    if (!err && (status === 0 || (status >= 400 && status < 600))) {
+        if (typeof responseBody === 'string') {
+            try {
+                errBody = JSON.parse(responseBody);
+                if (errBody.message) {
+                    errMessage = errBody.message;
                 } else {
-                    errMessage = status
-                        ? 'Error ' + status
-                        : 'Internal Fetchr XMLHttpRequest Error';
+                    errMessage = responseBody;
                 }
-
-                err = new Error(errMessage);
-                err.statusCode = status;
-                err.body = errBody || body;
-                if (err.body) {
-                    err.output = err.body.output;
-                    err.meta = err.body.meta;
-                }
+            } catch (e) {
+                errMessage = responseBody;
             }
-
-            resp.responseText = body;
-
-            if (err) {
-                // getting detail info from xhr module
-                err.rawRequest = resp.rawRequest;
-                err.url = resp.url;
-                err.timeout = options.timeout;
-
-                options.on.failure.call(null, err, resp);
-            } else {
-                options.on.success.call(null, null, resp);
-            }
+        } else {
+            errMessage = status
+                ? 'Error ' + status
+                : 'Internal Fetchr XMLHttpRequest Error';
         }
-    );
+
+        err = new Error(errMessage);
+        err.body = errBody || responseBody;
+        if (err.body) {
+            err.output = err.body.output;
+            err.meta = err.body.meta;
+        }
+    }
+
+    err.rawRequest = {
+        headers: options.headers,
+        method: request.method,
+        url: request.url,
+    };
+    err.statusCode = status;
+    err.timeout = options.timeout;
+    err.url = request.url;
+
+    return err;
+}
+
+function io(url, options) {
+    var controller = new AbortController();
+
+    var request = new Request(url, {
+        method: options.method,
+        headers: options.headers,
+        body: options.data,
+        credentials: options.withCredentials ? 'include' : 'same-origin',
+        signal: controller.signal,
+    });
+
+    var timeoutId = setTimeout(function () {
+        controller.abort();
+    }, options.timeout);
+
+    fetch(request)
+        .then(function (response) {
+            clearTimeout(timeoutId);
+
+            if (response.ok) {
+                response.text().then(function (responseBody) {
+                    options.on.success(null, {
+                        responseText: responseBody,
+                        statusCode: response.status,
+                    });
+                });
+            } else {
+                response.text().then(function (responseBody) {
+                    options.on.failure(
+                        new FetchrError(
+                            options,
+                            request,
+                            response,
+                            responseBody
+                        ),
+                        response
+                    );
+                });
+            }
+        })
+        .catch(function (err) {
+            clearTimeout(timeoutId);
+
+            options.on.failure(
+                new FetchrError(options, request, null, null, err),
+                { status: 0 }
+            );
+        });
+
+    return controller;
 }
 
 /**
