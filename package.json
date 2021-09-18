@@ -9,8 +9,8 @@
     "format:check": "prettier --check .",
     "lint": "eslint . && npm run format:check",
     "test": "npm run test:unit && npm run test:functional",
-    "test:coverage":  "nyc --reporter=lcov npm run test:unit",
-    "test:unit": "NODE_ENV=test mocha tests/unit/ --recursive --reporter spec --timeout 20000 --exit",
+    "test:coverage": "nyc --reporter=lcov npm run test:unit",
+    "test:unit": "NODE_ENV=test mocha tests/unit/ --recursive --reporter spec --timeout 20000 --exit --require tests/unit/setup.js",
     "test:functional": "NODE_ENV=test mocha tests/functional/*.test.js --reporter spec --exit"
   },
   "repository": {
