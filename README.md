@@ -16,6 +16,8 @@ Having to write code differently for both environments is duplicative and error 
 npm install fetchr --save
 ```
 
+_Important:_ when on browser, `Fetchr` relies fully on [`Fetch`](https://fetch.spec.whatwg.org/) API. If you need to support old browsers, you will need to install a polyfill as well (eg. https://github.com/github/fetch).
+
 ## Setup
 
 Follow the steps below to setup Fetchr properly. This assumes you are using the [Express](https://www.npmjs.com/package/express) framework.
