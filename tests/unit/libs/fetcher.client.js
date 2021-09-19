@@ -6,7 +6,6 @@
 'use strict';
 
 var expect = require('chai').expect;
-var lodash = require('lodash');
 var mockery = require('mockery');
 var qs = require('qs');
 var sinon = require('sinon');
@@ -125,7 +124,7 @@ describe('Client Fetcher', function () {
     });
     describe('CORS', function () {
         function constructGetUri(uri, resource, params, config, context) {
-            params = lodash.assign(context, params);
+            params = Object.assign(context, params);
             if (config.cors) {
                 return uri + '/' + resource + '?' + qs.stringify(params);
             }
@@ -143,7 +142,7 @@ describe('Client Fetcher', function () {
                 }
             };
             this.fetcher = new Fetcher({
-                context: lodash.assign({ cors: true }, context),
+                context: Object.assign({ cors: true }, context),
                 corsPath: corsPath,
             });
         });
@@ -312,7 +311,7 @@ describe('Client Fetcher', function () {
     });
 
     describe('Context Picker', function () {
-        var ctx = lodash.assign({ random: 'randomnumber' }, context);
+        var ctx = Object.assign({ random: 'randomnumber' }, context);
         before(function () {
             validateXhr = function (req) {
                 if (req.method === 'GET') {

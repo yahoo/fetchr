@@ -1,8 +1,12 @@
 var expect = require('chai').expect;
-var lodash = require('lodash');
-
 var mockService = require('../mock/MockService');
+
 var resource = mockService.resource;
+
+const removeUndefinedProperties = (obj) =>
+    Object.fromEntries(
+        Object.entries(obj).filter((entry) => entry[1] !== undefined)
+    );
 
 var params = {
     uuids: ['1', '2', '3', '4', '5'],
@@ -25,9 +29,7 @@ var callback = function (operation, done) {
         expect(data.operation.success).to.be.true;
         expect(data.args).to.exist;
         expect(data.args.resource).to.equal(resource);
-        expect(data.args.params).to.eql(
-            lodash.omitBy(params, lodash.isUndefined)
-        );
+        expect(data.args.params).to.eql(removeUndefinedProperties(params));
         expect(meta).to.eql(params.meta);
         done();
     };
@@ -43,7 +45,7 @@ var resolve = function (operation, done) {
             expect(result.data.args).to.exist;
             expect(result.data.args.resource).to.equal(resource);
             expect(result.data.args.params).to.eql(
-                lodash.omitBy(params, lodash.isUndefined)
+                removeUndefinedProperties(params)
             );
             expect(result.meta).to.eql(params.meta);
         } catch (e) {
