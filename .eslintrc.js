@@ -8,7 +8,6 @@ module.exports = {
     rules: {
         'no-prototype-builtins': 0,
         'no-unexpected-multiline': 0,
-        'dot-notation': [2, { allowKeywords: false }],
     },
     globals: {
         Promise: 'readonly',
