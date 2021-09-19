@@ -5,11 +5,11 @@
   "main": "index.js",
   "browser": "./libs/fetcher.client.js",
   "scripts": {
-    "cover": "nyc npm run test:unit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint . && npm run format:check",
     "test": "npm run test:unit && npm run test:functional",
+    "test:coverage":  "nyc --reporter=lcov npm run test:unit",
     "test:unit": "NODE_ENV=test mocha tests/unit/ --recursive --reporter spec --timeout 20000 --exit",
     "test:functional": "NODE_ENV=test mocha tests/functional/*.test.js --reporter spec --exit"
   },
@@ -31,7 +31,6 @@
   },
   "devDependencies": {
     "chai": "^4.2.0",
-    "coveralls": "^3.0.5",
     "eslint": "^7.29.0",
     "express": "^4.17.1",
     "lodash": "^4.17.15",

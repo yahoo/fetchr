@@ -1,5 +1,6 @@
 .*
 *.yml
+/coverage/
 /docs/
 /artifacts/
 /examples/
