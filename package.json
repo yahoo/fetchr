@@ -30,7 +30,6 @@
     "xhr": "^2.4.0"
   },
   "devDependencies": {
-    "body-parser": "^1.19.0",
     "chai": "^4.2.0",
     "coveralls": "^3.0.5",
     "eslint": "^7.29.0",
