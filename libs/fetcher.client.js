@@ -11,8 +11,8 @@
  */
 var REST = require('./util/http.client');
 var DEFAULT_GUID = 'g0';
-var DEFAULT_XHR_PATH = '/api';
-var DEFAULT_XHR_TIMEOUT = 3000;
+var DEFAULT_PATH = '/api';
+var DEFAULT_TIMEOUT = 3000;
 var MAX_URI_LEN = 2048;
 var OP_READ = 'read';
 var defaultConstructGetUri = require('./util/defaultConstructGetUri');
@@ -91,8 +91,8 @@ function Request(operation, resource, options) {
     this.resource = resource;
     this.options = {
         headers: options.headers,
-        xhrPath: options.xhrPath || DEFAULT_XHR_PATH,
-        xhrTimeout: options.xhrTimeout || DEFAULT_XHR_TIMEOUT,
+        xhrPath: options.xhrPath || DEFAULT_PATH,
+        xhrTimeout: options.xhrTimeout || DEFAULT_TIMEOUT,
         corsPath: options.corsPath,
         context: options.context || {},
         contextPicker: options.contextPicker || {},
@@ -374,8 +374,8 @@ Request.prototype._constructGroupUri = function (uri) {
  * Fetcher class for the client. Provides CRUD methods.
  * @class FetcherClient
  * @param {Object} options configuration options for Fetcher
- * @param {String} [options.xhrPath="/api"] The path for XHR requests
- * @param {Number} [options.xhrTimout=3000] Timeout in milliseconds for all XHR requests
+ * @param {String} [options.xhrPath="/api"] The path for requests
+ * @param {Number} [options.xhrTimout=3000] Timeout in milliseconds for all requests
  * @param {Boolean} [options.corsPath] Base CORS path in case CORS is enabled
  * @param {Object} [options.context] The context object that is propagated to all outgoing
  *      requests as query params.  It can contain current-session/context data that should
@@ -550,7 +550,7 @@ Fetcher.prototype = {
 
     /**
      * get the serviceMeta array.
-     * The array contains all xhr meta returned in this session
+     * The array contains all requests meta returned in this session
      * with the 0 index being the first call.
      * @method getServiceMeta
      * @return {Array} array of metadata returned by each service call

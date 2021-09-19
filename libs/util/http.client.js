@@ -126,7 +126,7 @@ function mergeConfig(config) {
     return cfg;
 }
 
-function doXhr(method, url, headers, data, config, attempt, callback) {
+function doRequest(method, url, headers, data, config, attempt, callback) {
     headers = normalizeHeaders(headers, method, config.cors);
     config = mergeConfig(config);
 
@@ -149,8 +149,8 @@ function doXhr(method, url, headers, data, config, attempt, callback) {
                         config.retry.interval *
                         Math.pow(2, attempt);
 
-                    setTimeout(function retryXHR() {
-                        doXhr(
+                    setTimeout(function retryRequest() {
+                        doRequest(
                             method,
                             url,
                             headers,
@@ -284,7 +284,7 @@ module.exports = {
      * @param {Function} callback The callback function, with two params (error, response)
      */
     get: function (url, headers, config, callback) {
-        return doXhr(
+        return doRequest(
             METHOD_GET,
             url,
             headers,
@@ -310,7 +310,7 @@ module.exports = {
      * @param {Function} callback The callback function, with two params (error, response)
      */
     post: function (url, headers, data, config, callback) {
-        return doXhr(
+        return doRequest(
             METHOD_POST,
             url,
             headers,

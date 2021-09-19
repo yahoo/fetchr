@@ -19,7 +19,7 @@ function jsonifyComplexType(value) {
 }
 
 /**
- * Construct xhr GET URI.
+ * Construct GET URI.
  * @method defaultConstructGetUri
  * @param {String} uri base URI
  * @param {String} resource Resource name

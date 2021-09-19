@@ -434,7 +434,7 @@ describe('Client HTTP', function () {
         });
     });
 
-    describe('xhr errors', function () {
+    describe('request errors', function () {
         it('should pass-through any xhr error', function (done) {
             responseStatus = 0;
             fetchMock.get('/url', {
