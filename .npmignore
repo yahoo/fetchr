@@ -1,9 +1,6 @@
+.*
 *.yml
-.github
-.editorconfig
-.eslintignore
-.eslintrc.js
-.prettierignore
+/coverage/
 /docs/
 /artifacts/
 /examples/

@@ -3,7 +3,6 @@
  * Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
  */
 var express = require('express');
-var bodyParser = require('body-parser');
 var app = express();
 
 var FetcherServer = require('../../libs/fetcher');
@@ -14,7 +13,7 @@ FetcherServer.registerService(mockService);
 FetcherServer.registerService(mockErrorService);
 FetcherServer.registerService(mockNoopService);
 
-app.use(bodyParser.json());
+app.use(express.json());
 app.use(function cors(req, res, next) {
     if (req.query.cors) {
         res.set('Access-Control-Allow-Origin', '*');

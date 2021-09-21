@@ -6,9 +6,7 @@
 'use strict';
 
 var expect = require('chai').expect;
-var lodash = require('lodash');
 var mockery = require('mockery');
-var qs = require('qs');
 var sinon = require('sinon');
 var supertest = require('supertest');
 var xhr = require('xhr');
@@ -18,6 +16,7 @@ FakeXMLHttpRequest.onCreate = handleFakeXhr;
 xhr.XMLHttpRequest = FakeXMLHttpRequest;
 
 var Fetcher = require('../../../libs/fetcher.client');
+var defaultConstructGetUri = require('../../../libs/util/defaultConstructGetUri');
 var REST = require('../../../libs/util/http.client');
 var testCrud = require('../../util/testCrud');
 var defaultOptions = require('../../util/defaultOptions');
@@ -123,13 +122,8 @@ describe('Client Fetcher', function () {
             validateXhr = null;
         });
     });
+
     describe('CORS', function () {
-        function constructGetUri(uri, resource, params, config, context) {
-            params = lodash.assign(context, params);
-            if (config.cors) {
-                return uri + '/' + resource + '?' + qs.stringify(params);
-            }
-        }
         before(function () {
             validateXhr = function (req) {
                 if (req.method === 'GET') {
@@ -143,17 +137,14 @@ describe('Client Fetcher', function () {
                 }
             };
             this.fetcher = new Fetcher({
-                context: lodash.assign({ cors: true }, context),
+                context: Object.assign({ cors: true }, context),
                 corsPath: corsPath,
             });
         });
         testCrud({
             params: params,
             body: body,
-            config: {
-                cors: true,
-                constructGetUri: constructGetUri,
-            },
+            config: { cors: true },
             disableNoConfigTests: true,
             callback: callback,
             resolve: resolve,
@@ -312,7 +303,7 @@ describe('Client Fetcher', function () {
     });
 
     describe('Context Picker', function () {
-        var ctx = lodash.assign({ random: 'randomnumber' }, context);
+        var ctx = Object.assign({ random: 'randomnumber' }, context);
         before(function () {
             validateXhr = function (req) {
                 if (req.method === 'GET') {
@@ -379,6 +370,28 @@ describe('Client Fetcher', function () {
             });
 
             testCrud(params, body, config, callback, resolve, reject);
+        });
+    });
+
+    describe('Custom constructGetUri', () => {
+        it('is called correctly', () => {
+            const fetcher = new Fetcher({});
+            const constructGetUri = sinon
+                .stub()
+                .callsFake(defaultConstructGetUri);
+
+            return fetcher
+                .read('mock_service', { foo: 'bar' }, { constructGetUri })
+                .then(() => {
+                    sinon.assert.calledOnceWithExactly(
+                        constructGetUri,
+                        '/api',
+                        'mock_service',
+                        { foo: 'bar' },
+                        { constructGetUri },
+                        {}
+                    );
+                });
         });
     });
 

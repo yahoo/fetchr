@@ -2,7 +2,6 @@
  * Copyright 2014, Yahoo! Inc.
  * Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
  */
-var lodash = require('lodash');
 var MockErrorService = {
     resource: 'mock_error_service',
 
@@ -28,11 +27,17 @@ var MockErrorService = {
             params &&
             Object.keys(params).length === 0
         ) {
-            // in our CORS test, we use regular query params instead of matrix params for the params object will be empty
-            // create params from req.query but omit the context values(i.e. cors & returnMeta)
-            params = lodash.omitBy(req.query, function (v, k) {
-                return k === 'cors' || k === 'returnMeta' || k === '_csrf';
-            });
+            // in our CORS test, we use regular query params instead
+            // of matrix params for the params object will be empty
+            // create params from req.query but omit the context
+            // values(i.e. cors & returnMeta)
+            params = {};
+            for (const [key, value] of Object.entries(req.query)) {
+                if (['cors', 'returnMeta', '_csrf'].includes(key)) {
+                    continue;
+                }
+                params[key] = value;
+            }
         }
         callback(
             {

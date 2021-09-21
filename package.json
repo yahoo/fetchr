@@ -5,11 +5,11 @@
   "main": "index.js",
   "browser": "./libs/fetcher.client.js",
   "scripts": {
-    "cover": "istanbul cover --dir artifacts -- ./node_modules/mocha/bin/_mocha tests/unit/ --recursive --reporter spec --timeout 20000 --exit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint . && npm run format:check",
     "test": "npm run test:unit && npm run test:functional",
+    "test:coverage":  "nyc --reporter=lcov npm run test:unit",
     "test:unit": "NODE_ENV=test mocha tests/unit/ --recursive --reporter spec --timeout 20000 --exit",
     "test:functional": "NODE_ENV=test mocha tests/functional/*.test.js --reporter spec --exit"
   },
@@ -30,20 +30,15 @@
     "xhr": "^2.4.0"
   },
   "devDependencies": {
-    "body-parser": "^1.19.0",
     "chai": "^4.2.0",
-    "coveralls": "^3.0.5",
     "eslint": "^7.29.0",
     "express": "^4.17.1",
-    "istanbul": "^0.4.5",
-    "lodash": "^4.17.15",
     "mocha": "^9.0.0",
     "mockery": "^2.0.0",
+    "nyc": "^15.1.0",
     "pre-commit": "^1.0.0",
     "prettier": "^2.3.2",
     "puppeteer": "^10.2.0",
-    "qs": "^6.7.0",
-    "request": "^2.81.0",
     "sinon": "^11.1.1",
     "supertest": "^6.0.0",
     "webpack": "^5.51.1"

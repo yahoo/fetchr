@@ -5,7 +5,6 @@
 var DEFAULT_XHR_PATH = '/api';
 
 var express = require('express');
-var bodyParser = require('body-parser');
 var app = express();
 
 var FetcherServer = require('../../libs/fetcher');
@@ -16,7 +15,7 @@ FetcherServer.registerService(mockService);
 FetcherServer.registerService(mockErrorService);
 FetcherServer.registerService(mockNoopService);
 
-app.use(bodyParser.json());
+app.use(express.json());
 app.use(DEFAULT_XHR_PATH, FetcherServer.middleware());
 
 module.exports = app;

@@ -1,10 +1,10 @@
 var expect = require('chai').expect;
+var deepmerge = require('deepmerge');
 var defaultOptions = require('./defaultOptions');
 var resource = defaultOptions.resource;
 var invalidResource = 'invalid_resource';
 var mockErrorService = require('../mock/MockErrorService');
 var mockNoopService = require('../mock/MockNoopService');
-var _ = require('lodash');
 
 module.exports = function testCrud(
     params,
@@ -301,7 +301,7 @@ module.exports = function testCrud(
             fetcher
                 .read(resource)
                 .params(
-                    _.merge({}, params, {
+                    deepmerge(params, {
                         meta: {
                             headers: {
                                 'x-foo': 'foo',
@@ -320,7 +320,7 @@ module.exports = function testCrud(
                     fetcher
                         .read(resource)
                         .params(
-                            _.merge({}, params, {
+                            deepmerge(params, {
                                 meta: {
                                     headers: {
                                         'x-bar': 'bar',
@@ -361,7 +361,7 @@ module.exports = function testCrud(
                 fetcher
                     .read(mockErrorService.resource)
                     .params(
-                        _.merge({}, params, {
+                        deepmerge(params, {
                             meta: {
                                 headers: {
                                     'x-foo': 'foo',
@@ -391,7 +391,7 @@ module.exports = function testCrud(
                 fetcher
                     .read(mockErrorService.resource)
                     .params(
-                        _.merge({}, params, {
+                        deepmerge(params, {
                             meta: {
                                 headers: {
                                     'x-foo': 'foo',
