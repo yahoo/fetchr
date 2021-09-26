@@ -471,24 +471,214 @@ describe('Client Fetcher', function () {
         });
     });
 
-    describe('Utils', function () {
-        it('should able to update options', function () {
-            var fetcher = new Fetcher({
-                context: {
-                    _csrf: 'stuff',
-                },
+    describe('updateOptions', function () {
+        it('replaces all non mergeable options', function () {
+            const f1 = () => {};
+            const f2 = () => {};
+
+            const fetcher = new Fetcher({
+                corsPath: '/cors-path-1',
+                statsCollector: f1,
+                xhrPath: '/path-1',
                 xhrTimeout: 1000,
             });
+
             fetcher.updateOptions({
-                context: {
-                    lang: 'en-US',
-                },
+                corsPath: '/cors-path-2',
+                statsCollector: f2,
+                xhrPath: '/path-2',
                 xhrTimeout: 1500,
             });
+
+            expect(fetcher.options.corsPath).to.equal('/cors-path-2');
+            expect(fetcher.options.statsCollector).to.equal(f2);
+            expect(fetcher.options.xhrPath).to.equal('/path-2');
             expect(fetcher.options.xhrTimeout).to.equal(1500);
-            // new context should be merged
-            expect(fetcher.options.context._csrf).to.equal('stuff');
-            expect(fetcher.options.context.lang).to.equal('en-US');
+        });
+
+        it('merges context values', function () {
+            const fetcher = new Fetcher({
+                context: { a: 'a' },
+            });
+
+            fetcher.updateOptions({
+                context: { b: 'b' },
+            });
+
+            expect(fetcher.options.context).to.deep.equal({
+                a: 'a',
+                b: 'b',
+            });
+        });
+
+        describe('contextPicker', () => {
+            const f1 = () => null;
+            const f2 = () => null;
+
+            it('keeps former contextPicker', () => {
+                const fetcher = new Fetcher({
+                    contextPicker: { GET: 'a' },
+                });
+
+                fetcher.updateOptions({});
+
+                expect(fetcher.options.contextPicker).to.deep.equal({
+                    GET: 'a',
+                });
+            });
+
+            it('sets new contextPicker', () => {
+                const fetcher = new Fetcher({});
+
+                fetcher.updateOptions({
+                    contextPicker: { POST: 'b' },
+                });
+
+                expect(fetcher.options.contextPicker).to.deep.equal({
+                    POST: 'b',
+                });
+            });
+
+            it('joins former and new contextPicker', () => {
+                const fetcher = new Fetcher({
+                    contextPicker: { GET: 'a' },
+                });
+
+                fetcher.updateOptions({
+                    contextPicker: { POST: 'b' },
+                });
+
+                expect(fetcher.options.contextPicker).to.deep.equal({
+                    GET: 'a',
+                    POST: 'b',
+                });
+            });
+
+            it('replaces string with string', () => {
+                const fetcher = new Fetcher({
+                    contextPicker: { GET: 'a' },
+                });
+
+                fetcher.updateOptions({
+                    contextPicker: { GET: 'b' },
+                });
+
+                expect(fetcher.options.contextPicker).to.deep.equal({
+                    GET: 'b',
+                });
+            });
+
+            it('replaces string with array', () => {
+                const fetcher = new Fetcher({
+                    contextPicker: { GET: 'a' },
+                });
+
+                fetcher.updateOptions({
+                    contextPicker: { GET: ['b'] },
+                });
+
+                expect(fetcher.options.contextPicker).to.deep.equal({
+                    GET: ['b'],
+                });
+            });
+
+            it('replaces string with function', () => {
+                const fetcher = new Fetcher({
+                    contextPicker: { GET: 'a' },
+                });
+
+                fetcher.updateOptions({
+                    contextPicker: { GET: f2 },
+                });
+
+                expect(fetcher.options.contextPicker).to.deep.equal({
+                    GET: f2,
+                });
+            });
+
+            it('replaces array with string', () => {
+                const fetcher = new Fetcher({
+                    contextPicker: { GET: ['a'] },
+                });
+
+                fetcher.updateOptions({
+                    contextPicker: { GET: 'b' },
+                });
+
+                expect(fetcher.options.contextPicker).to.deep.equal({
+                    GET: 'b',
+                });
+            });
+
+            it('merges array with array', () => {
+                const fetcher = new Fetcher({
+                    contextPicker: { GET: ['a'] },
+                });
+
+                fetcher.updateOptions({
+                    contextPicker: { GET: ['b'] },
+                });
+
+                expect(fetcher.options.contextPicker).to.deep.equal({
+                    GET: ['a', 'b'],
+                });
+            });
+
+            it('replaces array with function', () => {
+                const fetcher = new Fetcher({
+                    contextPicker: { GET: ['a'] },
+                });
+
+                fetcher.updateOptions({
+                    contextPicker: { GET: f2 },
+                });
+
+                expect(fetcher.options.contextPicker).to.deep.equal({
+                    GET: f2,
+                });
+            });
+
+            it('replaces function with string', () => {
+                const fetcher = new Fetcher({
+                    contextPicker: { GET: f1 },
+                });
+
+                fetcher.updateOptions({
+                    contextPicker: { GET: 'b' },
+                });
+
+                expect(fetcher.options.contextPicker).to.deep.equal({
+                    GET: 'b',
+                });
+            });
+
+            it('replaces function with array', () => {
+                const fetcher = new Fetcher({
+                    contextPicker: { GET: f1 },
+                });
+
+                fetcher.updateOptions({
+                    contextPicker: { GET: ['b'] },
+                });
+
+                expect(fetcher.options.contextPicker).to.deep.equal({
+                    GET: ['b'],
+                });
+            });
+
+            it('replaces function with function', () => {
+                const fetcher = new Fetcher({
+                    contextPicker: { GET: f1 },
+                });
+
+                fetcher.updateOptions({
+                    contextPicker: { GET: f2 },
+                });
+
+                expect(fetcher.options.contextPicker).to.deep.equal({
+                    GET: f2,
+                });
+            });
         });
     });
 });

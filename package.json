@@ -25,7 +25,6 @@
     }
   ],
   "dependencies": {
-    "deepmerge": "^4.2.2",
     "fumble": "^0.1.0",
     "xhr": "^2.4.0"
   },

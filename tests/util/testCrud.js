@@ -1,5 +1,4 @@
 var expect = require('chai').expect;
-var deepmerge = require('deepmerge');
 var defaultOptions = require('./defaultOptions');
 var resource = defaultOptions.resource;
 var invalidResource = 'invalid_resource';
@@ -300,15 +299,10 @@ module.exports = function testCrud(
             fetcher._serviceMeta.length = 0; // reset serviceMeta to empty array
             fetcher
                 .read(resource)
-                .params(
-                    deepmerge(params, {
-                        meta: {
-                            headers: {
-                                'x-foo': 'foo',
-                            },
-                        },
-                    })
-                )
+                .params({
+                    ...params,
+                    meta: { headers: { 'x-foo': 'foo' } },
+                })
                 .clientConfig(config)
                 .end(function (err, data, meta) {
                     if (err) {
@@ -319,15 +313,10 @@ module.exports = function testCrud(
                     expect(meta.headers['x-foo']).to.equal('foo');
                     fetcher
                         .read(resource)
-                        .params(
-                            deepmerge(params, {
-                                meta: {
-                                    headers: {
-                                        'x-bar': 'bar',
-                                    },
-                                },
-                            })
-                        )
+                        .params({
+                            ...params,
+                            meta: { headers: { 'x-bar': 'bar' } },
+                        })
                         .clientConfig(config)
                         .end(function (err, data, meta) {
                             if (err) {
@@ -360,15 +349,10 @@ module.exports = function testCrud(
                 fetcher._serviceMeta.length = 0; // reset serviceMeta to empty array
                 fetcher
                     .read(mockErrorService.resource)
-                    .params(
-                        deepmerge(params, {
-                            meta: {
-                                headers: {
-                                    'x-foo': 'foo',
-                                },
-                            },
-                        })
-                    )
+                    .params({
+                        ...params,
+                        meta: { headers: { 'x-foo': 'foo' } },
+                    })
                     .clientConfig(config)
                     .end(function (err) {
                         if (err) {
@@ -390,15 +374,10 @@ module.exports = function testCrud(
                 fetcher._serviceMeta.length = 0; // reset serviceMeta to empty array
                 fetcher
                     .read(mockErrorService.resource)
-                    .params(
-                        deepmerge(params, {
-                            meta: {
-                                headers: {
-                                    'x-foo': 'foo',
-                                },
-                            },
-                        })
-                    )
+                    .params({
+                        ...params,
+                        meta: { headers: { 'x-foo': 'foo' } },
+                    })
                     .clientConfig(config)
                     .end()
                     .catch(function (err) {

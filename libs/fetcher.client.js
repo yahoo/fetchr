@@ -10,7 +10,6 @@
  * @module Fetcher
  */
 var REST = require('./util/http.client');
-var deepmerge = require('deepmerge');
 var DEFAULT_GUID = 'g0';
 var DEFAULT_XHR_PATH = '/api';
 var DEFAULT_XHR_TIMEOUT = 3000;
@@ -295,7 +294,10 @@ function executeRequest(request, resolve, reject) {
         return REST.get(
             uri,
             customHeaders,
-            deepmerge({ xhrTimeout: request.options.xhrTimeout }, clientConfig),
+            Object.assign(
+                { xhrTimeout: request.options.xhrTimeout },
+                clientConfig
+            ),
             function getDone(err, response) {
                 if (err) {
                     return reject(err);
@@ -325,7 +327,7 @@ function executeRequest(request, resolve, reject) {
         uri,
         customHeaders,
         data,
-        deepmerge(
+        Object.assign(
             {
                 unsafeAllowRetry: allow_retry_post,
                 xhrTimeout: request.options.xhrTimeout,
@@ -515,7 +517,35 @@ Fetcher.prototype = {
      * @method updateOptions
      */
     updateOptions: function (options) {
-        this.options = deepmerge(this.options, options);
+        var self = this;
+        var contextPicker = {};
+        if (this.options.contextPicker && options.contextPicker) {
+            ['GET', 'POST'].forEach(function (method) {
+                var oldPicker = self.options.contextPicker[method];
+                var newPicker = options.contextPicker[method];
+
+                if (Array.isArray(oldPicker) && Array.isArray(newPicker)) {
+                    contextPicker[method] = [].concat(oldPicker, newPicker);
+                } else if (oldPicker || newPicker) {
+                    var picker = newPicker || oldPicker;
+                    contextPicker[method] = Array.isArray(picker)
+                        ? [].concat(picker)
+                        : picker;
+                }
+            });
+        } else {
+            contextPicker = Object.assign(
+                {},
+                this.options.contextPicker,
+                options.contextPicker
+            );
+        }
+
+        this.options = Object.assign({}, this.options, options, {
+            context: Object.assign({}, this.options.context, options.context),
+            contextPicker: contextPicker,
+            headers: Object.assign({}, this.options.headers, options.headers),
+        });
     },
 
     /**
