@@ -6,7 +6,7 @@
 
 Universal data access layer for web applications.
 
-Typically on the server, you call your API or database directly to fetch some data. However, on the client, you cannot always call your services in the same way (i.e, cross domain policies). Instead, XHR requests need to be made to the server which get forwarded to your service.
+Typically on the server, you call your API or database directly to fetch some data. However, on the client, you cannot always call your services in the same way (i.e, cross domain policies). Instead, XHR/fetch requests need to be made to the server which get forwarded to your service.
 
 Having to write code differently for both environments is duplicative and error prone. Fetchr provides an abstraction layer over your data service calls so that you can fetch data using the same API on the server and client side.
 
@@ -15,6 +15,8 @@ Having to write code differently for both environments is duplicative and error 
 ```bash
 npm install fetchr --save
 ```
+
+_Important:_ when on browser, `Fetchr` relies fully on [`Fetch`](https://fetch.spec.whatwg.org/) API. If you need to support old browsers, you will need to install a polyfill as well (eg. https://github.com/github/fetch).
 
 ## Setup
 
@@ -149,8 +151,8 @@ See the [simple example](https://github.com/yahoo/fetchr/tree/master/examples/si
 
 ## Service Metadata
 
-Service calls on the client transparently become xhr requests.
-It is a good idea to set cache headers on common xhr calls.
+Service calls on the client transparently become fetch requests.
+It is a good idea to set cache headers on common fetch calls.
 You can do so by providing a third parameter in your service's callback.
 If you want to look at what headers were set by the service you just called,
 simply inspect the third parameter in the callback.
@@ -169,7 +171,7 @@ export default {
             headers: {
                 'cache-control': 'public, max-age=3600',
             },
-            statusCode: 200, // You can even provide a custom statusCode for the xhr response
+            statusCode: 200, // You can even provide a custom statusCode for the fetch response
         };
         callback(null, data, meta);
     },
@@ -241,9 +243,9 @@ fetcher
     });
 ```
 
-## XHR Object
+## Abort support
 
-The xhr object is returned by the `.end()` method as long as you're _not_ chaining promises.
+An object with an `abort` method is returned by the `.end()` method as long as you're _not_ chaining promises.
 This is useful if you want to abort a request before it is completed.
 
 ```js
@@ -253,11 +255,11 @@ const req = fetcher
     .end(function (err, data, meta) {
         // err.output will be { message: "Not found", more: "meta data" }
     });
-// req is the xhr object
+
 req.abort();
 ```
 
-However, you can't acces the xhr object if using promise chaining like so:
+However, due to the current implementation, you can't access this method if using promise chaining like so:
 
 ```js
 const req = fetcher
@@ -268,10 +270,10 @@ const req = fetcher
 req.then(onResolve, onReject);
 ```
 
-## XHR Timeouts
+## Timeouts
 
 `xhrTimeout` is an optional config property that allows you to set timeout (in ms) for all clientside requests, defaults to `3000`.
-On the clientside, xhrPath and xhrTimeout will be used for XHR requests.
+On the clientside, xhrPath and xhrTimeout will be used for all requests.
 On the serverside, xhrPath and xhrTimeout are not needed and are ignored.
 
 ```js
@@ -294,9 +296,9 @@ fetcher
     });
 ```
 
-## XHR Params Processing
+## Params Processing
 
-For some applications, there may be a situation where you need to process the service params passed in XHR request before params are sent to the actual service. Typically, you would process these params in the service itself. However, if you want to perform processing across many services (i.e. sanitization for security), then you can use the `paramsProcessor` option.
+For some applications, there may be a situation where you need to process the service params passed in the request before they are sent to the actual service. Typically, you would process them in the service itself. However, if you neet to perform processing across many services (i.e. sanitization for security), then you can use the `paramsProcessor` option.
 
 `paramsProcessor` is a function that is passed into the `Fetcher.middleware` method. It is passed three arguments, the request object, the serviceInfo object, and the service params object. The `paramsProcessor` function can then modify the service params if needed.
 
@@ -318,9 +320,9 @@ app.use(
 );
 ```
 
-## XHR Response Formatting
+## Response Formatting
 
-For some applications, there may be a situation where you need to modify an XHR response before it is passed to the client. Typically, you would apply your modifications in the service itself. However, if you want to modify the XHR responses across many services (i.e. add debug information), then you can use the `responseFormatter` option.
+For some applications, there may be a situation where you need to modify the response before it is passed to the client. Typically, you would apply your modifications in the service itself. However, if you need to modify the responses across many services (i.e. add debug information), then you can use the `responseFormatter` option.
 
 `responseFormatter` is a function that is passed into the `Fetcher.middleware` method. It is passed three arguments, the request object, response object and the service response object (i.e. the data returned from your service). The `responseFormatter` function can then modify the service response to add additional information.
 
@@ -342,7 +344,7 @@ app.use(
 );
 ```
 
-Now when an XHR request is performed, your response will contain the `debug` property added above.
+Now when an request is performed, your response will contain the `debug` property added above.
 
 ## CORS Support
 
@@ -392,31 +394,31 @@ fetcher
 
 ## CSRF Protection
 
-You can protect your XHR paths from CSRF attacks by adding a middleware in front of the fetchr middleware:
+You can protect your Fetchr middleware paths from CSRF attacks by adding a middleware in front of it:
 
 `app.use('/myCustomAPIEndpoint', csrf(), Fetcher.middleware());`
 
 You could use https://github.com/expressjs/csurf for this as an example.
 
-Next you need to make sure that the CSRF token is being sent with our XHR requests so that they can be validated. To do this, pass the token in as a key in the `options.context` object on the client:
+Next you need to make sure that the CSRF token is being sent with our requests so that they can be validated. To do this, pass the token in as a key in the `options.context` object on the client:
 
 ```js
 const fetcher = new Fetcher({
-    xhrPath: '/myCustomAPIEndpoint', //xhrPath is REQUIRED on the clientside fetcher instantiation
+    xhrPath: '/myCustomAPIEndpoint', // xhrPath is REQUIRED on the clientside fetcher instantiation
     context: {
-        // These context values are persisted with XHR calls as query params
+        // These context values are persisted with client calls as query params
         _csrf: 'Ax89D94j',
     },
 });
 ```
 
-This `_csrf` will be sent in all XHR requests as a query parameter so that it can be validated on the server.
+This `_csrf` will be sent in all client requests as a query parameter so that it can be validated on the server.
 
 ## Service Call Config
 
 When calling a Fetcher service you can pass an optional config object.
 
-When this call is made from the client, the config object is used to define XHR request options and can be used to override default options:
+When this call is made from the client, the config object is used to set some request options and can be used to override default options:
 
 ```js
 //app.js - client
@@ -445,7 +447,7 @@ fetcher
     .end();
 ```
 
-With this configuration, Fetchr will retry all requests that fail with 408 status code or with an XHR 0 status code two more times before returning an error. The interval between each request respects
+With this configuration, Fetchr will retry all requests that fail with 408 status code or that failed without even reaching the service (status code 0 means, for example, that the client was not able to reach the server) two more times before returning an error. The interval between each request respects
 the following formula, based on the exponential backoff and full jitter strategy published in [this AWS architecture blog post](https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/):
 
 ```js
@@ -487,14 +489,14 @@ fetcher
 
 ## Context Variables
 
-By Default, fetchr appends all context values to the xhr url as query params. `contextPicker` allows you to greater control over which context variables get sent as query params depending on the xhr method (`GET` or `POST`). This is useful when you want to limit the number of variables in a `GET` url in order not to accidentally [cache bust](http://webassets.readthedocs.org/en/latest/expiring.html).
+By Default, fetchr appends all context values to the request url as query params. `contextPicker` allows you to have greater control over which context variables get sent as query params depending on the request method (`GET` or `POST`). This is useful when you want to limit the number of variables in a `GET` url in order not to accidentally [cache bust](http://webassets.readthedocs.org/en/latest/expiring.html).
 
 `contextPicker` follows the same format as the `predicate` parameter in [`lodash/pickBy`](https://lodash.com/docs#pickBy) with two arguments: `(value, key)`.
 
 ```js
 const fetcher = new Fetcher({
     context: {
-        // These context values are persisted with XHR calls as query params
+        // These context values are persisted with client calls as query params
         _csrf: 'Ax89D94j',
         device: 'desktop',
     },
@@ -512,7 +514,7 @@ const fetcher = new Fetcher({
 
 const fetcher = new Fetcher({
     context: {
-        // These context values are persisted with XHR calls as query params
+        // These context values are persisted with client calls as query params
         _csrf: 'Ax89D94j',
         device: 'desktop',
     },

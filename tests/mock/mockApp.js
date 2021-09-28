@@ -2,7 +2,7 @@
  * Copyright 2016, Yahoo! Inc.
  * Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
  */
-var DEFAULT_XHR_PATH = '/api';
+var DEFAULT_PATH = '/api';
 
 var express = require('express');
 var app = express();
@@ -16,7 +16,7 @@ FetcherServer.registerService(mockErrorService);
 FetcherServer.registerService(mockNoopService);
 
 app.use(express.json());
-app.use(DEFAULT_XHR_PATH, FetcherServer.middleware());
+app.use(DEFAULT_PATH, FetcherServer.middleware());
 
 module.exports = app;
-module.exports.DEFAULT_XHR_PATH = DEFAULT_XHR_PATH;
+module.exports.DEFAULT_PATH = DEFAULT_PATH;

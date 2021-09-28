@@ -5,15 +5,11 @@
 
 'use strict';
 
+const fetchMock = require('fetch-mock');
 var expect = require('chai').expect;
 var mockery = require('mockery');
 var sinon = require('sinon');
 var supertest = require('supertest');
-var xhr = require('xhr');
-
-var FakeXMLHttpRequest = sinon.FakeXMLHttpRequest;
-FakeXMLHttpRequest.onCreate = handleFakeXhr;
-xhr.XMLHttpRequest = FakeXMLHttpRequest;
 
 var Fetcher = require('../../../libs/fetcher.client');
 var defaultConstructGetUri = require('../../../libs/util/defaultConstructGetUri');
@@ -23,18 +19,14 @@ var defaultOptions = require('../../util/defaultOptions');
 
 // APP
 var defaultApp = require('../../mock/mockApp');
-var DEFAULT_XHR_PATH = defaultApp.DEFAULT_XHR_PATH;
+var DEFAULT_PATH = defaultApp.DEFAULT_PATH;
 // CORS
 var corsApp = require('../../mock/mockCorsApp');
 var corsPath = corsApp.corsPath;
 
-var validateXhr = null;
+var validateRequest = null;
 
-function handleFakeXhr(request) {
-    if (request.readyState === 0) {
-        setImmediate(handleFakeXhr, request);
-        return;
-    }
+function handleFakeRequest(a, b, request) {
     var method = request.method.toLowerCase();
     var url = request.url;
     var app = defaultApp;
@@ -46,25 +38,35 @@ function handleFakeXhr(request) {
             url = '/' + url;
         }
     }
-    supertest(app)
+    return supertest(app)
         [method](url)
-        .set(request.requestHeaders)
-        .send(request.requestBody)
-        .end(function (err, res) {
-            if (err) {
-                // superagent error
-                request.respond(500, null, err);
-                return;
-            }
+        .set(request.headers.entries())
+        .send(request.body ? JSON.parse(request.body.toString()) : undefined)
+        .then(function (res) {
             if (res.error) {
                 // fetcher error
-                request.respond(res.error.status || 500, null, res.error.text);
-                return;
+                return {
+                    status: res.error.status || 500,
+                    body: res.error.text,
+                };
             }
-            validateXhr && validateXhr(request);
-            request.respond(res.status, JSON.stringify(res.headers), res.text);
+            validateRequest && validateRequest(request);
+            return {
+                status: res.status,
+                headers: res.headers,
+                body: res.text,
+            };
+        })
+        .catch((err) => {
+            // superagent error
+            return {
+                status: 500,
+                throws: err,
+            };
         });
 }
+
+fetchMock.mock('*', handleFakeRequest);
 
 var context = { _csrf: 'stuff' };
 var resource = defaultOptions.resource;
@@ -94,22 +96,24 @@ var callbackWithStats = function (operation, done) {
 };
 
 describe('Client Fetcher', function () {
+    after(() => {
+        fetchMock.reset();
+    });
+
     describe('DEFAULT', function () {
         before(function () {
             this.fetcher = new Fetcher({
                 context: context,
                 statsCollector: statsCollector,
             });
-            validateXhr = function (req) {
+            validateRequest = function (req) {
                 if (req.method === 'GET') {
-                    expect(req.url).to.contain(
-                        DEFAULT_XHR_PATH + '/' + resource
-                    );
+                    expect(req.url).to.contain(DEFAULT_PATH + '/' + resource);
                     expect(req.url).to.contain('?_csrf=' + context._csrf);
                     expect(req.url).to.contain('returnMeta=true');
                 } else if (req.method === 'POST') {
                     expect(req.url).to.equal(
-                        DEFAULT_XHR_PATH + '?_csrf=' + context._csrf
+                        DEFAULT_PATH + '?_csrf=' + context._csrf
                     );
                 }
             };
@@ -119,20 +123,20 @@ describe('Client Fetcher', function () {
         });
         testCrud(params, body, config, callbackWithStats, resolve, reject);
         after(function () {
-            validateXhr = null;
+            validateRequest = null;
         });
     });
 
     describe('CORS', function () {
         before(function () {
-            validateXhr = function (req) {
+            validateRequest = function (req) {
                 if (req.method === 'GET') {
                     expect(req.url).to.contain(corsPath);
                     expect(req.url).to.contain('_csrf=' + context._csrf);
                     expect(req.url).to.contain('returnMeta=true');
                 } else if (req.method === 'POST') {
                     expect(req.url).to.contain(
-                        corsPath + '?_csrf=' + context._csrf
+                        corsPath + '/?_csrf=' + context._csrf
                     );
                 }
             };
@@ -151,20 +155,20 @@ describe('Client Fetcher', function () {
             reject: reject,
         });
         after(function () {
-            validateXhr = null;
+            validateRequest = null;
         });
     });
 
-    describe('xhr', function () {
+    describe('request', function () {
         before(function () {
             this.fetcher = new Fetcher({
                 context: context,
             });
         });
 
-        it('should return xhr object when calling end w/ callback', function (done) {
+        it('should return request object when calling end w/ callback', function (done) {
             var operation = 'create';
-            var xhr = this.fetcher[operation](resource)
+            var request = this.fetcher[operation](resource)
                 .params(params)
                 .body(body)
                 .clientConfig(config)
@@ -174,17 +178,14 @@ describe('Client Fetcher', function () {
                             done(err);
                             return;
                         }
-                        expect(xhr.readyState).to.exist;
-                        expect(xhr.abort).to.exist;
-                        expect(xhr.open).to.exist;
-                        expect(xhr.send).to.exist;
+                        expect(request.abort).to.exist;
                         done();
                     })
                 );
         });
-        it('should be able to abort xhr when calling end w/ callback', function () {
+        it('should be able to abort when calling end w/ callback', function () {
             var operation = 'create';
-            var xhr = this.fetcher[operation](resource)
+            var request = this.fetcher[operation](resource)
                 .params(params)
                 .body(body)
                 .clientConfig(config)
@@ -197,12 +198,12 @@ describe('Client Fetcher', function () {
                         }
                     })
                 );
-            expect(xhr.abort).to.exist;
-            xhr.abort();
+            expect(request.abort).to.exist;
+            request.abort();
         });
     });
 
-    describe('xhrTimeout', function () {
+    describe('Timeout', function () {
         describe('should be configurable globally', function () {
             before(function () {
                 mockery.registerMock('./util/http.client', {
@@ -273,7 +274,7 @@ describe('Client Fetcher', function () {
             });
         });
 
-        describe('should default to DEFAULT_XHR_TIMEOUT of 3000', function () {
+        describe('should default to DEFAULT_TIMEOUT of 3000', function () {
             before(function () {
                 mockery.registerMock('./util/http.client', {
                     get: function (url, headers, config, callback) {
@@ -305,17 +306,15 @@ describe('Client Fetcher', function () {
     describe('Context Picker', function () {
         var ctx = Object.assign({ random: 'randomnumber' }, context);
         before(function () {
-            validateXhr = function (req) {
+            validateRequest = function (req) {
                 if (req.method === 'GET') {
-                    expect(req.url).to.contain(
-                        DEFAULT_XHR_PATH + '/' + resource
-                    );
+                    expect(req.url).to.contain(DEFAULT_PATH + '/' + resource);
                     expect(req.url).to.contain('?_csrf=' + ctx._csrf);
                     expect(req.url).to.not.contain('random=' + ctx.random);
                     expect(req.url).to.contain('returnMeta=true');
                 } else if (req.method === 'POST') {
                     expect(req.url).to.equal(
-                        DEFAULT_XHR_PATH +
+                        DEFAULT_PATH +
                             '?_csrf=' +
                             ctx._csrf +
                             '&random=' +
@@ -325,7 +324,7 @@ describe('Client Fetcher', function () {
             };
         });
         after(function () {
-            validateXhr = null;
+            validateRequest = null;
         });
 
         describe('Function', function () {
