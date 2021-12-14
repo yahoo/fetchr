@@ -143,7 +143,7 @@ describe('client/server integration', () => {
                     rawRequest: {
                         url: 'http://localhost:3001/error',
                         method: 'GET',
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        headers: {},
                     },
                     url: 'http://localhost:3001/error',
                     timeout: 3000,
@@ -166,7 +166,7 @@ describe('client/server integration', () => {
                     rawRequest: {
                         url: 'http://localhost:3000/api/error',
                         method: 'GET',
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        headers: {},
                     },
                     statusCode: 400,
                     timeout: 3000,
@@ -192,7 +192,7 @@ describe('client/server integration', () => {
                     rawRequest: {
                         url: 'http://localhost:3000/api/error;error=unexpected',
                         method: 'GET',
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        headers: {},
                     },
                     statusCode: 500,
                     timeout: 3000,
@@ -212,7 +212,7 @@ describe('client/server integration', () => {
                     rawRequest: {
                         url: 'http://localhost:3000/non-existent/item',
                         method: 'GET',
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        headers: {},
                     },
                     url: 'http://localhost:3000/non-existent/item',
                     timeout: 3000,
@@ -232,7 +232,7 @@ describe('client/server integration', () => {
                     rawRequest: {
                         url: 'http://localhost:3000/api/error;error=timeout',
                         method: 'GET',
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        headers: {},
                     },
                     url: 'http://localhost:3000/api/error;error=timeout',
                     timeout: 20,
@@ -274,7 +274,6 @@ describe('client/server integration', () => {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest',
                         },
                     },
                     url: 'http://localhost:3001/',
@@ -300,7 +299,6 @@ describe('client/server integration', () => {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest',
                         },
                     },
                     statusCode: 400,
@@ -329,7 +327,6 @@ describe('client/server integration', () => {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest',
                         },
                     },
                     statusCode: 500,
@@ -352,7 +349,6 @@ describe('client/server integration', () => {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest',
                         },
                     },
                     url: 'http://localhost:3000/non-existent',
@@ -377,7 +373,6 @@ describe('client/server integration', () => {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest',
                         },
                     },
                     url: 'http://localhost:3000/api',

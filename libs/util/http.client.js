@@ -31,11 +31,8 @@ var DEFAULT_CONFIG = {
 
 var INITIAL_ATTEMPT = 0;
 
-function normalizeHeaders(headers, method, isCors) {
+function normalizeHeaders(headers, method) {
     var normalized = {};
-    if (!isCors) {
-        normalized['X-Requested-With'] = 'XMLHttpRequest';
-    }
     var needContentType = method === METHOD_POST;
     forEach(headers, function (v, field) {
         if (field.toLowerCase() === 'content-type') {
@@ -127,7 +124,7 @@ function mergeConfig(config) {
 }
 
 function doRequest(method, url, headers, data, config, attempt, callback) {
-    headers = normalizeHeaders(headers, method, config.cors);
+    headers = normalizeHeaders(headers, method);
     config = mergeConfig(config);
 
     var options = {
@@ -280,7 +277,6 @@ module.exports = {
      * @param {Number} [config.retry.interval=200] The start interval unit (in ms).
      * @param {Number} [config.retry.maxRetries=0] Number of max retries.
      * @param {Number} [config.retry.statusCodes=[0, 408, 999]] Response status codes to be retried.
-     * @param {Boolean} [config.cors] Whether to enable CORS & use XDR on IE8/9.
      * @param {Function} callback The callback function, with two params (error, response)
      */
     get: function (url, headers, config, callback) {
@@ -306,7 +302,6 @@ module.exports = {
      * @param {Number} [config.retry.interval=200] The start interval unit (in ms).
      * @param {Number} [config.retry.maxRetries=0] Number of max retries.
      * @param {Number} [config.retry.statusCodes=[0, 408, 999]] Response status codes to be retried.
-     * @param {Boolean} [config.cors] Whether to enable CORS & use XDR on IE8/9.
      * @param {Function} callback The callback function, with two params (error, response)
      */
     post: function (url, headers, data, config, callback) {

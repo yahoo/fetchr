@@ -39,9 +39,6 @@ describe('Client HTTP', function () {
                 expect(fetchMock.calls()).to.have.lengthOf(1);
                 const options = fetchMock.lastCall().request;
                 expect(options.url).to.equal('/url');
-                expect(options.headers.get('X-Requested-With')).to.equal(
-                    'XMLHttpRequest'
-                );
                 expect(options.headers.get('X-Foo')).to.equal('foo');
                 expect(options.method).to.equal('GET');
                 expect(err).to.equal(null);
@@ -66,9 +63,6 @@ describe('Client HTTP', function () {
                     expect(fetchMock.calls()).to.have.lengthOf(1);
                     const options = fetchMock.lastCall().request;
                     expect(options.url).to.equal('/url');
-                    expect(options.headers.get('X-Requested-With')).to.equal(
-                        'XMLHttpRequest'
-                    );
                     expect(options.headers.get('X-Foo')).to.equal('foo');
                     expect(options.method).to.equal('POST');
                     expect(options.body.toString()).to.eql('{"data":"data"}');
@@ -103,9 +97,6 @@ describe('Client HTTP', function () {
                     expect(fetchMock.calls()).to.have.lengthOf(1);
                     const options = fetchMock.lastCall().request;
                     expect(options.url).to.equal('/url');
-                    expect(options.headers).to.not.have.property(
-                        'X-Requested-With'
-                    );
                     expect(options.headers.get('X-Foo')).to.equal('foo');
                     expect(options.method).to.equal('GET');
                     expect(err).to.equal(null);
@@ -138,9 +129,6 @@ describe('Client HTTP', function () {
                     expect(fetchMock.calls()).to.have.lengthOf(1);
                     const options = fetchMock.lastCall().request;
                     expect(options.url).to.equal('/url');
-                    expect(options.headers).to.not.have.property(
-                        'X-Requested-With'
-                    );
                     expect(options.headers.get('X-Foo')).to.equal('foo');
                     expect(options.method).to.equal('POST');
                     expect(options.body.toString()).to.eql('{"data":"data"}');
@@ -262,9 +250,6 @@ describe('Client HTTP', function () {
                 const options = fetchMock.lastCall().request;
                 expect(fetchMock.calls()).to.have.lengthOf(1);
                 expect(options.url).to.equal('/url');
-                expect(options.headers.get('X-Requested-With')).to.equal(
-                    'XMLHttpRequest'
-                );
                 expect(options.headers.get('X-Foo')).to.equal('foo');
                 expect(options.method).to.equal('GET');
                 expect(err.message).to.equal('BODY');
@@ -293,9 +278,6 @@ describe('Client HTTP', function () {
                     expect(fetchMock.calls()).to.have.lengthOf(2);
                     const options = fetchMock.lastCall().request;
                     expect(options.url).to.equal('/url');
-                    expect(options.headers.get('X-Requested-With')).to.equal(
-                        'XMLHttpRequest'
-                    );
                     expect(options.headers.get('X-Foo')).to.equal('foo');
                     expect(options.method).to.equal('GET');
                     expect(err.message).to.equal('BODY');
