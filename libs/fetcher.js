@@ -459,31 +459,21 @@ Fetcher.middleware = function (options) {
                     }
                     if (err) {
                         var errResponse = getErrorResponse(err);
-                        if (req.query && req.query.returnMeta) {
-                            res.status(errResponse.statusCode).json(
-                                responseFormatter(req, res, {
-                                    output: errResponse.output,
-                                    meta: meta,
-                                })
-                            );
-                        } else {
-                            res.status(errResponse.statusCode).json(
-                                responseFormatter(req, res, errResponse.output)
-                            );
-                        }
-                        return;
-                    }
-                    if (req.query.returnMeta) {
-                        res.status(meta.statusCode || 200).json(
+                        res.status(errResponse.statusCode).json(
                             responseFormatter(req, res, {
-                                data: data,
+                                output: errResponse.output,
                                 meta: meta,
                             })
                         );
-                    } else {
-                        // TODO: Remove `returnMeta` feature flag after next release
-                        res.status(meta.statusCode || 200).json(data);
+                        return;
                     }
+
+                    res.status(meta.statusCode || 200).json(
+                        responseFormatter(req, res, {
+                            data: data,
+                            meta: meta,
+                        })
+                    );
                 });
         } else {
             var requests = req.body && req.body.requests;

@@ -140,11 +140,11 @@ describe('client/server integration', () => {
             expect(response).to.deep.equal({
                 statusCode: 0,
                 rawRequest: {
-                    url: 'http://localhost:3001/error?returnMeta=true',
+                    url: 'http://localhost:3001/error',
                     method: 'GET',
                     headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 },
-                url: 'http://localhost:3001/error?returnMeta=true',
+                url: 'http://localhost:3001/error',
                 timeout: 3000,
             });
         });
@@ -163,13 +163,13 @@ describe('client/server integration', () => {
                 meta: { foo: 'bar' },
                 output: { message: 'error' },
                 rawRequest: {
-                    url: 'http://localhost:3000/api/error?returnMeta=true',
+                    url: 'http://localhost:3000/api/error',
                     method: 'GET',
                     headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 },
                 statusCode: 400,
                 timeout: 3000,
-                url: 'http://localhost:3000/api/error?returnMeta=true',
+                url: 'http://localhost:3000/api/error',
             });
         });
 
@@ -189,13 +189,13 @@ describe('client/server integration', () => {
                 meta: {},
                 output: { message: 'unexpected' },
                 rawRequest: {
-                    url: 'http://localhost:3000/api/error;error=unexpected?returnMeta=true',
+                    url: 'http://localhost:3000/api/error;error=unexpected',
                     method: 'GET',
                     headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 },
                 statusCode: 500,
                 timeout: 3000,
-                url: 'http://localhost:3000/api/error;error=unexpected?returnMeta=true',
+                url: 'http://localhost:3000/api/error;error=unexpected',
             });
         });
 
@@ -209,11 +209,11 @@ describe('client/server integration', () => {
                 statusCode: 404,
                 body: { error: 'page not found' },
                 rawRequest: {
-                    url: 'http://localhost:3000/non-existent/item?returnMeta=true',
+                    url: 'http://localhost:3000/non-existent/item',
                     method: 'GET',
                     headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 },
-                url: 'http://localhost:3000/non-existent/item?returnMeta=true',
+                url: 'http://localhost:3000/non-existent/item',
                 timeout: 3000,
             });
         });
@@ -229,11 +229,11 @@ describe('client/server integration', () => {
             expect(response).to.deep.equal({
                 statusCode: 0,
                 rawRequest: {
-                    url: 'http://localhost:3000/api/error;error=timeout?returnMeta=true',
+                    url: 'http://localhost:3000/api/error;error=timeout',
                     method: 'GET',
                     headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 },
-                url: 'http://localhost:3000/api/error;error=timeout?returnMeta=true',
+                url: 'http://localhost:3000/api/error;error=timeout',
                 timeout: 20,
             });
         });

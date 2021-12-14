@@ -110,7 +110,6 @@ describe('Client Fetcher', function () {
                 if (req.method === 'GET') {
                     expect(req.url).to.contain(DEFAULT_PATH + '/' + resource);
                     expect(req.url).to.contain('?_csrf=' + context._csrf);
-                    expect(req.url).to.contain('returnMeta=true');
                 } else if (req.method === 'POST') {
                     expect(req.url).to.equal(
                         DEFAULT_PATH + '?_csrf=' + context._csrf
@@ -133,7 +132,6 @@ describe('Client Fetcher', function () {
                 if (req.method === 'GET') {
                     expect(req.url).to.contain(corsPath);
                     expect(req.url).to.contain('_csrf=' + context._csrf);
-                    expect(req.url).to.contain('returnMeta=true');
                 } else if (req.method === 'POST') {
                     expect(req.url).to.contain(
                         corsPath + '/?_csrf=' + context._csrf
@@ -311,7 +309,6 @@ describe('Client Fetcher', function () {
                     expect(req.url).to.contain(DEFAULT_PATH + '/' + resource);
                     expect(req.url).to.contain('?_csrf=' + ctx._csrf);
                     expect(req.url).to.not.contain('random=' + ctx.random);
-                    expect(req.url).to.contain('returnMeta=true');
                 } else if (req.method === 'POST') {
                     expect(req.url).to.equal(
                         DEFAULT_PATH +
