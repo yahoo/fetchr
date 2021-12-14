@@ -329,27 +329,41 @@ describe('Server Fetcher', function () {
 
             it(
                 'should respond to POST api request with default error details',
-                makePostApiErrorTest({}, 500, { message: 'request failed' })
+                makePostApiErrorTest({}, 500, {
+                    meta: {},
+                    output: {
+                        message: 'request failed',
+                    },
+                })
             );
 
             it(
                 'should respond to POST api request with custom error status code',
                 makePostApiErrorTest({ statusCode: 400 }, 400, {
-                    message: 'request failed',
+                    meta: {},
+                    output: {
+                        message: 'request failed',
+                    },
                 })
             );
 
             it(
                 'should respond to POST api request with custom error message',
                 makePostApiErrorTest({ message: 'Error message...' }, 500, {
-                    message: 'Error message...',
+                    meta: {},
+                    output: {
+                        message: 'Error message...',
+                    },
                 })
             );
 
             it(
                 'should respond to POST api request with no leaked error information',
                 makePostApiErrorTest({ statusCode: 400, danger: 'zone' }, 400, {
-                    message: 'request failed',
+                    meta: {},
+                    output: {
+                        message: 'request failed',
+                    },
                 })
             );
 
@@ -365,7 +379,13 @@ describe('Server Fetcher', function () {
                             },
                         },
                         400,
-                        { message: 'custom message', foo: 'bar' }
+                        {
+                            meta: {},
+                            output: {
+                                message: 'custom message',
+                                foo: 'bar',
+                            },
+                        }
                     )
                 );
 
@@ -374,64 +394,16 @@ describe('Server Fetcher', function () {
                     makePostApiErrorTest(
                         { statusCode: 400, output: [1, 2] },
                         400,
-                        [1, 2]
+                        {
+                            meta: {},
+                            output: [1, 2],
+                        }
                     )
                 );
             });
         });
 
         describe('#GET', function () {
-            it('should respond to GET api request w/o meta', function (done) {
-                var operation = 'read';
-                var statusCodeSet = false;
-                var params = {
-                    uuids: [
-                        'cd7240d6-aeed-3fed-b63c-d7e99e21ca17',
-                        'cd7240d6-aeed-3fed-b63c-d7e99e21ca17',
-                    ],
-                    id: 'asdf',
-                };
-                var req = {
-                    method: 'GET',
-                    path:
-                        '/' +
-                        mockService.resource +
-                        ';' +
-                        qs.stringify(params, ';'),
-                    query: {},
-                };
-                var res = {
-                    json: function (response) {
-                        expect(response).to.exist;
-                        expect(response).to.not.be.empty;
-                        expect(response).to.not.contain.keys('data', 'meta');
-                        expect(response).to.contain.keys('operation', 'args');
-                        expect(response.operation.name).to.equal(operation);
-                        expect(response.operation.success).to.be.true;
-                        expect(response.args).to.contain.keys('params');
-                        expect(response.args.params).to.deep.equal(params);
-                        expect(statusCodeSet).to.be.true;
-                        done();
-                    },
-                    status: function (code) {
-                        expect(code).to.equal(200);
-                        statusCodeSet = true;
-                        return this;
-                    },
-                    send: function (code) {
-                        console.log(
-                            'Not Expected: middleware responded with',
-                            code
-                        );
-                    },
-                };
-                var next = function () {
-                    console.log('Not Expected: middleware skipped request');
-                };
-                var middleware = Fetcher.middleware({ pathPrefix: '/api' });
-
-                middleware(req, res, next);
-            });
             it('should respond to GET api request', function (done) {
                 var operation = 'read',
                     statusCodeSet = false,
@@ -449,9 +421,6 @@ describe('Server Fetcher', function () {
                             mockService.resource +
                             ';' +
                             qs.stringify(params, ';'),
-                        query: {
-                            returnMeta: true,
-                        },
                     },
                     res = {
                         json: function (response) {
@@ -516,9 +485,6 @@ describe('Server Fetcher', function () {
                             mockService.resource +
                             ';' +
                             qs.stringify(params, ';'),
-                        query: {
-                            returnMeta: true,
-                        },
                     },
                     res = {
                         json: function (response) {
@@ -589,9 +555,6 @@ describe('Server Fetcher', function () {
                             mockService.resource +
                             ';' +
                             qs.stringify(params, ';'),
-                        query: {
-                            returnMeta: true,
-                        },
                     },
                     res = {
                         json: function (response) {
@@ -658,9 +621,6 @@ describe('Server Fetcher', function () {
                             mockService.resource +
                             ';' +
                             qs.stringify(params, ';'),
-                        query: {
-                            returnMeta: true,
-                        },
                     },
                     res = {
                         json: function (response) {
@@ -726,9 +686,6 @@ describe('Server Fetcher', function () {
                             mockService.resource +
                             ';' +
                             qs.stringify(params, ';'),
-                        query: {
-                            returnMeta: true,
-                        },
                     },
                     res = {
                         json: function (response) {
@@ -829,27 +786,41 @@ describe('Server Fetcher', function () {
 
             it(
                 'should respond to GET api request with default error details',
-                makeGetApiErrorTest({}, 500, { message: 'request failed' })
+                makeGetApiErrorTest({}, 500, {
+                    meta: {},
+                    output: {
+                        message: 'request failed',
+                    },
+                })
             );
 
             it(
                 'should respond to GET api request with custom error status code',
                 makeGetApiErrorTest({ statusCode: 400 }, 400, {
-                    message: 'request failed',
+                    meta: {},
+                    output: {
+                        message: 'request failed',
+                    },
                 })
             );
 
             it(
                 'should respond to GET api request with no leaked error information',
                 makeGetApiErrorTest({ statusCode: 400, danger: 'zone' }, 400, {
-                    message: 'request failed',
+                    meta: {},
+                    output: {
+                        message: 'request failed',
+                    },
                 })
             );
 
             it(
                 'should respond to GET api request with custom error message',
                 makeGetApiErrorTest({ message: 'Error message...' }, 500, {
-                    message: 'Error message...',
+                    meta: {},
+                    output: {
+                        message: 'Error message...',
+                    },
                 })
             );
 
@@ -865,16 +836,28 @@ describe('Server Fetcher', function () {
                             },
                         },
                         400,
-                        { message: 'custom message', foo: 'bar' }
+                        {
+                            meta: {},
+                            output: {
+                                message: 'custom message',
+                                foo: 'bar',
+                            },
+                        }
                     )
                 );
 
                 it(
                     'using json array',
                     makeGetApiErrorTest(
-                        { statusCode: 400, output: [1, 2] },
+                        {
+                            statusCode: 400,
+                            output: [1, 2],
+                        },
                         400,
-                        [1, 2]
+                        {
+                            meta: {},
+                            output: [1, 2],
+                        }
                     )
                 );
             });
@@ -1017,9 +1000,6 @@ describe('Server Fetcher', function () {
                             mockService.resource +
                             ';' +
                             qs.stringify(params, ';'),
-                        query: {
-                            returnMeta: true,
-                        },
                     };
                     var res = {
                         json: function (response) {
@@ -1171,9 +1151,6 @@ describe('Server Fetcher', function () {
                     mockService.resource +
                     ';' +
                     qs.stringify(params, ';'),
-                query: {
-                    returnMeta: true,
-                },
             };
             var res = {
                 json: function (response) {

@@ -30,6 +30,9 @@ const errorsService = {
         err.statusCode = 400;
         callback(err, null, { foo: 'bar' });
     },
+    create(req, resource, params, body, config, callback) {
+        this.read(req, resource, params, config, callback);
+    },
 };
 
 module.exports = {

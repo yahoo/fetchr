@@ -269,19 +269,7 @@ function executeRequest(request, resolve, reject) {
                 request.options.context
             );
         }
-        // TODO: Remove `returnMeta` feature flag after next release
-        // This feature flag will enable the new return format for GET api requests
-        // Whereas before any data from services was returned as is. We now return
-        // an object with a data key containing the service response, and a meta key
-        // containing the service's metadata response (i.e headers and statusCode).
-        // We need this feature flag to be truly backwards compatible because it is
-        // concievable that some active browser sessions could have the old version of
-        // client fetcher while the server upgrades to the new version. This could be
-        // easily fixed by refreshing the browser, but the feature flag will ensure
-        // old fetcher clients will receive the old format and the new client will
-        // receive the new format
-        get_uri += get_uri.indexOf('?') !== -1 ? '&' : '?';
-        get_uri += 'returnMeta=true';
+
         if (get_uri.length <= MAX_URI_LEN) {
             uri = get_uri;
         } else {

@@ -30,10 +30,10 @@ var MockErrorService = {
             // in our CORS test, we use regular query params instead
             // of matrix params for the params object will be empty
             // create params from req.query but omit the context
-            // values(i.e. cors & returnMeta)
+            // values(i.e. cors)
             params = {};
             for (const [key, value] of Object.entries(req.query)) {
-                if (['cors', 'returnMeta', '_csrf'].includes(key)) {
+                if (['cors', '_csrf'].includes(key)) {
                     continue;
                 }
                 params[key] = value;

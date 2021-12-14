@@ -129,130 +129,277 @@ describe('client/server integration', () => {
     });
 
     describe('Error handling', () => {
-        it('can handle uncongifured server', async () => {
-            const response = await page.evaluate(() => {
-                const fetcher = new Fetchr({
-                    xhrPath: 'http://localhost:3001',
+        describe('GET', () => {
+            it('can handle unconfigured server', async () => {
+                const response = await page.evaluate(() => {
+                    const fetcher = new Fetchr({
+                        xhrPath: 'http://localhost:3001',
+                    });
+                    return fetcher.read('error', null).catch((err) => err);
                 });
-                return fetcher.read('error', null).catch((err) => err);
+
+                expect(response).to.deep.equal({
+                    statusCode: 0,
+                    rawRequest: {
+                        url: 'http://localhost:3001/error',
+                        method: 'GET',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    },
+                    url: 'http://localhost:3001/error',
+                    timeout: 3000,
+                });
             });
 
-            expect(response).to.deep.equal({
-                statusCode: 0,
-                rawRequest: {
-                    url: 'http://localhost:3001/error?returnMeta=true',
-                    method: 'GET',
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                },
-                url: 'http://localhost:3001/error?returnMeta=true',
-                timeout: 3000,
-            });
-        });
+            it('can handle service expected errors', async () => {
+                const response = await page.evaluate(() => {
+                    const fetcher = new Fetchr({});
+                    return fetcher.read('error', null).catch((err) => err);
+                });
 
-        it('can handle service expected errors', async () => {
-            const response = await page.evaluate(() => {
-                const fetcher = new Fetchr({});
-                return fetcher.read('error', null).catch((err) => err);
-            });
-
-            expect(response).to.deep.equal({
-                body: {
-                    output: { message: 'error' },
+                expect(response).to.deep.equal({
+                    body: {
+                        output: { message: 'error' },
+                        meta: { foo: 'bar' },
+                    },
                     meta: { foo: 'bar' },
-                },
-                meta: { foo: 'bar' },
-                output: { message: 'error' },
-                rawRequest: {
-                    url: 'http://localhost:3000/api/error?returnMeta=true',
-                    method: 'GET',
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                },
-                statusCode: 400,
-                timeout: 3000,
-                url: 'http://localhost:3000/api/error?returnMeta=true',
-            });
-        });
-
-        it('can handle service unexpected errors', async () => {
-            const response = await page.evaluate(() => {
-                const fetcher = new Fetchr({});
-                return fetcher
-                    .read('error', { error: 'unexpected' })
-                    .catch((err) => err);
+                    output: { message: 'error' },
+                    rawRequest: {
+                        url: 'http://localhost:3000/api/error',
+                        method: 'GET',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    },
+                    statusCode: 400,
+                    timeout: 3000,
+                    url: 'http://localhost:3000/api/error',
+                });
             });
 
-            expect(response).to.deep.equal({
-                body: {
-                    output: { message: 'unexpected' },
+            it('can handle service unexpected errors', async () => {
+                const response = await page.evaluate(() => {
+                    const fetcher = new Fetchr({});
+                    return fetcher
+                        .read('error', { error: 'unexpected' })
+                        .catch((err) => err);
+                });
+
+                expect(response).to.deep.equal({
+                    body: {
+                        output: { message: 'unexpected' },
+                        meta: {},
+                    },
                     meta: {},
-                },
-                meta: {},
-                output: { message: 'unexpected' },
-                rawRequest: {
-                    url: 'http://localhost:3000/api/error;error=unexpected?returnMeta=true',
-                    method: 'GET',
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                },
-                statusCode: 500,
-                timeout: 3000,
-                url: 'http://localhost:3000/api/error;error=unexpected?returnMeta=true',
+                    output: { message: 'unexpected' },
+                    rawRequest: {
+                        url: 'http://localhost:3000/api/error;error=unexpected',
+                        method: 'GET',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    },
+                    statusCode: 500,
+                    timeout: 3000,
+                    url: 'http://localhost:3000/api/error;error=unexpected',
+                });
+            });
+
+            it('can handle incorrect api path', async () => {
+                const response = await page.evaluate(() => {
+                    const fetcher = new Fetchr({ xhrPath: '/non-existent' });
+                    return fetcher.read('item', null).catch((err) => err);
+                });
+
+                expect(response).to.deep.equal({
+                    statusCode: 404,
+                    body: { error: 'page not found' },
+                    rawRequest: {
+                        url: 'http://localhost:3000/non-existent/item',
+                        method: 'GET',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    },
+                    url: 'http://localhost:3000/non-existent/item',
+                    timeout: 3000,
+                });
+            });
+
+            it('can handle timeouts', async () => {
+                const response = await page.evaluate(() => {
+                    const fetcher = new Fetchr({});
+                    return fetcher
+                        .read('error', { error: 'timeout' }, { timeout: 20 })
+                        .catch((err) => err);
+                });
+
+                expect(response).to.deep.equal({
+                    statusCode: 0,
+                    rawRequest: {
+                        url: 'http://localhost:3000/api/error;error=timeout',
+                        method: 'GET',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    },
+                    url: 'http://localhost:3000/api/error;error=timeout',
+                    timeout: 20,
+                });
+            });
+
+            it('can retry failed requests', async () => {
+                const response = await page.evaluate(() => {
+                    const fetcher = new Fetchr({});
+                    return fetcher
+                        .read(
+                            'error',
+                            { error: 'retry' },
+                            { retry: { maxRetries: 2 } }
+                        )
+                        .catch((err) => err);
+                });
+
+                expect(response).to.deep.equal({
+                    data: { retry: 'ok' },
+                    meta: {},
+                });
             });
         });
 
-        it('can handle incorrect api path', async () => {
-            const response = await page.evaluate(() => {
-                const fetcher = new Fetchr({ xhrPath: '/non-existent' });
-                return fetcher.read('item', null).catch((err) => err);
+        describe('POST', () => {
+            it('can handle unconfigured server', async () => {
+                const response = await page.evaluate(() => {
+                    const fetcher = new Fetchr({
+                        xhrPath: 'http://localhost:3001',
+                    });
+                    return fetcher.create('error', null).catch((err) => err);
+                });
+
+                expect(response).to.deep.equal({
+                    statusCode: 0,
+                    rawRequest: {
+                        url: 'http://localhost:3001/',
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    },
+                    url: 'http://localhost:3001/',
+                    timeout: 3000,
+                });
             });
 
-            expect(response).to.deep.equal({
-                statusCode: 404,
-                body: { error: 'page not found' },
-                rawRequest: {
-                    url: 'http://localhost:3000/non-existent/item?returnMeta=true',
-                    method: 'GET',
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                },
-                url: 'http://localhost:3000/non-existent/item?returnMeta=true',
-                timeout: 3000,
-            });
-        });
+            it('can handle service expected errors', async () => {
+                const response = await page.evaluate(() => {
+                    const fetcher = new Fetchr({});
+                    return fetcher.create('error', null).catch((err) => err);
+                });
 
-        it('can handle timeouts', async () => {
-            const response = await page.evaluate(() => {
-                const fetcher = new Fetchr({});
-                return fetcher
-                    .read('error', { error: 'timeout' }, { timeout: 20 })
-                    .catch((err) => err);
-            });
-
-            expect(response).to.deep.equal({
-                statusCode: 0,
-                rawRequest: {
-                    url: 'http://localhost:3000/api/error;error=timeout?returnMeta=true',
-                    method: 'GET',
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                },
-                url: 'http://localhost:3000/api/error;error=timeout?returnMeta=true',
-                timeout: 20,
-            });
-        });
-
-        it('can retry failed requests', async () => {
-            const response = await page.evaluate(() => {
-                const fetcher = new Fetchr({});
-                return fetcher
-                    .read(
-                        'error',
-                        { error: 'retry' },
-                        { retry: { maxRetries: 2 } }
-                    )
-                    .catch((err) => err);
+                expect(response).to.deep.equal({
+                    body: {
+                        output: { message: 'error' },
+                        meta: { foo: 'bar' },
+                    },
+                    meta: { foo: 'bar' },
+                    output: { message: 'error' },
+                    rawRequest: {
+                        url: 'http://localhost:3000/api',
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    },
+                    statusCode: 400,
+                    timeout: 3000,
+                    url: 'http://localhost:3000/api',
+                });
             });
 
-            expect(response).to.deep.equal({
-                data: { retry: 'ok' },
-                meta: {},
+            it('can handle service unexpected errors', async () => {
+                const response = await page.evaluate(() => {
+                    const fetcher = new Fetchr({});
+                    return fetcher
+                        .create('error', { error: 'unexpected' })
+                        .catch((err) => err);
+                });
+
+                expect(response).to.deep.equal({
+                    body: {
+                        output: { message: 'unexpected' },
+                        meta: {},
+                    },
+                    meta: {},
+                    output: { message: 'unexpected' },
+                    rawRequest: {
+                        url: 'http://localhost:3000/api',
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    },
+                    statusCode: 500,
+                    timeout: 3000,
+                    url: 'http://localhost:3000/api',
+                });
+            });
+
+            it('can handle incorrect api path', async () => {
+                const response = await page.evaluate(() => {
+                    const fetcher = new Fetchr({ xhrPath: '/non-existent' });
+                    return fetcher.create('item', null).catch((err) => err);
+                });
+
+                expect(response).to.deep.equal({
+                    statusCode: 404,
+                    body: { error: 'page not found' },
+                    rawRequest: {
+                        url: 'http://localhost:3000/non-existent',
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    },
+                    url: 'http://localhost:3000/non-existent',
+                    timeout: 3000,
+                });
+            });
+
+            it('can handle timeouts', async () => {
+                const response = await page.evaluate(() => {
+                    const fetcher = new Fetchr({});
+                    return fetcher
+                        .create('error', { error: 'timeout' }, null, {
+                            timeout: 20,
+                        })
+                        .catch((err) => err);
+                });
+
+                expect(response).to.deep.equal({
+                    statusCode: 0,
+                    rawRequest: {
+                        url: 'http://localhost:3000/api',
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    },
+                    url: 'http://localhost:3000/api',
+                    timeout: 20,
+                });
+            });
+
+            it('can retry failed requests', async () => {
+                const response = await page.evaluate(() => {
+                    const fetcher = new Fetchr({});
+                    return fetcher
+                        .create('error', { error: 'retry' }, null, {
+                            retry: { maxRetries: 2 },
+                            unsafeAllowRetry: true,
+                        })
+                        .catch((err) => err);
+                });
+
+                expect(response).to.deep.equal({
+                    data: { retry: 'ok' },
+                    meta: {},
+                });
             });
         });
     });
