@@ -329,27 +329,41 @@ describe('Server Fetcher', function () {
 
             it(
                 'should respond to POST api request with default error details',
-                makePostApiErrorTest({}, 500, { message: 'request failed' })
+                makePostApiErrorTest({}, 500, {
+                    meta: {},
+                    output: {
+                        message: 'request failed',
+                    },
+                })
             );
 
             it(
                 'should respond to POST api request with custom error status code',
                 makePostApiErrorTest({ statusCode: 400 }, 400, {
-                    message: 'request failed',
+                    meta: {},
+                    output: {
+                        message: 'request failed',
+                    },
                 })
             );
 
             it(
                 'should respond to POST api request with custom error message',
                 makePostApiErrorTest({ message: 'Error message...' }, 500, {
-                    message: 'Error message...',
+                    meta: {},
+                    output: {
+                        message: 'Error message...',
+                    },
                 })
             );
 
             it(
                 'should respond to POST api request with no leaked error information',
                 makePostApiErrorTest({ statusCode: 400, danger: 'zone' }, 400, {
-                    message: 'request failed',
+                    meta: {},
+                    output: {
+                        message: 'request failed',
+                    },
                 })
             );
 
@@ -365,7 +379,13 @@ describe('Server Fetcher', function () {
                             },
                         },
                         400,
-                        { message: 'custom message', foo: 'bar' }
+                        {
+                            meta: {},
+                            output: {
+                                message: 'custom message',
+                                foo: 'bar',
+                            },
+                        }
                     )
                 );
 
@@ -374,7 +394,10 @@ describe('Server Fetcher', function () {
                     makePostApiErrorTest(
                         { statusCode: 400, output: [1, 2] },
                         400,
-                        [1, 2]
+                        {
+                            meta: {},
+                            output: [1, 2],
+                        }
                     )
                 );
             });

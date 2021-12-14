@@ -536,7 +536,10 @@ Fetcher.middleware = function (options) {
                     if (err) {
                         var errResponse = getErrorResponse(err);
                         res.status(errResponse.statusCode).json(
-                            responseFormatter(req, res, errResponse.output)
+                            responseFormatter(req, res, {
+                                output: errResponse.output,
+                                meta: meta,
+                            })
                         );
                         return;
                     }
