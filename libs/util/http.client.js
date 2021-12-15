@@ -7,8 +7,6 @@
  * @module rest-http
  */
 
-var forEach = require('./forEach');
-
 /*
  * Default configurations:
  *   timeout: timeout (in ms) for each request
@@ -23,44 +21,23 @@ var DEFAULT_CONFIG = {
         },
         unsafeAllowRetry: false,
     },
-    CONTENT_TYPE = 'Content-Type',
-    TYPE_JSON = 'application/json',
     METHOD_GET = 'GET',
     METHOD_POST = 'POST';
 
 var INITIAL_ATTEMPT = 0;
 
-function normalizeHeaders(headers, method, isCors) {
-    var normalized = {};
+function normalizeHeaders(rawHeaders, method, isCors) {
+    var headers = Object.assign({}, rawHeaders);
+
     if (!isCors) {
-        normalized['X-Requested-With'] = 'XMLHttpRequest';
-    }
-    var needContentType = method === METHOD_POST;
-    forEach(headers, function (v, field) {
-        if (field.toLowerCase() === 'content-type') {
-            if (needContentType) {
-                normalized[CONTENT_TYPE] = v;
-            }
-        } else {
-            normalized[field] = v;
-        }
-    });
-
-    if (needContentType && !normalized[CONTENT_TYPE]) {
-        normalized[CONTENT_TYPE] = TYPE_JSON;
+        headers['X-Requested-With'] = 'XMLHttpRequest';
     }
 
-    return normalized;
-}
-
-function isContentTypeJSON(headers) {
-    if (!headers[CONTENT_TYPE]) {
-        return false;
+    if (method === METHOD_POST) {
+        headers['Content-Type'] = 'application/json';
     }
 
-    return headers[CONTENT_TYPE].split(';').some(function (part) {
-        return part.trim().toLowerCase() === TYPE_JSON;
-    });
+    return headers;
 }
 
 function shouldRetry(method, config, statusCode, attempt) {
@@ -164,7 +141,7 @@ function doRequest(method, url, headers, data, config, attempt, callback) {
         },
     };
     if (data != null) {
-        options.data = isContentTypeJSON(headers) ? JSON.stringify(data) : data;
+        options.data = JSON.stringify(data);
     }
     return io(url, options);
 }
