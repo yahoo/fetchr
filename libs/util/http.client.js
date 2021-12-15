@@ -26,8 +26,7 @@ var DEFAULT_CONFIG = {
     CONTENT_TYPE = 'Content-Type',
     TYPE_JSON = 'application/json',
     METHOD_GET = 'GET',
-    METHOD_POST = 'POST',
-    NULL = null;
+    METHOD_POST = 'POST';
 
 var INITIAL_ATTEMPT = 0;
 
@@ -137,7 +136,7 @@ function doRequest(method, url, headers, data, config, attempt, callback) {
         withCredentials: config.withCredentials,
         on: {
             success: function (err, response) {
-                callback(NULL, response);
+                callback(null, response);
             },
             failure: function (err, response) {
                 if (!shouldRetry(method, config, response.status, attempt)) {
@@ -164,7 +163,7 @@ function doRequest(method, url, headers, data, config, attempt, callback) {
             },
         },
     };
-    if (data !== undefined && data !== NULL) {
+    if (data != null) {
         options.data = isContentTypeJSON(headers) ? JSON.stringify(data) : data;
     }
     return io(url, options);
@@ -288,7 +287,7 @@ module.exports = {
             METHOD_GET,
             url,
             headers,
-            NULL,
+            null,
             config,
             INITIAL_ATTEMPT,
             callback
