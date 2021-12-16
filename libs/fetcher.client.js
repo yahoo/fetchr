@@ -346,6 +346,15 @@ function executeRequest(request, resolve, reject) {
 Request.prototype._constructPostUri = function (uri) {
     var query = [];
     var final_uri = uri;
+
+    // We only want to append the resource if the uri is the fetchr
+    // one. If users set a custom uri (through clientConfig method or
+    // by passing a config obejct to the request), we should not
+    // modify it.
+    if (!this._clientConfig.uri) {
+        final_uri += '/' + this.resource;
+    }
+
     forEach(
         pickContext(this.options.context, this.options.contextPicker, 'POST'),
         function eachContext(v, k) {

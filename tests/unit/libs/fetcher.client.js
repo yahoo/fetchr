@@ -112,7 +112,11 @@ describe('Client Fetcher', function () {
                     expect(req.url).to.contain('?_csrf=' + context._csrf);
                 } else if (req.method === 'POST') {
                     expect(req.url).to.equal(
-                        DEFAULT_PATH + '?_csrf=' + context._csrf
+                        DEFAULT_PATH +
+                            '/' +
+                            resource +
+                            '?_csrf=' +
+                            context._csrf
                     );
                 }
             };
@@ -134,7 +138,7 @@ describe('Client Fetcher', function () {
                     expect(req.url).to.contain('_csrf=' + context._csrf);
                 } else if (req.method === 'POST') {
                     expect(req.url).to.contain(
-                        corsPath + '/?_csrf=' + context._csrf
+                        '/' + resource + '?_csrf=' + context._csrf
                     );
                 }
             };
@@ -312,6 +316,8 @@ describe('Client Fetcher', function () {
                 } else if (req.method === 'POST') {
                     expect(req.url).to.equal(
                         DEFAULT_PATH +
+                            '/' +
+                            resource +
                             '?_csrf=' +
                             ctx._csrf +
                             '&random=' +
