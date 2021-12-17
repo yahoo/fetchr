@@ -309,7 +309,7 @@ function executeRequest(request, resolve, reject) {
         requests: requests,
         context: request.options.context,
     }; // TODO: remove. leave here for now for backward compatibility
-    uri = request._constructGroupUri(uri);
+    uri = request._constructPostUri(uri);
     allow_retry_post = request.operation === OP_READ;
     return REST.post(
         uri,
@@ -339,13 +339,22 @@ function executeRequest(request, resolve, reject) {
 
 /**
  * Build a final uri by adding query params to base uri from this.context
- * @method _constructGroupUri
+ * @method _constructPostUri
  * @param {String} uri the base uri
  * @private
  */
-Request.prototype._constructGroupUri = function (uri) {
+Request.prototype._constructPostUri = function (uri) {
     var query = [];
     var final_uri = uri;
+
+    // We only want to append the resource if the uri is the fetchr
+    // one. If users set a custom uri (through clientConfig method or
+    // by passing a config obejct to the request), we should not
+    // modify it.
+    if (!this._clientConfig.uri) {
+        final_uri += '/' + this.resource;
+    }
+
     forEach(
         pickContext(this.options.context, this.options.contextPicker, 'POST'),
         function eachContext(v, k) {

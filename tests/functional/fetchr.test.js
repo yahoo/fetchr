@@ -270,14 +270,14 @@ describe('client/server integration', () => {
                 expect(response).to.deep.equal({
                     statusCode: 0,
                     rawRequest: {
-                        url: 'http://localhost:3001/',
+                        url: 'http://localhost:3001/error',
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-Requested-With': 'XMLHttpRequest',
                         },
                     },
-                    url: 'http://localhost:3001/',
+                    url: 'http://localhost:3001/error',
                     timeout: 3000,
                 });
             });
@@ -296,7 +296,7 @@ describe('client/server integration', () => {
                     meta: { foo: 'bar' },
                     output: { message: 'error' },
                     rawRequest: {
-                        url: 'http://localhost:3000/api',
+                        url: 'http://localhost:3000/api/error',
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -305,7 +305,7 @@ describe('client/server integration', () => {
                     },
                     statusCode: 400,
                     timeout: 3000,
-                    url: 'http://localhost:3000/api',
+                    url: 'http://localhost:3000/api/error',
                 });
             });
 
@@ -325,7 +325,7 @@ describe('client/server integration', () => {
                     meta: {},
                     output: { message: 'unexpected' },
                     rawRequest: {
-                        url: 'http://localhost:3000/api',
+                        url: 'http://localhost:3000/api/error',
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -334,7 +334,7 @@ describe('client/server integration', () => {
                     },
                     statusCode: 500,
                     timeout: 3000,
-                    url: 'http://localhost:3000/api',
+                    url: 'http://localhost:3000/api/error',
                 });
             });
 
@@ -348,14 +348,14 @@ describe('client/server integration', () => {
                     statusCode: 404,
                     body: { error: 'page not found' },
                     rawRequest: {
-                        url: 'http://localhost:3000/non-existent',
+                        url: 'http://localhost:3000/non-existent/item',
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-Requested-With': 'XMLHttpRequest',
                         },
                     },
-                    url: 'http://localhost:3000/non-existent',
+                    url: 'http://localhost:3000/non-existent/item',
                     timeout: 3000,
                 });
             });
@@ -373,14 +373,14 @@ describe('client/server integration', () => {
                 expect(response).to.deep.equal({
                     statusCode: 0,
                     rawRequest: {
-                        url: 'http://localhost:3000/api',
+                        url: 'http://localhost:3000/api/error',
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-Requested-With': 'XMLHttpRequest',
                         },
                     },
-                    url: 'http://localhost:3000/api',
+                    url: 'http://localhost:3000/api/error',
                     timeout: 20,
                 });
             });
