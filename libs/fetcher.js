@@ -2,19 +2,20 @@
  * Copyright 2014, Yahoo! Inc.
  * Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
  */
-var OP_READ = 'read';
-var OP_CREATE = 'create';
-var OP_UPDATE = 'update';
-var OP_DELETE = 'delete';
-var GET = 'GET';
-var qs = require('querystring');
-var fumble = require('fumble');
-var RESOURCE_SANTIZER_REGEXP = /[^\w.]+/g;
+const qs = require('querystring');
+const fumble = require('fumble');
+
+const OP_READ = 'read';
+const OP_CREATE = 'create';
+const OP_UPDATE = 'update';
+const OP_DELETE = 'delete';
+const GET = 'GET';
+const RESOURCE_SANTIZER_REGEXP = /[^\w.]+/g;
 
 function parseValue(value) {
     // take care of value of type: array, object
     try {
-        var ret = JSON.parse(value);
+        let ret = JSON.parse(value);
         // Big interger, big decimal and the number in exponential notations will results
         // in unexpected form. e.g. 1234e1234 will be parsed into Infinity and the
         // number > MAX_SAFE_INTEGER will cause a rounding error.
@@ -29,7 +30,7 @@ function parseValue(value) {
 }
 
 function parseParamValues(params) {
-    return Object.keys(params).reduce(function (parsed, curr) {
+    return Object.keys(params).reduce((parsed, curr) => {
         parsed[curr] = parseValue(params[curr]);
         return parsed;
     }, {});
@@ -48,8 +49,8 @@ function sanitizeResourceName(resource) {
  * @return {Object} object with resolved statusCode & output
  */
 function getErrorResponse(err) {
-    var statusCode = err.statusCode || 500;
-    var output = {
+    const statusCode = err.statusCode || 500;
+    let output = {
         message: 'request failed',
     };
 
@@ -60,8 +61,8 @@ function getErrorResponse(err) {
     }
 
     return {
-        statusCode: statusCode,
-        output: output,
+        statusCode,
+        output,
     };
 }
 
@@ -81,14 +82,13 @@ function getErrorResponse(err) {
  *      the req object, the serviceInfo object, and the params object.  It is expected to return the processed params object.
  * @constructor
  */
-function Request(operation, resource, options) {
+function Request(operation, resource, options = {}) {
     if (!resource) {
         throw new Error('Resource is required for a fetcher request');
     }
 
     this.operation = operation || OP_READ;
     this.resource = resource;
-    options = options || {};
     this.req = options.req || {};
     this.serviceMeta = options.serviceMeta || [];
     this._params = {};
@@ -149,25 +149,22 @@ Request.prototype.clientConfig = function (config) {
  * @param {Object} result  The response data for successful request
  */
 Request.prototype._captureMetaAndStats = function (errData, result) {
-    var self = this;
-    var meta = (errData && errData.meta) || (result && result.meta);
+    const meta = (errData && errData.meta) || (result && result.meta);
     if (meta) {
-        self.serviceMeta.push(meta);
+        this.serviceMeta.push(meta);
     }
-    var statsCollector = self._statsCollector;
-    if (typeof statsCollector === 'function') {
-        var err = errData && errData.err;
-        var stats = {
-            resource: self.resource,
-            operation: self.operation,
-            params: self._params,
+    if (typeof this._statsCollector === 'function') {
+        const err = errData && errData.err;
+        this._statsCollector({
+            resource: this.resource,
+            operation: this.operation,
+            params: this._params,
             statusCode: err
                 ? err.statusCode
                 : (result && result.meta && result.meta.statusCode) || 200,
-            err: err,
-            time: Date.now() - self._startTime,
-        };
-        statsCollector(stats);
+            err,
+            time: Date.now() - this._startTime,
+        });
     }
 };
 
@@ -178,30 +175,27 @@ Request.prototype._captureMetaAndStats = function (errData, result) {
  * @param {Fetcher~fetcherCallback} callback callback invoked when service is complete.
  */
 Request.prototype.end = function (callback) {
-    var self = this;
-    self._startTime = Date.now();
+    this._startTime = Date.now();
 
-    var promise = new Promise(function requestExecutor(resolve, reject) {
-        setImmediate(executeRequest, self, resolve, reject);
-    });
-
-    promise = promise.then(
-        function requestSucceeded(result) {
-            self._captureMetaAndStats(null, result);
+    const promise = new Promise((resolve, reject) => {
+        setImmediate(executeRequest, this, resolve, reject);
+    }).then(
+        (result) => {
+            this._captureMetaAndStats(null, result);
             return result;
         },
-        function requestFailed(errData) {
-            self._captureMetaAndStats(errData);
+        (errData) => {
+            this._captureMetaAndStats(errData);
             throw errData.err;
         }
     );
 
     if (callback) {
         promise.then(
-            function requestSucceeded(result) {
+            (result) => {
                 setImmediate(callback, null, result.data, result.meta);
             },
-            function requestFailed(err) {
+            (err) => {
                 setImmediate(callback, err);
             }
         );
@@ -218,43 +212,35 @@ Request.prototype.end = function (callback) {
  * @param {Function} reject function to call when request rejected
  */
 function executeRequest(request, resolve, reject) {
-    var args = [
+    const args = [
         request.req,
         request.resource,
         request._params,
         request._clientConfig,
         function executeRequestCallback(err, data, meta) {
             if (err) {
-                reject({
-                    err: err,
-                    meta: meta,
-                });
+                reject({ err, meta });
             } else {
-                resolve({
-                    data: data,
-                    meta: meta,
-                });
+                resolve({ data, meta });
             }
         },
     ];
-    var op = request.operation;
+
+    const op = request.operation;
     if (op === OP_CREATE || op === OP_UPDATE) {
         args.splice(3, 0, request._body);
     }
-    var service;
+
     try {
-        service = Fetcher.getService(request.resource);
+        const service = Fetcher.getService(request.resource);
         if (!service[op]) {
             throw new Error(
-                'operation: ' +
-                    op +
-                    ' is undefined on service: ' +
-                    request.resource
+                `operation: ${op} is undefined on service: ${request.resource}`
             );
         }
         service[op].apply(service, args);
     } catch (err) {
-        reject({ err: err });
+        reject({ err });
     }
 }
 
@@ -273,8 +259,8 @@ function executeRequest(request, resolve, reject) {
  *      the req object, the serviceInfo object, and the params object.  It is expected to return the processed params object.
  * @constructor
  */
-function Fetcher(options) {
-    this.options = options || {};
+function Fetcher(options = {}) {
+    this.options = options;
     this.req = this.options.req || {};
     this._serviceMeta = [];
 }
@@ -312,7 +298,7 @@ Fetcher.registerService = function (service) {
         );
     }
 
-    var resource;
+    let resource;
     if (typeof service.resource !== 'undefined') {
         resource = service.resource;
     } else if (typeof service.name !== 'undefined') {
@@ -352,10 +338,10 @@ Fetcher.getFetcher = function (name) {
  */
 Fetcher.getService = function (name) {
     //Access service by name
-    var service = Fetcher.isRegistered(name);
+    const service = Fetcher.isRegistered(name);
     if (!service) {
         throw new Error(
-            'Service "' + sanitizeResourceName(name) + '" could not be found'
+            `Service "${sanitizeResourceName(name)}" could not be found`
         );
     }
     return service;
@@ -390,44 +376,32 @@ Fetcher.isRegistered = function (name) {
  *     @param {Object} res
  *     @param {Object} next
  */
-Fetcher.middleware = function (options) {
-    options = options || {};
-    var responseFormatter =
-        options.responseFormatter ||
-        function noOp(req, res, data) {
-            return data;
-        };
+Fetcher.middleware = function (options = {}) {
+    const responseFormatter =
+        options.responseFormatter || ((req, res, data) => data);
 
     if (
         Fetcher._deprecatedServicesDefinitions.length &&
         'production' !== process.env.NODE_ENV
     ) {
-        var deprecatedServices = Fetcher._deprecatedServicesDefinitions
+        const deprecatedServices = Fetcher._deprecatedServicesDefinitions
             .sort()
             .join(', ');
 
-        console.warn(
-            'You have registered services using a deprecated property. ' +
-                'Please, replace the property "name" by "resource" in the ' +
-                'following services definitions:\n' +
-                deprecatedServices +
-                '.'
-        );
+        console.warn(`You have registered services using a deprecated property.
+Please, rename the property "name" to "resource" in the
+following services definitions: ${deprecatedServices}.`);
     }
 
-    return function (req, res, next) {
-        var request;
-        var error;
-        var errorMsg;
-        var resourceName;
-        var serviceMeta;
+    return (req, res, next) => {
+        const serviceMeta = [];
 
         if (req.method === GET) {
-            var path = req.path.substr(1).split(';');
-            var resource = path.shift();
+            const path = req.path.substr(1).split(';');
+            const resource = path.shift();
 
             if (!resource) {
-                error = fumble.http.badRequest('No resource specified', {
+                const error = fumble.http.badRequest('No resource specified', {
                     debug: 'Bad resource',
                 });
                 error.source = 'fetchr';
@@ -435,82 +409,74 @@ Fetcher.middleware = function (options) {
             }
 
             if (!Fetcher.isRegistered(resource)) {
-                resourceName = sanitizeResourceName(resource);
-                errorMsg = 'Resource "' + resourceName + '" is not registered';
-                error = fumble.http.badRequest(errorMsg, {
-                    debug: 'Bad resource ' + resourceName,
+                const resourceName = sanitizeResourceName(resource);
+                const errorMsg = `Resource "${resourceName}" is not registered`;
+                const error = fumble.http.badRequest(errorMsg, {
+                    debug: `Bad resource ${resourceName}`,
                 });
                 error.source = 'fetchr';
                 return next(error);
             }
-            serviceMeta = [];
-            request = new Request(OP_READ, resource, {
-                req: req,
-                serviceMeta: serviceMeta,
+
+            new Request(OP_READ, resource, {
+                req,
+                serviceMeta,
                 statsCollector: options.statsCollector,
                 paramsProcessor: options.paramsProcessor,
-            });
-            request
+            })
                 .params(parseParamValues(qs.parse(path.join('&'))))
-                .end(function (err, data) {
-                    var meta = serviceMeta[0] || {};
+                .end((err, data) => {
+                    const meta = serviceMeta[0] || {};
+
                     if (meta.headers) {
                         res.set(meta.headers);
                     }
-                    if (err) {
-                        var errResponse = getErrorResponse(err);
-                        res.status(errResponse.statusCode).json(
-                            responseFormatter(req, res, {
-                                output: errResponse.output,
-                                meta: meta,
-                            })
-                        );
-                        return;
-                    }
 
-                    res.status(meta.statusCode || 200).json(
-                        responseFormatter(req, res, {
-                            data: data,
-                            meta: meta,
-                        })
-                    );
+                    if (err) {
+                        const { statusCode, output } = getErrorResponse(err);
+                        res.status(statusCode).json(
+                            responseFormatter(req, res, { output, meta })
+                        );
+                    } else {
+                        res.status(meta.statusCode || 200).json(
+                            responseFormatter(req, res, { data, meta })
+                        );
+                    }
                 });
         } else {
-            var requests = req.body && req.body.requests;
+            const requests = req.body && req.body.requests;
 
             if (!requests || Object.keys(requests).length === 0) {
-                error = fumble.http.badRequest('No resource specified', {
+                const error = fumble.http.badRequest('No resource specified', {
                     debug: 'No resources',
                 });
                 error.source = 'fetchr';
                 return next(error);
             }
 
-            var DEFAULT_GUID = 'g0';
-            var singleRequest = requests[DEFAULT_GUID];
-            resourceName = sanitizeResourceName(singleRequest.resource);
+            const DEFAULT_GUID = 'g0';
+            const request = requests[DEFAULT_GUID];
 
-            if (!Fetcher.isRegistered(singleRequest.resource)) {
-                errorMsg = 'Resource "' + resourceName + '" is not registered';
-                error = fumble.http.badRequest(errorMsg, {
-                    debug: 'Bad resource ' + resourceName,
+            if (!Fetcher.isRegistered(request.resource)) {
+                const resourceName = sanitizeResourceName(request.resource);
+                const errorMsg = `Resource "${resourceName}" is not registered`;
+                const error = fumble.http.badRequest(errorMsg, {
+                    debug: `Bad resource ${resourceName}`,
                 });
                 error.source = 'fetchr';
                 return next(error);
             }
-            var operation = singleRequest.operation;
+
+            const operation = request.operation;
             if (
                 operation !== OP_CREATE &&
                 operation !== OP_UPDATE &&
                 operation !== OP_DELETE &&
                 operation !== OP_READ
             ) {
-                error = fumble.http.badRequest(
-                    'Unsupported "' +
-                        resourceName +
-                        '.' +
-                        operation +
-                        '" operation',
+                const resourceName = sanitizeResourceName(request.resource);
+                const error = fumble.http.badRequest(
+                    `Unsupported "${resourceName}.${operation}" operation`,
                     {
                         debug: 'Only "create", "read", "update" or "delete" operations are allowed',
                     }
@@ -518,37 +484,33 @@ Fetcher.middleware = function (options) {
                 error.source = 'fetchr';
                 return next(error);
             }
-            serviceMeta = [];
-            request = new Request(operation, singleRequest.resource, {
-                req: req,
-                serviceMeta: serviceMeta,
+
+            new Request(operation, request.resource, {
+                req,
+                serviceMeta,
                 statsCollector: options.statsCollector,
                 paramsProcessor: options.paramsProcessor,
-            });
-            request
-                .params(singleRequest.params)
-                .body(singleRequest.body || {})
-                .end(function (err, data) {
-                    var meta = serviceMeta[0] || {};
+            })
+                .params(request.params)
+                .body(request.body || {})
+                .end((err, data) => {
+                    const meta = serviceMeta[0] || {};
                     if (meta.headers) {
                         res.set(meta.headers);
                     }
                     if (err) {
-                        var errResponse = getErrorResponse(err);
-                        res.status(errResponse.statusCode).json(
-                            responseFormatter(req, res, {
-                                output: errResponse.output,
-                                meta: meta,
-                            })
+                        const { statusCode, output } = getErrorResponse(err);
+                        res.status(statusCode).json(
+                            responseFormatter(req, res, { output, meta })
                         );
-                        return;
+                    } else {
+                        res.status(meta.statusCode || 200).json({
+                            [DEFAULT_GUID]: responseFormatter(req, res, {
+                                data,
+                                meta,
+                            }),
+                        });
                     }
-                    var responseObj = {};
-                    responseObj[DEFAULT_GUID] = responseFormatter(req, res, {
-                        data: data,
-                        meta: meta,
-                    });
-                    res.status(meta.statusCode || 200).json(responseObj);
                 });
         }
         // TODO: Batching and multi requests
@@ -571,7 +533,7 @@ Fetcher.middleware = function (options) {
  * @static
  */
 Fetcher.prototype.read = function (resource, params, config, callback) {
-    var request = new Request('read', resource, {
+    const request = new Request('read', resource, {
         req: this.req,
         serviceMeta: this._serviceMeta,
         statsCollector: this.options.statsCollector,
@@ -591,6 +553,7 @@ Fetcher.prototype.read = function (resource, params, config, callback) {
     }
     return request.params(params).clientConfig(config).end(callback);
 };
+
 /**
  * create operation (create as in CRUD).
  * @method create
@@ -604,7 +567,7 @@ Fetcher.prototype.read = function (resource, params, config, callback) {
  * @static
  */
 Fetcher.prototype.create = function (resource, params, body, config, callback) {
-    var request = new Request('create', resource, {
+    const request = new Request('create', resource, {
         req: this.req,
         serviceMeta: this._serviceMeta,
         statsCollector: this.options.statsCollector,
@@ -624,6 +587,7 @@ Fetcher.prototype.create = function (resource, params, body, config, callback) {
     }
     return request.params(params).body(body).clientConfig(config).end(callback);
 };
+
 /**
  * update operation (update as in CRUD).
  * @method update
@@ -637,7 +601,7 @@ Fetcher.prototype.create = function (resource, params, body, config, callback) {
  * @static
  */
 Fetcher.prototype.update = function (resource, params, body, config, callback) {
-    var request = new Request('update', resource, {
+    const request = new Request('update', resource, {
         req: this.req,
         serviceMeta: this._serviceMeta,
         statsCollector: this.options.statsCollector,
@@ -657,6 +621,7 @@ Fetcher.prototype.update = function (resource, params, body, config, callback) {
     }
     return request.params(params).body(body).clientConfig(config).end(callback);
 };
+
 /**
  * delete operation (delete as in CRUD).
  * @method delete
@@ -668,8 +633,8 @@ Fetcher.prototype.update = function (resource, params, body, config, callback) {
  * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
  * @static
  */
-Fetcher.prototype['delete'] = function (resource, params, config, callback) {
-    var request = new Request('delete', resource, {
+Fetcher.prototype.delete = function (resource, params, config, callback) {
+    const request = new Request('delete', resource, {
         req: this.req,
         serviceMeta: this._serviceMeta,
         statsCollector: this.options.statsCollector,
