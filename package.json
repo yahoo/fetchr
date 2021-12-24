@@ -7,7 +7,9 @@
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "eslint . && npm run format:check",
+    "lint": "npm run lint:client && npm run lint:server && npm run format:check",
+    "lint:client": "eslint libs/util/ libs/fetcher.client.js",
+    "lint:server": "eslint --parser-options=ecmaVersion:latest libs/fetcher.js",
     "test": "npm run test:unit && npm run test:functional",
     "test:coverage": "nyc --reporter=lcov npm run test:unit",
     "test:unit": "NODE_ENV=test mocha tests/unit/ --recursive --reporter spec --timeout 20000 --exit --require tests/unit/setup.js",
