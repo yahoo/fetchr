@@ -69,20 +69,25 @@ function getErrorResponse(err) {
 /**
  * A Request instance represents a single fetcher request.
  * The constructor requires `operation` (CRUD) and `resource`.
- * @class Request
- * @param {String} operation The CRUD operation name: 'create|read|update|delete'.
- * @param {String} resource name of service
- * @param {Object} options configuration options for Request
- * @param {Object} [options.req] The request object from express/connect.  It can contain per-request/context data.
- * @param {Array} [options.serviceMeta] Array to hold per-request/session metadata from all service calls.
- * @param {Function} [options.statsCollector] The function will be invoked with 1 argument:
- *      the stats object, which contains resource, operation, params (request params),
- *      statusCode, err, and time (elapsed time)
- * @param {Function} [options.paramsProcessor] The function will be invoked with 3 arguments:
- *      the req object, the serviceInfo object, and the params object.  It is expected to return the processed params object.
- * @constructor
  */
 class Request {
+    /**
+     * @param {String} operation The CRUD operation name: 'create|read|update|delete'.
+     * @param {String} resource name of service
+     * @param {Object} options configuration options for Request
+     * @param {Object} [options.req] The request object from
+     * express/connect. It can contain per-request/context data.
+     * @param {Array} [options.serviceMeta] Array to hold
+     * per-request/session metadata from all service calls.
+     * @param {Function} [options.statsCollector] The function will be
+     * invoked with 1 argument: the stats object, which contains
+     * resource, operation, params (request params), statusCode, err,
+     * and time (elapsed time)
+     * @param {Function} [options.paramsProcessor] The function will
+     * be invoked with 3 arguments: the req object, the serviceInfo
+     * object, and the params object.  It is expected to return the
+     * processed params object.
+     */
     constructor(operation, resource, options = {}) {
         if (!resource) {
             throw new Error('Resource is required for a fetcher request');
@@ -102,10 +107,9 @@ class Request {
 
     /**
      * Add params to this fetcher request
-     * @method params
-     * @memberof Request
-     * @param {Object} params Information carried in query and matrix parameters in typical REST API
-     * @chainable
+     * @param {Object} params Information carried in query and matrix
+     * parameters in typical REST API.
+     * @returns {this}
      */
     params(params) {
         this._params =
@@ -121,10 +125,10 @@ class Request {
 
     /**
      * Add body to this fetcher request
-     * @method body
-     * @memberof Request
-     * @param {Object} body The JSON object that contains the resource data being updated for this request. Not used for read and delete operations.
-     * @chainable
+     * @param {Object} body The JSON object that contains the resource
+     * data being updated for this request. Not used for read and
+     * delete operations.
+     * @returns {this}
      */
     body(body) {
         this._body = body;
@@ -132,11 +136,9 @@ class Request {
     }
 
     /**
-     * Add clientConfig to this fetcher request
-     * @method config
-     * @memberof Request
+     * Add clientConfig to this fetcher request.
      * @param {Object} config config for this fetcher request
-     * @chainable
+     * @returns {this}
      */
     clientConfig(config) {
         this._clientConfig = config;
@@ -144,8 +146,8 @@ class Request {
     }
 
     /**
-     * capture meta data; capture stats for this request and pass
-     * stats data to options.statsCollector
+     * Capture meta data; capture stats for this request and pass
+     * stats data to options.statsCollector.
      * @param {Object} errData  The error response for failed request
      * @param {Object} result  The response data for successful request
      */
@@ -171,9 +173,8 @@ class Request {
 
     /**
      * Execute this fetcher request and call callback.
-     * @method end
-     * @memberof Request
-     * @param {Fetcher~fetcherCallback} callback callback invoked when service is complete.
+     * @param {fetcherCallback} callback callback invoked when service
+     * is complete.
      */
     end(callback) {
         this._startTime = Date.now();
@@ -208,7 +209,6 @@ class Request {
 
 /**
  * Execute and resolve/reject this fetcher request
- * @method executeRequest
  * @param {Object} request Request instance object
  * @param {Function} resolve function to call when request fulfilled
  * @param {Function} reject function to call when request rejected
@@ -252,14 +252,19 @@ class Fetcher {
      * Provides interface to register data services and
      * to later access those services.
      * @class Fetcher
-     * @param {Object} options configuration options for Fetcher
-     * @param {Object} [options.req] The express request object.  It can contain per-request/context data.
-     * @param {string} [options.xhrPath="/api"] The path for XHR requests. Will be ignored server side.
-     * @param {Function} [options.statsCollector] The function will be invoked with 1 argument:
-     *      the stats object, which contains resource, operation, params (request params),
-     *      statusCode, err, and time (elapsed time)
-     * @param {Function} [options.paramsProcessor] The function will be invoked with 3 arguments:
-     *      the req object, the serviceInfo object, and the params object.  It is expected to return the processed params object.
+     * @param {Object} options configuration options for Fetcher.
+     * @param {Object} [options.req] The express request object. It
+     * can contain per-request/context data.
+     * @param {string} [options.xhrPath="/api"] The path for XHR
+     * requests. Will be ignored server side.
+     * @param {Function} [options.statsCollector] The function will be
+     * invoked with 1 argument: the stats object, which contains
+     * resource, operation, params (request params), statusCode, err,
+     * and time (elapsed time).
+     * @param {Function} [options.paramsProcessor] The function will
+     * be invoked with 3 arguments: the req object, the serviceInfo
+     * object, and the params object.  It is expected to return the
+     * processed params object.
      * @constructor
      */
     constructor(options = {}) {
@@ -273,10 +278,8 @@ class Fetcher {
     static _deprecatedServicesDefinitions = [];
 
     /**
-     * DEPRECATED
      * Register a data fetcher
-     * @method registerFetcher
-     * @memberof Fetcher
+     * @deprecated Use registerService.
      * @param {Function} fetcher
      */
     static registerFetcher(fetcher) {
@@ -290,8 +293,6 @@ class Fetcher {
 
     /**
      * Register a data service
-     * @method registerService
-     * @memberof Fetcher
      * @param {Function} service
      */
     static registerService(service) {
@@ -318,10 +319,9 @@ class Fetcher {
     }
 
     /**
-     * DEPRECATED
      * Retrieve a data fetcher by name
-     * @method getFetcheresourceof Fetcher
-     * @param {String} name oresource @returns {Function} fetcher
+     * @deprecated Use getService
+     * @param {String} name oresource @returns {Function} fetcher.
      */
     static getFetcher(name) {
         // TODO: Uncomment warnings in next minor release
@@ -334,8 +334,6 @@ class Fetcher {
 
     /**
      * Retrieve a data service by name
-     * @method getService
-     * @memberof Fetcher
      * @param {String} name of service
      * @returns {Function} service
      */
@@ -352,8 +350,6 @@ class Fetcher {
 
     /**
      * Returns true if service with name has been registered
-     * @method isRegistered
-     * @memberof Fetcher
      * @param {String} name of service
      * @returns {Boolean} true if service with name was registered
      */
@@ -362,23 +358,23 @@ class Fetcher {
     }
 
     /**
- * Returns express/connect middleware for Fetcher
- * @method middleware
- * @memberof Fetcher
- * @param {Object} [options] Optional configurations
- * @param {Function} [options.responseFormatter=no op function] Function to modify the response
-            before sending to client. First argument is the HTTP request object,
-            second argument is the HTTP response object and the third argument is the service data object.
- * @param {Function} [options.statsCollector] The function will be invoked with 1 argument:
-           the stats object, which contains resource, operation, params (request params),
-           statusCode, err, and time (elapsed time)
- * @param {Function} [options.paramsProcessor] The function will be invoked with 3 arguments:
- *         the req object, the serviceInfo object, and the params object.  It is expected to return the processed params object.
- * @returns {Function} middleware
- *     @param {Object} req
- *     @param {Object} res
- *     @param {Object} next
- */
+     * Returns express/connect middleware for Fetcher
+     * @param {Object} [options] Optional configurations
+     * @param {Function} [options.responseFormatter=no op function]
+     * Function to modify the response before sending to client. First
+     * argument is the HTTP request object, second argument is the
+     * HTTP response object and the third argument is the service data
+     * object.
+     * @param {Function} [options.statsCollector] The function will be
+     * invoked with 1 argument: the stats object, which contains
+     * resource, operation, params (request params), statusCode, err,
+     * and time (elapsed time).
+     * @param {Function} [options.paramsProcessor] The function will
+     * be invoked with 3 arguments: the req object, the serviceInfo
+     * object, and the params object.  It is expected to return the
+     * processed params object.
+     * @returns {Function} middleware
+     */
     static middleware(options = {}) {
         const responseFormatter =
             options.responseFormatter || ((req, res, data) => data);
@@ -528,20 +524,16 @@ following services definitions: ${deprecatedServices}.`);
         };
     }
 
-    // ------------------------------------------------------------------
-    // CRUD Data Access Wrapper Methods
-    // ------------------------------------------------------------------
-
     /**
      * read operation (read as in CRUD).
-     * @method read
-     * @memberof Fetcher.prototype
-     * @param {String} resource  The resource name
-     * @param {Object} params    The parameters identify the resource, and along with information
-     *                           carried in query and matrix parameters in typical REST API
-     * @param {Object} [config={}] The config object.  It can contain "config" for per-request config data.
-     * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
-     * @static
+     * @param {String} resource The resource name.
+     * @param {Object} params The parameters identify the resource,
+     * and along with information carried in query and matrix
+     * parameters in typical REST API.
+     * @param {Object} [config={}] The config object. It can contain
+     * "config" for per-request config data.
+     * @param {fetcherCallback} callback callback invoked when fetcher
+     * is complete.
      */
     read(resource, params, config, callback) {
         const request = new Request('read', resource, {
@@ -566,16 +558,17 @@ following services definitions: ${deprecatedServices}.`);
     }
 
     /**
-     * create operation (create as in CRUD).
-     * @method create
-     * @memberof Fetcher.prototype
-     * @param {String} resource  The resource name
-     * @param {Object} params    The parameters identify the resource, and along with information
-     *                           carried in query and matrix parameters in typical REST API
-     * @param {Object} body      The JSON object that contains the resource data that is being created
-     * @param {Object} [config={}] The config object.  It can contain "config" for per-request config data.
-     * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
-     * @static
+     * Create operation (create as in CRUD).
+     * @param {String} resource The resource name.
+     * @param {Object} params The parameters identify the resource,
+     * and along with information carried in query and matrix
+     * parameters in typical REST API.
+     * @param {Object} body The JSON object that contains the resource
+     * data that is being created.
+     * @param {Object} [config={}] The config object. It can contain
+     * "config" for per-request config data.
+     * @param {fetcherCallback} callback callback invoked when fetcher
+     * is complete.
      */
     create(resource, params, body, config, callback) {
         const request = new Request('create', resource, {
@@ -604,16 +597,17 @@ following services definitions: ${deprecatedServices}.`);
     }
 
     /**
-     * update operation (update as in CRUD).
-     * @method update
-     * @memberof Fetcher.prototype
-     * @param {String} resource  The resource name
-     * @param {Object} params    The parameters identify the resource, and along with information
-     *                           carried in query and matrix parameters in typical REST API
-     * @param {Object} body      The JSON object that contains the resource data that is being updated
-     * @param {Object} [config={}] The config object.  It can contain "config" for per-request config data.
-     * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
-     * @static
+     * Update operation (update as in CRUD).
+     * @param {String} resource The resource name
+     * @param {Object} params The parameters identify the resource,
+     * and along with information carried in query and matrix
+     * parameters in typical REST API.
+     * @param {Object} body The JSON object that contains the resource
+     * data that is being updated.
+     * @param {Object} [config={}] The config object. It can contain
+     * "config" for per-request config data.
+     * @param {fetcherCallback} callback callback invoked when
+     * fetcher is complete.
      */
     update(resource, params, body, config, callback) {
         const request = new Request('update', resource, {
@@ -642,15 +636,15 @@ following services definitions: ${deprecatedServices}.`);
     }
 
     /**
-     * delete operation (delete as in CRUD).
-     * @method delete
-     * @memberof Fetcher.prototype
-     * @param {String} resource  The resource name
-     * @param {Object} params    The parameters identify the resource, and along with information
-     *                           carried in query and matrix parameters in typical REST API
-     * @param {Object} [config={}] The config object.  It can contain "config" for per-request config data.
-     * @param {Fetcher~fetcherCallback} callback callback invoked when fetcher is complete.
-     * @static
+     * Delete operation (delete as in CRUD).
+     * @param {String} resource The resource name
+     * @param {Object} params The parameters identify the resource,
+     * and along with information carried in query and matrix
+     * parameters in typical REST API.
+     * @param {Object} [config={}] The config object. It can contain
+     * "config" for per-request config data.
+     * @param {fetcherCallback} callback callback invoked when
+     * fetcher is complete.
      */
     delete(resource, params, config, callback) {
         const request = new Request('delete', resource, {
@@ -676,12 +670,12 @@ following services definitions: ${deprecatedServices}.`);
     }
 
     /**
-     * update fetchr options
-     * @method updateOptions
-     * @memberof Fetcher.prototype
-     * @param {Object} options configuration options for Fetcher
-     * @param {Object} [options.req] The request object.  It can contain per-request/context data.
-     * @param {string} [options.xhrPath="/api"] The path for XHR requests. Will be ignored server side.
+     * Update fetchr options
+     * @param {Object} options configuration options for Fetcher.
+     * @param {string} [options.xhrPath="/api"] The path for XHR
+     * requests. Will be ignored server side.
+     * @param {Object} [options.req] The request object. It can
+     * contain per-request/context data.
      */
     updateOptions(options) {
         this.options = Object.assign(this.options, options);
@@ -689,7 +683,8 @@ following services definitions: ${deprecatedServices}.`);
     }
 
     /**
-     * Get all the aggregated metadata sent data services in this request
+     * Get all the aggregated metadata sent data services in this
+     * request.
      */
     getServiceMeta() {
         return this._serviceMeta;
@@ -699,8 +694,10 @@ following services definitions: ${deprecatedServices}.`);
 module.exports = Fetcher;
 
 /**
- * @callback Fetcher~fetcherCallback
- * @param {Object} err  The request error, pass null if there was no error. The data and meta parameters will be ignored if this parameter is not null.
+ * @callback fetcherCallback
+ * @param {Object} err The request error, pass null if there was no
+ * error. The data and meta parameters will be ignored if this
+ * parameter is not null.
  * @param {number} [err.statusCode=500] http status code to return
  * @param {string} [err.message=request failed] http response body
  * @param {Object} data request result
