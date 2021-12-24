@@ -82,127 +82,129 @@ function getErrorResponse(err) {
  *      the req object, the serviceInfo object, and the params object.  It is expected to return the processed params object.
  * @constructor
  */
-function Request(operation, resource, options = {}) {
-    if (!resource) {
-        throw new Error('Resource is required for a fetcher request');
-    }
-
-    this.operation = operation || OP_READ;
-    this.resource = resource;
-    this.req = options.req || {};
-    this.serviceMeta = options.serviceMeta || [];
-    this._params = {};
-    this._body = null;
-    this._clientConfig = {};
-    this._startTime = 0;
-    this._statsCollector = options.statsCollector;
-    this._paramsProcessor = options.paramsProcessor;
-}
-
-/**
- * Add params to this fetcher request
- * @method params
- * @memberof Request
- * @param {Object} params Information carried in query and matrix parameters in typical REST API
- * @chainable
- */
-Request.prototype.params = function (params) {
-    this._params =
-        typeof this._paramsProcessor === 'function'
-            ? this._paramsProcessor(
-                  this.req,
-                  { operation: this.operation, resource: this.resource },
-                  params
-              )
-            : params;
-    return this;
-};
-/**
- * Add body to this fetcher request
- * @method body
- * @memberof Request
- * @param {Object} body The JSON object that contains the resource data being updated for this request.
- *                      Not used for read and delete operations.
- * @chainable
- */
-Request.prototype.body = function (body) {
-    this._body = body;
-    return this;
-};
-/**
- * Add clientConfig to this fetcher request
- * @method config
- * @memberof Request
- * @param {Object} config config for this fetcher request
- * @chainable
- */
-Request.prototype.clientConfig = function (config) {
-    this._clientConfig = config;
-    return this;
-};
-
-/**
- * capture meta data; capture stats for this request and pass stats data
- * to options.statsCollector
- * @method _captureMetaAndStats
- * @param {Object} errData  The error response for failed request
- * @param {Object} result  The response data for successful request
- */
-Request.prototype._captureMetaAndStats = function (errData, result) {
-    const meta = (errData && errData.meta) || (result && result.meta);
-    if (meta) {
-        this.serviceMeta.push(meta);
-    }
-    if (typeof this._statsCollector === 'function') {
-        const err = errData && errData.err;
-        this._statsCollector({
-            resource: this.resource,
-            operation: this.operation,
-            params: this._params,
-            statusCode: err
-                ? err.statusCode
-                : (result && result.meta && result.meta.statusCode) || 200,
-            err,
-            time: Date.now() - this._startTime,
-        });
-    }
-};
-
-/**
- * Execute this fetcher request and call callback.
- * @method end
- * @memberof Request
- * @param {Fetcher~fetcherCallback} callback callback invoked when service is complete.
- */
-Request.prototype.end = function (callback) {
-    this._startTime = Date.now();
-
-    const promise = new Promise((resolve, reject) => {
-        setImmediate(executeRequest, this, resolve, reject);
-    }).then(
-        (result) => {
-            this._captureMetaAndStats(null, result);
-            return result;
-        },
-        (errData) => {
-            this._captureMetaAndStats(errData);
-            throw errData.err;
+class Request {
+    constructor(operation, resource, options = {}) {
+        if (!resource) {
+            throw new Error('Resource is required for a fetcher request');
         }
-    );
 
-    if (callback) {
-        promise.then(
+        this.operation = operation || OP_READ;
+        this.resource = resource;
+        this.req = options.req || {};
+        this.serviceMeta = options.serviceMeta || [];
+        this._params = {};
+        this._body = null;
+        this._clientConfig = {};
+        this._startTime = 0;
+        this._statsCollector = options.statsCollector;
+        this._paramsProcessor = options.paramsProcessor;
+    }
+
+    /**
+     * Add params to this fetcher request
+     * @method params
+     * @memberof Request
+     * @param {Object} params Information carried in query and matrix parameters in typical REST API
+     * @chainable
+     */
+    params(params) {
+        this._params =
+            typeof this._paramsProcessor === 'function'
+                ? this._paramsProcessor(
+                      this.req,
+                      { operation: this.operation, resource: this.resource },
+                      params
+                  )
+                : params;
+        return this;
+    }
+
+    /**
+     * Add body to this fetcher request
+     * @method body
+     * @memberof Request
+     * @param {Object} body The JSON object that contains the resource data being updated for this request. Not used for read and delete operations.
+     * @chainable
+     */
+    body(body) {
+        this._body = body;
+        return this;
+    }
+
+    /**
+     * Add clientConfig to this fetcher request
+     * @method config
+     * @memberof Request
+     * @param {Object} config config for this fetcher request
+     * @chainable
+     */
+    clientConfig(config) {
+        this._clientConfig = config;
+        return this;
+    }
+
+    /**
+     * capture meta data; capture stats for this request and pass
+     * stats data to options.statsCollector
+     * @param {Object} errData  The error response for failed request
+     * @param {Object} result  The response data for successful request
+     */
+    _captureMetaAndStats(errData, result) {
+        const meta = (errData && errData.meta) || (result && result.meta);
+        if (meta) {
+            this.serviceMeta.push(meta);
+        }
+        if (typeof this._statsCollector === 'function') {
+            const err = errData && errData.err;
+            this._statsCollector({
+                resource: this.resource,
+                operation: this.operation,
+                params: this._params,
+                statusCode: err
+                    ? err.statusCode
+                    : (result && result.meta && result.meta.statusCode) || 200,
+                err,
+                time: Date.now() - this._startTime,
+            });
+        }
+    }
+
+    /**
+     * Execute this fetcher request and call callback.
+     * @method end
+     * @memberof Request
+     * @param {Fetcher~fetcherCallback} callback callback invoked when service is complete.
+     */
+    end(callback) {
+        this._startTime = Date.now();
+
+        const promise = new Promise((resolve, reject) => {
+            setImmediate(executeRequest, this, resolve, reject);
+        }).then(
             (result) => {
-                setImmediate(callback, null, result.data, result.meta);
+                this._captureMetaAndStats(null, result);
+                return result;
             },
-            (err) => {
-                setImmediate(callback, err);
+            (errData) => {
+                this._captureMetaAndStats(errData);
+                throw errData.err;
             }
         );
-    } else {
-        return promise;
+
+        if (callback) {
+            promise.then(
+                (result) => {
+                    setImmediate(callback, null, result.data, result.meta);
+                },
+                (err) => {
+                    setImmediate(callback, err);
+                }
+            );
+        } else {
+            return promise;
+        }
     }
-};
+}
 
 /**
  * Execute and resolve/reject this fetcher request
