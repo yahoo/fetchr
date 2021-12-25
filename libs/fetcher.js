@@ -418,25 +418,23 @@ class Fetcher {
      * @returns {Function} middleware
      */
     static middleware(options = {}) {
-        const responseFormatter =
-            options.responseFormatter || ((req, res, data) => data);
-
         if (
             Fetcher._deprecatedServicesDefinitions.length &&
             'production' !== process.env.NODE_ENV
         ) {
-            const deprecatedServices = Fetcher._deprecatedServicesDefinitions
+            const services = Fetcher._deprecatedServicesDefinitions
                 .sort()
                 .join(', ');
 
             console.warn(`You have registered services using a deprecated property.
 Please, rename the property "name" to "resource" in the
-following services definitions: ${deprecatedServices}.`);
+following services definitions: ${services}.`);
         }
 
-        return (req, res, next) => {
-            const serviceMeta = [];
+        const { paramsProcessor, statsCollector, responseFormatter } = options;
+        const formatResponse = responseFormatter || ((req, res, data) => data);
 
+        return (req, res, next) => {
             const { body, operation, params, resource } = parseRequest(req);
 
             if (!resource) {
@@ -456,11 +454,13 @@ following services definitions: ${deprecatedServices}.`);
                 return next(badOperationError(resource, operation));
             }
 
+            const serviceMeta = [];
+
             new Request(operation, resource, {
                 req,
                 serviceMeta,
-                statsCollector: options.statsCollector,
-                paramsProcessor: options.paramsProcessor,
+                statsCollector,
+                paramsProcessor,
             })
                 .params(params)
                 .body(body)
@@ -472,11 +472,11 @@ following services definitions: ${deprecatedServices}.`);
                     if (err) {
                         const { statusCode, output } = getErrorResponse(err);
                         res.status(statusCode).json(
-                            responseFormatter(req, res, { output, meta })
+                            formatResponse(req, res, { output, meta })
                         );
                     } else {
                         res.status(meta.statusCode || 200).json(
-                            responseFormatter(req, res, { data, meta })
+                            formatResponse(req, res, { data, meta })
                         );
                     }
                 });
