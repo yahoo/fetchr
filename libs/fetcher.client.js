@@ -10,7 +10,6 @@
  * @module Fetcher
  */
 var REST = require('./util/http.client');
-var DEFAULT_GUID = 'g0';
 var DEFAULT_PATH = '/api';
 var DEFAULT_TIMEOUT = 3000;
 var MAX_URI_LEN = 2048;
@@ -228,7 +227,6 @@ function executeRequest(request, resolve, reject) {
     var use_post;
     var allow_retry_post;
     var uri = clientConfig.uri;
-    var requests;
     var data;
 
     if (!uri) {
@@ -295,20 +293,16 @@ function executeRequest(request, resolve, reject) {
         );
     }
 
-    // individual request is also normalized into a request hash to pass to api
-    requests = {};
-    requests[DEFAULT_GUID] = {
+    data = {
         resource: request.resource,
         operation: request.operation,
         params: request._params,
+        context: request.options.context,
     };
     if (request._body) {
-        requests[DEFAULT_GUID].body = request._body;
+        data.body = request._body;
     }
-    data = {
-        requests: requests,
-        context: request.options.context,
-    }; // TODO: remove. leave here for now for backward compatibility
+
     uri = request._constructPostUri(uri);
     allow_retry_post = request.operation === OP_READ;
     return REST.post(
@@ -326,13 +320,7 @@ function executeRequest(request, resolve, reject) {
             if (err) {
                 return reject(err);
             }
-            var result = parseResponse(response);
-            if (result) {
-                result = result[DEFAULT_GUID] || {};
-            } else {
-                result = {};
-            }
-            resolve(result);
+            resolve(parseResponse(response));
         }
     );
 }

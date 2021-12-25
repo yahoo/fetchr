@@ -447,9 +447,9 @@ following services definitions: ${deprecatedServices}.`);
                         }
                     });
             } else {
-                const requests = req.body && req.body.requests;
+                const request = req.body || {};
 
-                if (!requests || Object.keys(requests).length === 0) {
+                if (!request.resource) {
                     const error = fumble.http.badRequest(
                         'No resource specified',
                         {
@@ -459,9 +459,6 @@ following services definitions: ${deprecatedServices}.`);
                     error.source = 'fetchr';
                     return next(error);
                 }
-
-                const DEFAULT_GUID = 'g0';
-                const request = requests[DEFAULT_GUID];
 
                 if (!Fetcher.isRegistered(request.resource)) {
                     const resourceName = sanitizeResourceName(request.resource);
@@ -511,16 +508,12 @@ following services definitions: ${deprecatedServices}.`);
                                 responseFormatter(req, res, { output, meta })
                             );
                         } else {
-                            res.status(meta.statusCode || 200).json({
-                                [DEFAULT_GUID]: responseFormatter(req, res, {
-                                    data,
-                                    meta,
-                                }),
-                            });
+                            res.status(meta.statusCode || 200).json(
+                                responseFormatter(req, res, { data, meta })
+                            );
                         }
                     });
             }
-            // TODO: Batching and multi requests
         };
     }
 
