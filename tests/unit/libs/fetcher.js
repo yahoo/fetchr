@@ -863,7 +863,7 @@ describe('Server Fetcher', function () {
                 var request = { method: 'GET', path: '/' };
                 var error = {
                     message: 'No resource specified',
-                    debug: 'Bad resource',
+                    debug: 'No resource',
                 };
                 makeInvalidReqTest(request, error, done);
             });
@@ -934,7 +934,7 @@ describe('Server Fetcher', function () {
                 var request = { method: 'POST', body: { requests: {} } };
                 var error = {
                     message: 'No resource specified',
-                    debug: 'No resources',
+                    debug: 'No resource',
                 };
                 makeInvalidReqTest(request, error, done);
             });
@@ -943,7 +943,7 @@ describe('Server Fetcher', function () {
                 var request = { method: 'POST' };
                 var error = {
                     message: 'No resource specified',
-                    debug: 'No resources',
+                    debug: 'No resource',
                 };
                 makeInvalidReqTest(request, error, done);
             });
