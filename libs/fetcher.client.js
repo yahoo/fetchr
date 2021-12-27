@@ -223,106 +223,70 @@ Request.prototype.end = function (callback) {
  * @param {Function} reject function to call when request rejected
  */
 function executeRequest(request, resolve, reject) {
-    var clientConfig = request._clientConfig;
-    var use_post;
-    var allow_retry_post;
-    var uri = clientConfig.uri;
-    var data;
+    var callback = function (err, response) {
+        if (err) {
+            return reject(err);
+        }
+        resolve(parseResponse(response));
+    };
 
-    if (!uri) {
-        uri = clientConfig.cors
+    var config = Object.assign(
+        {
+            unsafeAllowRetry: request.operation === OP_READ,
+            xhrTimeout: request.options.xhrTimeout,
+        },
+        request._clientConfig
+    );
+    var headers = config.headers || request.options.headers || {};
+
+    var url;
+    var baseUrl = config.uri;
+    if (!baseUrl) {
+        baseUrl = config.cors
             ? request.options.corsPath
             : request.options.xhrPath;
     }
 
-    use_post = request.operation !== OP_READ || clientConfig.post_for_read;
-    // We use GET request by default for READ operation, but you can override that behavior
-    // by specifying {post_for_read: true} in your request's clientConfig
-    if (!use_post) {
-        var getUriFn = isFunction(clientConfig.constructGetUri)
-            ? clientConfig.constructGetUri
+    if (request.operation === OP_READ) {
+        var buildGetUrl = isFunction(config.constructGetUri)
+            ? config.constructGetUri
             : defaultConstructGetUri;
-        var get_uri = getUriFn.call(
-            request,
-            uri,
+
+        var context = pickContext(
+            request.options.context,
+            request.options.contextPicker,
+            'GET'
+        );
+
+        var args = [
+            baseUrl,
             request.resource,
             request._params,
-            clientConfig,
-            pickContext(
-                request.options.context,
-                request.options.contextPicker,
-                'GET'
-            )
-        );
-        /* istanbul ignore next */
-        if (!get_uri) {
-            // If a custom getUriFn returns falsy value, we should run defaultConstructGetUri
-            // TODO: Add test for this fallback
-            get_uri = defaultConstructGetUri.call(
-                request,
-                uri,
-                request.resource,
-                request._params,
-                clientConfig,
-                request.options.context
-            );
-        }
+            request._clientConfig,
+            context,
+        ];
 
-        if (get_uri.length <= MAX_URI_LEN) {
-            uri = get_uri;
-        } else {
-            use_post = true;
+        // If a custom getUriFn returns falsy value, we should run defaultConstructGetUri
+        // TODO: Add test for this fallback
+        url =
+            buildGetUrl.apply(request, args) ||
+            defaultConstructGetUri.apply(request, args);
+
+        if (url.length <= MAX_URI_LEN) {
+            return REST.get(url, headers, config, callback);
         }
     }
 
-    var customHeaders = clientConfig.headers || request.options.headers || {};
-    if (!use_post) {
-        return REST.get(
-            uri,
-            customHeaders,
-            Object.assign(
-                { xhrTimeout: request.options.xhrTimeout },
-                clientConfig
-            ),
-            function getDone(err, response) {
-                if (err) {
-                    return reject(err);
-                }
-                resolve(parseResponse(response));
-            }
-        );
-    }
-
-    data = {
-        resource: request.resource,
+    url = request._constructPostUri(baseUrl);
+    var data = {
+        body: request._body,
+        context: request.options.context,
         operation: request.operation,
         params: request._params,
-        context: request.options.context,
+        resource: request.resource,
     };
-    if (request._body) {
-        data.body = request._body;
-    }
 
-    uri = request._constructPostUri(uri);
-    allow_retry_post = request.operation === OP_READ;
-    return REST.post(
-        uri,
-        customHeaders,
-        data,
-        Object.assign(
-            {
-                unsafeAllowRetry: allow_retry_post,
-                xhrTimeout: request.options.xhrTimeout,
-            },
-            clientConfig
-        ),
-        function postDone(err, response) {
-            if (err) {
-                return reject(err);
-            }
-            resolve(parseResponse(response));
-        }
-    );
+    return REST.post(url, headers, data, config, callback);
 }
 
 /**
