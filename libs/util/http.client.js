@@ -26,6 +26,17 @@ var DEFAULT_CONFIG = {
 
 var INITIAL_ATTEMPT = 0;
 
+function parseResponse(response) {
+    if (response && response.responseText) {
+        try {
+            return JSON.parse(response.responseText);
+        } catch (e) {
+            return null;
+        }
+    }
+    return null;
+}
+
 function normalizeHeaders(rawHeaders, method, isCors) {
     var headers = Object.assign({}, rawHeaders);
 
@@ -113,7 +124,7 @@ function doRequest(method, url, headers, data, config, attempt, callback) {
         withCredentials: config.withCredentials,
         on: {
             success: function (err, response) {
-                callback(null, response);
+                callback(null, parseResponse(response));
             },
             failure: function (err, response) {
                 if (!shouldRetry(method, config, response.status, attempt)) {

@@ -19,17 +19,6 @@ var DEFAULT_TIMEOUT = 3000;
 var MAX_URI_LEN = 2048;
 var OP_READ = 'read';
 
-function parseResponse(response) {
-    if (response && response.responseText) {
-        try {
-            return JSON.parse(response.responseText);
-        } catch (e) {
-            return null;
-        }
-    }
-    return null;
-}
-
 /**
  * A RequestClient instance represents a single fetcher request.
  * The constructor requires `operation` (CRUD) and `resource`.
@@ -188,7 +177,7 @@ function executeRequest(request, resolve, reject) {
         if (err) {
             return reject(err);
         }
-        resolve(parseResponse(response));
+        resolve(response);
     };
 
     var config = Object.assign(
