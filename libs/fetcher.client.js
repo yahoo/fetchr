@@ -17,10 +17,6 @@ var OP_READ = 'read';
 var defaultConstructGetUri = require('./util/defaultConstructGetUri');
 var forEach = require('./util/forEach');
 
-function isFunction(value) {
-    return typeof value === 'function';
-}
-
 function parseResponse(response) {
     if (response && response.responseText) {
         try {
@@ -248,9 +244,10 @@ function executeRequest(request, resolve, reject) {
     }
 
     if (request.operation === OP_READ) {
-        var buildGetUrl = isFunction(config.constructGetUri)
-            ? config.constructGetUri
-            : defaultConstructGetUri;
+        var buildGetUrl =
+            typeof config.constructGetUri === 'function'
+                ? config.constructGetUri
+                : defaultConstructGetUri;
 
         var context = pickContext(
             request.options.context,
