@@ -54,6 +54,36 @@ function sanitizeResourceName(resource) {
         : resource;
 }
 
+function emptyResourceError() {
+    const error = fumble.http.badRequest('No resource specified', {
+        debug: 'No resource',
+    });
+    error.source = 'fetchr';
+    return error;
+}
+
+function badResourceError(resource) {
+    const resourceName = sanitizeResourceName(resource);
+    const errorMsg = `Resource "${resourceName}" is not registered`;
+    const error = fumble.http.badRequest(errorMsg, {
+        debug: `Bad resource ${resourceName}`,
+    });
+    error.source = 'fetchr';
+    return error;
+}
+
+function badOperationError(resource, operation) {
+    const resourceName = sanitizeResourceName(resource);
+    const error = fumble.http.badRequest(
+        `Unsupported "${resourceName}.${operation}" operation`,
+        {
+            debug: 'Only "create", "read", "update" or "delete" operations are allowed',
+        }
+    );
+    error.source = 'fetchr';
+    return error;
+}
+
 /**
  * Takes an error and resolves output and statusCode to respond to client with
  *
@@ -410,21 +440,11 @@ following services definitions: ${deprecatedServices}.`);
             const { body, operation, params, resource } = parseRequest(req);
 
             if (!resource) {
-                const error = fumble.http.badRequest('No resource specified', {
-                    debug: 'No resource',
-                });
-                error.source = 'fetchr';
-                return next(error);
+                return next(emptyResourceError());
             }
 
             if (!Fetcher.isRegistered(resource)) {
-                const resourceName = sanitizeResourceName(resource);
-                const errorMsg = `Resource "${resourceName}" is not registered`;
-                const error = fumble.http.badRequest(errorMsg, {
-                    debug: `Bad resource ${resourceName}`,
-                });
-                error.source = 'fetchr';
-                return next(error);
+                return next(badResourceError(resource));
             }
 
             if (
@@ -433,15 +453,7 @@ following services definitions: ${deprecatedServices}.`);
                 operation !== OP_DELETE &&
                 operation !== OP_READ
             ) {
-                const resourceName = sanitizeResourceName(resource);
-                const error = fumble.http.badRequest(
-                    `Unsupported "${resourceName}.${operation}" operation`,
-                    {
-                        debug: 'Only "create", "read", "update" or "delete" operations are allowed',
-                    }
-                );
-                error.source = 'fetchr';
-                return next(error);
+                return next(badOperationError(resource, operation));
             }
 
             new Request(operation, resource, {
