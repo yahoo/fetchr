@@ -126,18 +126,14 @@ describe('Server Fetcher', function () {
                         method: 'POST',
                         path: '/' + mockService.resource,
                         body: {
-                            requests: {
-                                g0: {
-                                    resource: mockService.resource,
-                                    operation: operation,
-                                    params: {
-                                        uuids: [
-                                            'cd7240d6-aeed-3fed-b63c-d7e99e21ca17',
-                                            'cd7240d6-aeed-3fed-b63c-d7e99e21ca17',
-                                        ],
-                                        id: 'asdf',
-                                    },
-                                },
+                            resource: mockService.resource,
+                            operation: operation,
+                            params: {
+                                uuids: [
+                                    'cd7240d6-aeed-3fed-b63c-d7e99e21ca17',
+                                    'cd7240d6-aeed-3fed-b63c-d7e99e21ca17',
+                                ],
+                                id: 'asdf',
                             },
                             context: {
                                 site: '',
@@ -149,22 +145,18 @@ describe('Server Fetcher', function () {
                         json: function (response) {
                             expect(response).to.exist;
                             expect(response).to.not.be.empty;
-                            var data = response.g0.data;
+                            var data = response.data;
                             expect(data).to.contain.keys('operation', 'args');
                             expect(data.operation.name).to.equal(operation);
                             expect(data.operation.success).to.be.true;
                             expect(data.args).to.contain.keys('params');
-                            expect(data.args.params).to.equal(
-                                req.body.requests.g0.params
-                            );
+                            expect(data.args.params).to.equal(req.body.params);
                             expect(statusCodeSet).to.be.true;
                             expect(stats.resource).to.eql(mockService.resource);
                             expect(stats.operation).to.eql(operation);
                             expect(stats.statusCode).to.eql(200);
                             expect(stats.time).to.be.at.least(0);
-                            expect(stats.params).to.eql(
-                                req.body.requests.g0.params
-                            );
+                            expect(stats.params).to.eql(req.body.params);
                             done();
                         },
                         status: function (code) {
@@ -199,18 +191,14 @@ describe('Server Fetcher', function () {
                         method: 'POST',
                         path: '/' + mockService.resource,
                         body: {
-                            requests: {
-                                g0: {
-                                    resource: mockService.resource,
-                                    operation: operation,
-                                    params: {
-                                        uuids: [
-                                            'cd7240d6-aeed-3fed-b63c-d7e99e21ca17',
-                                            'cd7240d6-aeed-3fed-b63c-d7e99e21ca17',
-                                        ],
-                                        id: 'asdf',
-                                    },
-                                },
+                            resource: mockService.resource,
+                            operation: operation,
+                            params: {
+                                uuids: [
+                                    'cd7240d6-aeed-3fed-b63c-d7e99e21ca17',
+                                    'cd7240d6-aeed-3fed-b63c-d7e99e21ca17',
+                                ],
+                                id: 'asdf',
                             },
                             context: {
                                 site: '',
@@ -222,23 +210,19 @@ describe('Server Fetcher', function () {
                         json: function (response) {
                             expect(response).to.exist;
                             expect(response).to.not.be.empty;
-                            var data = response.g0.data;
+                            var data = response.data;
                             expect(data).to.contain.keys('operation', 'args');
                             expect(data.operation.name).to.equal(operation);
                             expect(data.operation.success).to.be.true;
                             expect(data.args).to.contain.keys('params');
-                            expect(data.args.params).to.equal(
-                                req.body.requests.g0.params
-                            );
+                            expect(data.args.params).to.equal(req.body.params);
                             expect(headersSet).to.eql(responseHeaders);
                             expect(statusCodeSet).to.be.true;
                             expect(stats.resource).to.eql(mockService.resource);
                             expect(stats.operation).to.eql(operation);
                             expect(stats.statusCode).to.eql(201);
                             expect(stats.time).to.be.at.least(0);
-                            expect(stats.params).to.eql(
-                                req.body.requests.g0.params
-                            );
+                            expect(stats.params).to.eql(req.body.params);
                             expect(stats.err).to.eql(null);
                             done();
                         },
@@ -286,13 +270,9 @@ describe('Server Fetcher', function () {
                             method: 'POST',
                             path: '/' + mockErrorService.resource,
                             body: {
-                                requests: {
-                                    g0: {
-                                        resource: mockErrorService.resource,
-                                        operation: operation,
-                                        params: params,
-                                    },
-                                },
+                                resource: mockErrorService.resource,
+                                operation: operation,
+                                params: params,
                                 context: {
                                     site: '',
                                     device: '',
@@ -883,7 +863,7 @@ describe('Server Fetcher', function () {
                 var request = { method: 'GET', path: '/' };
                 var error = {
                     message: 'No resource specified',
-                    debug: 'Bad resource',
+                    debug: 'No resource',
                 };
                 makeInvalidReqTest(request, error, done);
             });
@@ -910,11 +890,7 @@ describe('Server Fetcher', function () {
                 var request = {
                     method: 'POST',
                     body: {
-                        requests: {
-                            g0: {
-                                resource: 'invalidService',
-                            },
-                        },
+                        resource: 'invalidService',
                     },
                 };
                 var error = {
@@ -928,11 +904,7 @@ describe('Server Fetcher', function () {
                 var request = {
                     method: 'POST',
                     body: {
-                        requests: {
-                            g0: {
-                                resource: 'invalid&Service',
-                            },
-                        },
+                        resource: 'invalid&Service',
                     },
                 };
                 var error = {
@@ -946,12 +918,8 @@ describe('Server Fetcher', function () {
                 var request = {
                     method: 'POST',
                     body: {
-                        requests: {
-                            g0: {
-                                resource: mockErrorService.resource,
-                                operation: 'constructor',
-                            },
-                        },
+                        resource: mockErrorService.resource,
+                        operation: 'constructor',
                     },
                 };
                 var error = {
@@ -966,7 +934,7 @@ describe('Server Fetcher', function () {
                 var request = { method: 'POST', body: { requests: {} } };
                 var error = {
                     message: 'No resource specified',
-                    debug: 'No resources',
+                    debug: 'No resource',
                 };
                 makeInvalidReqTest(request, error, done);
             });
@@ -975,7 +943,7 @@ describe('Server Fetcher', function () {
                 var request = { method: 'POST' };
                 var error = {
                     message: 'No resource specified',
-                    debug: 'No resources',
+                    debug: 'No resource',
                 };
                 makeInvalidReqTest(request, error, done);
             });
@@ -1061,18 +1029,14 @@ describe('Server Fetcher', function () {
                             method: 'POST',
                             path: '/' + mockService.resource,
                             body: {
-                                requests: {
-                                    g0: {
-                                        resource: mockService.resource,
-                                        operation: operation,
-                                        params: {
-                                            uuids: [
-                                                'cd7240d6-aeed-3fed-b63c-d7e99e21ca17',
-                                                'cd7240d6-aeed-3fed-b63c-d7e99e21ca17',
-                                            ],
-                                            id: 'asdf',
-                                        },
-                                    },
+                                resource: mockService.resource,
+                                operation: operation,
+                                params: {
+                                    uuids: [
+                                        'cd7240d6-aeed-3fed-b63c-d7e99e21ca17',
+                                        'cd7240d6-aeed-3fed-b63c-d7e99e21ca17',
+                                    ],
+                                    id: 'asdf',
                                 },
                                 context: {
                                     site: '',
@@ -1084,12 +1048,12 @@ describe('Server Fetcher', function () {
                             json: function (response) {
                                 expect(response).to.exist;
                                 expect(response).to.not.be.empty;
-                                expect(response.g0).to.contain.keys(
+                                expect(response).to.contain.keys(
                                     'data',
                                     'meta',
                                     'modified'
                                 );
-                                var data = response.g0.data;
+                                var data = response.data;
                                 expect(data).to.contain.keys(
                                     'operation',
                                     'args'
@@ -1098,7 +1062,7 @@ describe('Server Fetcher', function () {
                                 expect(data.operation.success).to.be.true;
                                 expect(data.args).to.contain.keys('params');
                                 expect(data.args.params).to.equal(
-                                    req.body.requests.g0.params
+                                    req.body.params
                                 );
                                 expect(statusCodeSet).to.be.true;
                                 done();
@@ -1215,18 +1179,14 @@ describe('Server Fetcher', function () {
                     ';' +
                     qs.stringify(params, ';'),
                 body: {
-                    requests: {
-                        g0: {
-                            resource: mockService.resource,
-                            operation: operation,
-                            params: {
-                                uuids: [
-                                    'cd7240d6-aeed-3fed-b63c-d7e99e21ca17',
-                                    'cd7240d6-aeed-3fed-b63c-d7e99e21ca17',
-                                ],
-                                id: 'asdf',
-                            },
-                        },
+                    resource: mockService.resource,
+                    operation: operation,
+                    params: {
+                        uuids: [
+                            'cd7240d6-aeed-3fed-b63c-d7e99e21ca17',
+                            'cd7240d6-aeed-3fed-b63c-d7e99e21ca17',
+                        ],
+                        id: 'asdf',
                     },
                     context: {
                         site: '',
@@ -1238,15 +1198,13 @@ describe('Server Fetcher', function () {
                 json: function (response) {
                     expect(response).to.exist;
                     expect(response).to.not.be.empty;
-                    expect(response.g0).to.contain.keys('data', 'meta');
-                    var data = response.g0.data;
+                    expect(response).to.contain.keys('data', 'meta');
+                    var data = response.data;
                     expect(data).to.contain.keys('operation', 'args');
                     expect(data.operation.name).to.equal(operation);
                     expect(data.operation.success).to.be.true;
                     expect(data.args).to.contain.keys('params');
-                    expect(data.args.params).to.include(
-                        req.body.requests.g0.params
-                    );
+                    expect(data.args.params).to.include(req.body.params);
                     expect(data.args.params.newParam).to.include('YES!');
                     expect(statusCodeSet).to.be.true;
                     done();

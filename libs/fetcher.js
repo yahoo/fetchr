@@ -9,7 +9,6 @@ const OP_READ = 'read';
 const OP_CREATE = 'create';
 const OP_UPDATE = 'update';
 const OP_DELETE = 'delete';
-const GET = 'GET';
 const RESOURCE_SANTIZER_REGEXP = /[^\w.]+/g;
 
 function parseValue(value) {
@@ -36,10 +35,53 @@ function parseParamValues(params) {
     }, {});
 }
 
+function parseRequest(req) {
+    if (req.method === 'GET') {
+        const path = req.path.substr(1).split(';');
+        const resource = path.shift();
+        const operation = 'read';
+        const params = parseParamValues(qs.parse(path.join('&')));
+        return { resource, operation, params };
+    }
+
+    const { resource, operation, body = {}, params } = req.body || {};
+    return { resource, operation, body, params };
+}
+
 function sanitizeResourceName(resource) {
     return resource
         ? resource.replace(RESOURCE_SANTIZER_REGEXP, '*')
         : resource;
+}
+
+function emptyResourceError() {
+    const error = fumble.http.badRequest('No resource specified', {
+        debug: 'No resource',
+    });
+    error.source = 'fetchr';
+    return error;
+}
+
+function badResourceError(resource) {
+    const resourceName = sanitizeResourceName(resource);
+    const errorMsg = `Resource "${resourceName}" is not registered`;
+    const error = fumble.http.badRequest(errorMsg, {
+        debug: `Bad resource ${resourceName}`,
+    });
+    error.source = 'fetchr';
+    return error;
+}
+
+function badOperationError(resource, operation) {
+    const resourceName = sanitizeResourceName(resource);
+    const error = fumble.http.badRequest(
+        `Unsupported "${resourceName}.${operation}" operation`,
+        {
+            debug: 'Only "create", "read", "update" or "delete" operations are allowed',
+        }
+    );
+    error.source = 'fetchr';
+    return error;
 }
 
 /**
@@ -376,151 +418,68 @@ class Fetcher {
      * @returns {Function} middleware
      */
     static middleware(options = {}) {
-        const responseFormatter =
-            options.responseFormatter || ((req, res, data) => data);
-
         if (
             Fetcher._deprecatedServicesDefinitions.length &&
             'production' !== process.env.NODE_ENV
         ) {
-            const deprecatedServices = Fetcher._deprecatedServicesDefinitions
+            const services = Fetcher._deprecatedServicesDefinitions
                 .sort()
                 .join(', ');
 
             console.warn(`You have registered services using a deprecated property.
 Please, rename the property "name" to "resource" in the
-following services definitions: ${deprecatedServices}.`);
+following services definitions: ${services}.`);
         }
 
+        const { paramsProcessor, statsCollector, responseFormatter } = options;
+        const formatResponse = responseFormatter || ((req, res, data) => data);
+
         return (req, res, next) => {
+            const { body, operation, params, resource } = parseRequest(req);
+
+            if (!resource) {
+                return next(emptyResourceError());
+            }
+
+            if (!Fetcher.isRegistered(resource)) {
+                return next(badResourceError(resource));
+            }
+
+            if (
+                operation !== OP_CREATE &&
+                operation !== OP_UPDATE &&
+                operation !== OP_DELETE &&
+                operation !== OP_READ
+            ) {
+                return next(badOperationError(resource, operation));
+            }
+
             const serviceMeta = [];
 
-            if (req.method === GET) {
-                const path = req.path.substr(1).split(';');
-                const resource = path.shift();
-
-                if (!resource) {
-                    const error = fumble.http.badRequest(
-                        'No resource specified',
-                        {
-                            debug: 'Bad resource',
-                        }
-                    );
-                    error.source = 'fetchr';
-                    return next(error);
-                }
-
-                if (!Fetcher.isRegistered(resource)) {
-                    const resourceName = sanitizeResourceName(resource);
-                    const errorMsg = `Resource "${resourceName}" is not registered`;
-                    const error = fumble.http.badRequest(errorMsg, {
-                        debug: `Bad resource ${resourceName}`,
-                    });
-                    error.source = 'fetchr';
-                    return next(error);
-                }
-
-                new Request(OP_READ, resource, {
-                    req,
-                    serviceMeta,
-                    statsCollector: options.statsCollector,
-                    paramsProcessor: options.paramsProcessor,
-                })
-                    .params(parseParamValues(qs.parse(path.join('&'))))
-                    .end((err, data) => {
-                        const meta = serviceMeta[0] || {};
-
-                        if (meta.headers) {
-                            res.set(meta.headers);
-                        }
-
-                        if (err) {
-                            const { statusCode, output } =
-                                getErrorResponse(err);
-                            res.status(statusCode).json(
-                                responseFormatter(req, res, { output, meta })
-                            );
-                        } else {
-                            res.status(meta.statusCode || 200).json(
-                                responseFormatter(req, res, { data, meta })
-                            );
-                        }
-                    });
-            } else {
-                const requests = req.body && req.body.requests;
-
-                if (!requests || Object.keys(requests).length === 0) {
-                    const error = fumble.http.badRequest(
-                        'No resource specified',
-                        {
-                            debug: 'No resources',
-                        }
-                    );
-                    error.source = 'fetchr';
-                    return next(error);
-                }
-
-                const DEFAULT_GUID = 'g0';
-                const request = requests[DEFAULT_GUID];
-
-                if (!Fetcher.isRegistered(request.resource)) {
-                    const resourceName = sanitizeResourceName(request.resource);
-                    const errorMsg = `Resource "${resourceName}" is not registered`;
-                    const error = fumble.http.badRequest(errorMsg, {
-                        debug: `Bad resource ${resourceName}`,
-                    });
-                    error.source = 'fetchr';
-                    return next(error);
-                }
-
-                const operation = request.operation;
-                if (
-                    operation !== OP_CREATE &&
-                    operation !== OP_UPDATE &&
-                    operation !== OP_DELETE &&
-                    operation !== OP_READ
-                ) {
-                    const resourceName = sanitizeResourceName(request.resource);
-                    const error = fumble.http.badRequest(
-                        `Unsupported "${resourceName}.${operation}" operation`,
-                        {
-                            debug: 'Only "create", "read", "update" or "delete" operations are allowed',
-                        }
-                    );
-                    error.source = 'fetchr';
-                    return next(error);
-                }
-
-                new Request(operation, request.resource, {
-                    req,
-                    serviceMeta,
-                    statsCollector: options.statsCollector,
-                    paramsProcessor: options.paramsProcessor,
-                })
-                    .params(request.params)
-                    .body(request.body || {})
-                    .end((err, data) => {
-                        const meta = serviceMeta[0] || {};
-                        if (meta.headers) {
-                            res.set(meta.headers);
-                        }
-                        if (err) {
-                            const { statusCode, output } =
-                                getErrorResponse(err);
-                            res.status(statusCode).json(
-                                responseFormatter(req, res, { output, meta })
-                            );
-                        } else {
-                            res.status(meta.statusCode || 200).json({
-                                [DEFAULT_GUID]: responseFormatter(req, res, {
-                                    data,
-                                    meta,
-                                }),
-                            });
-                        }
-                    });
-            }
-            // TODO: Batching and multi requests
+            new Request(operation, resource, {
+                req,
+                serviceMeta,
+                statsCollector,
+                paramsProcessor,
+            })
+                .params(params)
+                .body(body)
+                .end((err, data) => {
+                    const meta = serviceMeta[0] || {};
+                    if (meta.headers) {
+                        res.set(meta.headers);
+                    }
+                    if (err) {
+                        const { statusCode, output } = getErrorResponse(err);
+                        res.status(statusCode).json(
+                            formatResponse(req, res, { output, meta })
+                        );
+                    } else {
+                        res.status(meta.statusCode || 200).json(
+                            formatResponse(req, res, { data, meta })
+                        );
+                    }
+                });
         };
     }
 

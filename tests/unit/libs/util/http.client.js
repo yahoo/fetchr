@@ -26,7 +26,7 @@ describe('Client HTTP', function () {
     describe('#Successful requests', function () {
         beforeEach(function () {
             responseStatus = 200;
-            mockBody = 'BODY';
+            mockBody = { data: 'BODY' };
         });
 
         it('GET', function (done) {
@@ -45,8 +45,7 @@ describe('Client HTTP', function () {
                 expect(options.headers.get('X-Foo')).to.equal('foo');
                 expect(options.method).to.equal('GET');
                 expect(err).to.equal(null);
-                expect(response.statusCode).to.equal(200);
-                expect(response.responseText).to.equal('BODY');
+                expect(response).to.deep.equal(mockBody);
                 done();
             });
         });
@@ -81,7 +80,7 @@ describe('Client HTTP', function () {
     describe('#Successful CORS requests', function () {
         beforeEach(function () {
             responseStatus = 200;
-            mockBody = 'BODY';
+            mockBody = { data: 'BODY' };
             sinon.spy(global, 'Request');
         });
 
@@ -109,8 +108,7 @@ describe('Client HTTP', function () {
                     expect(options.headers.get('X-Foo')).to.equal('foo');
                     expect(options.method).to.equal('GET');
                     expect(err).to.equal(null);
-                    expect(response.statusCode).to.equal(200);
-                    expect(response.responseText).to.equal('BODY');
+                    expect(response).to.deep.equal(mockBody);
 
                     sinon.assert.calledWith(
                         Request,
