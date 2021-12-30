@@ -128,11 +128,11 @@ Request.prototype._captureMetaAndStats = function (err, result) {
 Request.prototype.end = function (callback) {
     var self = this;
     self._startTime = Date.now();
+    var request = executeRequest(self);
 
     if (callback) {
-        return executeRequest(
-            self,
-            function requestSucceeded(result) {
+        request.then(
+            function (result) {
                 self._captureMetaAndStats(null, result);
                 setTimeout(function () {
                     callback(
@@ -142,27 +142,26 @@ Request.prototype.end = function (callback) {
                     );
                 });
             },
-            function requestFailed(err) {
+            function (err) {
                 self._captureMetaAndStats(err);
                 setTimeout(function () {
                     callback(err);
                 });
             }
         );
-    } else {
-        return new Promise(function requestExecutor(resolve, reject) {
-            return executeRequest(self, resolve, reject);
-        }).then(
-            function requestSucceeded(result) {
-                self._captureMetaAndStats(null, result);
-                return result;
-            },
-            function requestFailed(err) {
-                self._captureMetaAndStats(err);
-                throw err;
-            }
-        );
+        return request;
     }
+
+    return request.then(
+        function (result) {
+            self._captureMetaAndStats(null, result);
+            return result;
+        },
+        function (err) {
+            self._captureMetaAndStats(err);
+            throw err;
+        }
+    );
 };
 
 /**
@@ -172,14 +171,7 @@ Request.prototype.end = function (callback) {
  * @param {Function} resolve function to call when request fulfilled
  * @param {Function} reject function to call when request rejected
  */
-function executeRequest(request, resolve, reject) {
-    var callback = function (err, response) {
-        if (err) {
-            return reject(err);
-        }
-        resolve(response);
-    };
-
+function executeRequest(request) {
     var config = Object.assign(
         {
             unsafeAllowRetry: request.operation === OP_READ,
@@ -224,7 +216,7 @@ function executeRequest(request, resolve, reject) {
             defaultConstructGetUri.apply(request, args);
 
         if (url.length <= MAX_URI_LEN) {
-            return REST.get(url, headers, config, callback);
+            return REST.get(url, headers, config);
         }
     }
 
@@ -237,7 +229,7 @@ function executeRequest(request, resolve, reject) {
         resource: request.resource,
     };
 
-    return REST.post(url, headers, data, config, callback);
+    return REST.post(url, headers, data, config);
 }
 
 /**
