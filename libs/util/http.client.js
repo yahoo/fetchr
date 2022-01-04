@@ -24,8 +24,6 @@ var DEFAULT_CONFIG = {
     METHOD_GET = 'GET',
     METHOD_POST = 'POST';
 
-var INITIAL_ATTEMPT = 0;
-
 function parseResponse(response) {
     if (response) {
         try {
@@ -123,6 +121,7 @@ function delayPromise(fn, delay) {
 
 function doRequest(method, url, headers, data, config, attempt) {
     var controller = new AbortController();
+    var currentAttempt = attempt || 0;
     headers = normalizeHeaders(headers, method, config.cors);
     config = mergeConfig(config);
 
@@ -136,7 +135,9 @@ function doRequest(method, url, headers, data, config, attempt) {
                 return parseResponse(response);
             },
             failure: function (err) {
-                if (!shouldRetry(method, config, err.statusCode, attempt)) {
+                if (
+                    !shouldRetry(method, config, err.statusCode, currentAttempt)
+                ) {
                     throw err;
                 }
 
@@ -146,7 +147,7 @@ function doRequest(method, url, headers, data, config, attempt) {
                 var delay =
                     Math.random() *
                     config.retry.interval *
-                    Math.pow(2, attempt);
+                    Math.pow(2, currentAttempt);
 
                 return delayPromise(function () {
                     return doRequest(
@@ -155,7 +156,7 @@ function doRequest(method, url, headers, data, config, attempt) {
                         headers,
                         data,
                         config,
-                        attempt + 1
+                        currentAttempt + 1
                     );
                 }, delay);
             },
@@ -279,14 +280,7 @@ module.exports = {
      * @param {Boolean} [config.cors] Whether to enable CORS & use XDR on IE8/9.
      */
     get: function (url, headers, config) {
-        return doRequest(
-            METHOD_GET,
-            url,
-            headers,
-            null,
-            config,
-            INITIAL_ATTEMPT
-        );
+        return doRequest(METHOD_GET, url, headers, null, config);
     },
 
     /**
@@ -303,13 +297,6 @@ module.exports = {
      * @param {Boolean} [config.cors] Whether to enable CORS & use XDR on IE8/9.
      */
     post: function (url, headers, data, config) {
-        return doRequest(
-            METHOD_POST,
-            url,
-            headers,
-            data,
-            config,
-            INITIAL_ATTEMPT
-        );
+        return doRequest(METHOD_POST, url, headers, data, config);
     },
 };
