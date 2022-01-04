@@ -247,6 +247,8 @@ function io(options) {
  * @class REST.HTTP
  */
 module.exports = {
+    default: doRequest,
+
     /**
      * @method get
      * @public
