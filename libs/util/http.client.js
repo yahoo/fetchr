@@ -133,37 +133,27 @@ function doRequest(method, url, headers, data, config, attempt) {
         headers: headers,
         withCredentials: config.withCredentials,
         data: data !== null ? JSON.stringify(data) : undefined,
-        on: {
-            success: function (response) {
-                return parseResponse(response);
-            },
-            failure: function (err) {
-                if (
-                    !shouldRetry(method, config, err.statusCode, currentAttempt)
-                ) {
-                    throw err;
-                }
+    }).catch(function (err) {
+        if (!shouldRetry(method, config, err.statusCode, currentAttempt)) {
+            throw err;
+        }
 
-                // Use exponential backoff and full jitter
-                // strategy published in
-                // https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
-                var delay =
-                    Math.random() *
-                    config.retry.interval *
-                    Math.pow(2, currentAttempt);
+        // Use exponential backoff and full jitter
+        // strategy published in
+        // https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
+        var delay =
+            Math.random() * config.retry.interval * Math.pow(2, currentAttempt);
 
-                return delayPromise(function () {
-                    return doRequest(
-                        method,
-                        url,
-                        headers,
-                        data,
-                        config,
-                        currentAttempt + 1
-                    );
-                }, delay);
-            },
-        },
+        return delayPromise(function () {
+            return doRequest(
+                method,
+                url,
+                headers,
+                data,
+                config,
+                currentAttempt + 1
+            );
+        }, delay);
     });
 
     return {
@@ -235,27 +225,22 @@ function io(options) {
 
             if (response.ok) {
                 return response.text().then(function (responseBody) {
-                    return options.on.success(responseBody);
+                    return parseResponse(responseBody);
                 });
             } else {
                 return response.text().then(function (responseBody) {
-                    return options.on.failure(
-                        new FetchrError(
-                            options,
-                            request,
-                            response,
-                            responseBody
-                        )
+                    throw new FetchrError(
+                        options,
+                        request,
+                        response,
+                        responseBody
                     );
                 });
             }
         },
         function (err) {
             clearTimeout(timeoutId);
-
-            return options.on.failure(
-                new FetchrError(options, request, null, null, err)
-            );
+            throw new FetchrError(options, request, null, null, err);
         }
     );
 }
