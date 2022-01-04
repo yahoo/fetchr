@@ -125,11 +125,14 @@ function doRequest(method, url, headers, data, config, attempt) {
     headers = normalizeHeaders(headers, method, config.cors);
     config = mergeConfig(config);
 
-    var options = {
+    var promise = io({
+        controller: controller,
+        url: url,
         method: method,
         timeout: config.timeout,
         headers: headers,
         withCredentials: config.withCredentials,
+        data: data !== null ? JSON.stringify(data) : undefined,
         on: {
             success: function (response) {
                 return parseResponse(response);
@@ -141,8 +144,8 @@ function doRequest(method, url, headers, data, config, attempt) {
                     throw err;
                 }
 
-                // Use exponential backoff and full jitter strategy
-                // published in
+                // Use exponential backoff and full jitter
+                // strategy published in
                 // https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
                 var delay =
                     Math.random() *
@@ -161,12 +164,7 @@ function doRequest(method, url, headers, data, config, attempt) {
                 }, delay);
             },
         },
-    };
-    if (data != null) {
-        options.data = JSON.stringify(data);
-    }
-
-    var promise = io(url, options, controller);
+    });
 
     return {
         then: promise.then.bind(promise),
@@ -218,17 +216,17 @@ function FetchrError(options, request, response, responseBody, originalError) {
     return err;
 }
 
-function io(url, options, controller) {
-    var request = new Request(url, {
+function io(options) {
+    var request = new Request(options.url, {
         method: options.method,
         headers: options.headers,
         body: options.data,
         credentials: options.withCredentials ? 'include' : 'same-origin',
-        signal: controller.signal,
+        signal: options.controller.signal,
     });
 
     var timeoutId = setTimeout(function () {
-        controller.abort();
+        options.controller.abort();
     }, options.timeout);
 
     return fetch(request).then(
