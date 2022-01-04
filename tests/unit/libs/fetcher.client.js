@@ -211,11 +211,11 @@ describe('Client Fetcher', function () {
                 mockery.registerMock('./util/http.client', {
                     get: function (url, headers, config, callback) {
                         expect(config.xhrTimeout).to.equal(4000);
-                        REST.get(url, headers, config, callback);
+                        return REST.get(url, headers, config, callback);
                     },
                     post: function (url, headers, body, config, callback) {
                         expect(config.xhrTimeout).to.equal(4000);
-                        REST.post(url, headers, body, config, callback);
+                        return REST.post(url, headers, body, config, callback);
                     },
                 });
                 mockery.enable({
@@ -241,12 +241,12 @@ describe('Client Fetcher', function () {
                     get: function (url, headers, config, callback) {
                         expect(config.xhrTimeout).to.equal(4000);
                         expect(config.timeout).to.equal(5000);
-                        REST.get(url, headers, config, callback);
+                        return REST.get(url, headers, config, callback);
                     },
                     post: function (url, headers, body, config, callback) {
                         expect(config.xhrTimeout).to.equal(4000);
                         expect(config.timeout).to.equal(5000);
-                        REST.post(url, headers, body, config, callback);
+                        return REST.post(url, headers, body, config, callback);
                     },
                 });
                 mockery.enable({
@@ -281,11 +281,11 @@ describe('Client Fetcher', function () {
                 mockery.registerMock('./util/http.client', {
                     get: function (url, headers, config, callback) {
                         expect(config.xhrTimeout).to.equal(3000);
-                        REST.get(url, headers, config, callback);
+                        return REST.get(url, headers, config, callback);
                     },
                     post: function (url, headers, body, config, callback) {
                         expect(config.xhrTimeout).to.equal(3000);
-                        REST.post(url, headers, body, config, callback);
+                        return REST.post(url, headers, body, config, callback);
                     },
                 });
                 mockery.enable({
@@ -405,11 +405,11 @@ describe('Client Fetcher', function () {
                 mockery.registerMock('./util/http.client', {
                     get: function (url, headers, config, callback) {
                         expect(headers['X-APP-VERSION']).to.equal(VERSION);
-                        REST.get(url, headers, config, callback);
+                        return REST.get(url, headers, config, callback);
                     },
                     post: function (url, headers, body, config, callback) {
                         expect(headers['X-APP-VERSION']).to.equal(VERSION);
-                        REST.post(url, headers, body, config, callback);
+                        return REST.post(url, headers, body, config, callback);
                     },
                 });
                 mockery.enable({
@@ -436,11 +436,11 @@ describe('Client Fetcher', function () {
                 mockery.registerMock('./util/http.client', {
                     get: function (url, headers, config, callback) {
                         expect(headers['X-APP-VERSION']).to.equal(VERSION);
-                        REST.get(url, headers, config, callback);
+                        return REST.get(url, headers, config, callback);
                     },
                     post: function (url, headers, body, config, callback) {
                         expect(headers['X-APP-VERSION']).to.equal(VERSION);
-                        REST.post(url, headers, body, config, callback);
+                        return REST.post(url, headers, body, config, callback);
                     },
                 });
                 mockery.enable({
