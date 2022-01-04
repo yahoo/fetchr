@@ -13,7 +13,7 @@ var supertest = require('supertest');
 
 var Fetcher = require('../../../libs/fetcher.client');
 var defaultConstructGetUri = require('../../../libs/util/defaultConstructGetUri');
-var REST = require('../../../libs/util/http.client');
+var httpRequest = require('../../../libs/util/http.client').default;
 var testCrud = require('../../util/testCrud');
 var defaultOptions = require('../../util/defaultOptions');
 
@@ -209,13 +209,9 @@ describe('Client Fetcher', function () {
         describe('should be configurable globally', function () {
             before(function () {
                 mockery.registerMock('./util/http.client', {
-                    get: function (url, headers, config) {
-                        expect(config.xhrTimeout).to.equal(4000);
-                        return REST.get(url, headers, config);
-                    },
-                    post: function (url, headers, body, config) {
-                        expect(config.xhrTimeout).to.equal(4000);
-                        return REST.post(url, headers, body, config);
+                    default: function (options) {
+                        expect(options.config.xhrTimeout).to.equal(4000);
+                        return httpRequest(options);
                     },
                 });
                 mockery.enable({
@@ -238,15 +234,10 @@ describe('Client Fetcher', function () {
         describe('should be configurable per each fetchr call', function () {
             before(function () {
                 mockery.registerMock('./util/http.client', {
-                    get: function (url, headers, config) {
-                        expect(config.xhrTimeout).to.equal(4000);
-                        expect(config.timeout).to.equal(5000);
-                        return REST.get(url, headers, config);
-                    },
-                    post: function (url, headers, body, config) {
-                        expect(config.xhrTimeout).to.equal(4000);
-                        expect(config.timeout).to.equal(5000);
-                        return REST.post(url, headers, body, config);
+                    default: function (options) {
+                        expect(options.config.xhrTimeout).to.equal(4000);
+                        expect(options.config.timeout).to.equal(5000);
+                        return httpRequest(options);
                     },
                 });
                 mockery.enable({
@@ -279,13 +270,9 @@ describe('Client Fetcher', function () {
         describe('should default to DEFAULT_TIMEOUT of 3000', function () {
             before(function () {
                 mockery.registerMock('./util/http.client', {
-                    get: function (url, headers, config) {
-                        expect(config.xhrTimeout).to.equal(3000);
-                        return REST.get(url, headers, config);
-                    },
-                    post: function (url, headers, body, config) {
-                        expect(config.xhrTimeout).to.equal(3000);
-                        return REST.post(url, headers, body, config);
+                    default: function (options) {
+                        expect(options.config.xhrTimeout).to.equal(3000);
+                        return httpRequest(options);
                     },
                 });
                 mockery.enable({
@@ -403,13 +390,11 @@ describe('Client Fetcher', function () {
         describe('should be configurable globally', function () {
             before(function () {
                 mockery.registerMock('./util/http.client', {
-                    get: function (url, headers, config) {
-                        expect(headers['X-APP-VERSION']).to.equal(VERSION);
-                        return REST.get(url, headers, config);
-                    },
-                    post: function (url, headers, body, config) {
-                        expect(headers['X-APP-VERSION']).to.equal(VERSION);
-                        return REST.post(url, headers, body, config);
+                    default: function (options) {
+                        expect(options.headers['X-APP-VERSION']).to.equal(
+                            VERSION
+                        );
+                        return httpRequest(options);
                     },
                 });
                 mockery.enable({
@@ -434,13 +419,11 @@ describe('Client Fetcher', function () {
         describe('should be configurable per request', function () {
             before(function () {
                 mockery.registerMock('./util/http.client', {
-                    get: function (url, headers, config) {
-                        expect(headers['X-APP-VERSION']).to.equal(VERSION);
-                        return REST.get(url, headers, config);
-                    },
-                    post: function (url, headers, body, config) {
-                        expect(headers['X-APP-VERSION']).to.equal(VERSION);
-                        return REST.post(url, headers, body, config);
+                    default: function (options) {
+                        expect(options.headers['X-APP-VERSION']).to.equal(
+                            VERSION
+                        );
+                        return httpRequest(options);
                     },
                 });
                 mockery.enable({
