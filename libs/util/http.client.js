@@ -118,49 +118,6 @@ function delayPromise(fn, delay) {
     });
 }
 
-function doRequest(options, attempt) {
-    var controller = new AbortController();
-    var currentAttempt = attempt || 0;
-    var config = mergeConfig(options.config);
-    var headers = normalizeHeaders(
-        options.headers,
-        options.method,
-        config.cors
-    );
-
-    var promise = io({
-        controller: controller,
-        url: options.url,
-        method: options.method,
-        timeout: config.timeout,
-        headers: headers,
-        withCredentials: config.withCredentials,
-        data: options.data !== null ? JSON.stringify(options.data) : undefined,
-    }).catch(function (err) {
-        if (
-            !shouldRetry(options.method, config, err.statusCode, currentAttempt)
-        ) {
-            throw err;
-        }
-
-        // Use exponential backoff and full jitter
-        // strategy published in
-        // https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
-        var delay =
-            Math.random() * config.retry.interval * Math.pow(2, currentAttempt);
-
-        return delayPromise(function () {
-            return doRequest(options, currentAttempt + 1);
-        }, delay);
-    });
-
-    return {
-        then: promise.then.bind(promise),
-        catch: promise.catch.bind(promise),
-        abort: controller.abort.bind(controller),
-    };
-}
-
 function FetchrError(options, request, response, responseBody, originalError) {
     var err = originalError;
     var status = response ? response.status : 0;
@@ -243,54 +200,47 @@ function io(options) {
     );
 }
 
-/**
- * @class REST.HTTP
- */
-module.exports = {
-    default: doRequest,
+function httpRequest(options, attempt) {
+    var controller = new AbortController();
+    var currentAttempt = attempt || 0;
+    var config = mergeConfig(options.config);
+    var headers = normalizeHeaders(
+        options.headers,
+        options.method,
+        config.cors
+    );
 
-    /**
-     * @method get
-     * @public
-     * @param {String} url
-     * @param {Object} headers
-     * @param {Object} config  The config object.
-     * @param {Number} [config.timeout=3000] Timeout (in ms) for each request
-     * @param {Object} config.retry Retry config object.
-     * @param {Number} [config.retry.interval=200] The start interval unit (in ms).
-     * @param {Number} [config.retry.maxRetries=0] Number of max retries.
-     * @param {Number} [config.retry.statusCodes=[0, 408, 999]] Response status codes to be retried.
-     * @param {Boolean} [config.cors] Whether to enable CORS & use XDR on IE8/9.
-     */
-    get: function (url, headers, config) {
-        return doRequest({
-            config: config,
-            headers: headers,
-            method: 'GET',
-            url: url,
-        });
-    },
+    var promise = io({
+        controller: controller,
+        url: options.url,
+        method: options.method,
+        timeout: config.timeout,
+        headers: headers,
+        withCredentials: config.withCredentials,
+        data: options.data !== null ? JSON.stringify(options.data) : undefined,
+    }).catch(function (err) {
+        if (
+            !shouldRetry(options.method, config, err.statusCode, currentAttempt)
+        ) {
+            throw err;
+        }
 
-    /**
-     * @method post
-     * @param {String} url
-     * @param {Object} headers
-     * @param {Mixed}  data
-     * @param {Object} config  The config object. No retries for POST.
-     * @param {Number} [config.timeout=3000] Timeout (in ms) for each request
-     * @param {Boolean} [config.unsafeAllowRetry=false] Whether to allow retrying this post.
-     * @param {Number} [config.retry.interval=200] The start interval unit (in ms).
-     * @param {Number} [config.retry.maxRetries=0] Number of max retries.
-     * @param {Number} [config.retry.statusCodes=[0, 408, 999]] Response status codes to be retried.
-     * @param {Boolean} [config.cors] Whether to enable CORS & use XDR on IE8/9.
-     */
-    post: function (url, headers, data, config) {
-        return doRequest({
-            config: config,
-            data: data,
-            headers: headers,
-            method: 'POST',
-            url: url,
-        });
-    },
-};
+        // Use exponential backoff and full jitter
+        // strategy published in
+        // https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
+        var delay =
+            Math.random() * config.retry.interval * Math.pow(2, currentAttempt);
+
+        return delayPromise(function () {
+            return httpRequest(options, currentAttempt + 1);
+        }, delay);
+    });
+
+    return {
+        then: promise.then.bind(promise),
+        catch: promise.catch.bind(promise),
+        abort: controller.abort.bind(controller),
+    };
+}
+
+module.exports.default = httpRequest;
