@@ -197,7 +197,7 @@ function executeRequest(request, resolve, reject) {
             : request.options.xhrPath;
     }
 
-    if (request.operation === OP_READ) {
+    if (request.operation === OP_READ && !config.post_for_read) {
         var buildGetUrl =
             typeof config.constructGetUri === 'function'
                 ? config.constructGetUri
