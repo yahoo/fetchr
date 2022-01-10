@@ -9,7 +9,7 @@
  * Fetcher is a CRUD interface for your data.
  * @module Fetcher
  */
-var REST = require('./util/http.client');
+var httpRequest = require('./util/http.client').default;
 var defaultConstructGetUri = require('./util/defaultConstructGetUri');
 var forEach = require('./util/forEach');
 var pickContext = require('./util/pickContext');
@@ -128,11 +128,11 @@ Request.prototype._captureMetaAndStats = function (err, result) {
 Request.prototype.end = function (callback) {
     var self = this;
     self._startTime = Date.now();
+    var request = executeRequest(self);
 
     if (callback) {
-        return executeRequest(
-            self,
-            function requestSucceeded(result) {
+        request.then(
+            function (result) {
                 self._captureMetaAndStats(null, result);
                 setTimeout(function () {
                     callback(
@@ -142,27 +142,26 @@ Request.prototype.end = function (callback) {
                     );
                 });
             },
-            function requestFailed(err) {
+            function (err) {
                 self._captureMetaAndStats(err);
                 setTimeout(function () {
                     callback(err);
                 });
             }
         );
-    } else {
-        return new Promise(function requestExecutor(resolve, reject) {
-            return executeRequest(self, resolve, reject);
-        }).then(
-            function requestSucceeded(result) {
-                self._captureMetaAndStats(null, result);
-                return result;
-            },
-            function requestFailed(err) {
-                self._captureMetaAndStats(err);
-                throw err;
-            }
-        );
+        return request;
     }
+
+    return request.then(
+        function (result) {
+            self._captureMetaAndStats(null, result);
+            return result;
+        },
+        function (err) {
+            self._captureMetaAndStats(err);
+            throw err;
+        }
+    );
 };
 
 /**
@@ -172,13 +171,8 @@ Request.prototype.end = function (callback) {
  * @param {Function} resolve function to call when request fulfilled
  * @param {Function} reject function to call when request rejected
  */
-function executeRequest(request, resolve, reject) {
-    var callback = function (err, response) {
-        if (err) {
-            return reject(err);
-        }
-        resolve(response);
-    };
+function executeRequest(request) {
+    var options = {};
 
     var config = Object.assign(
         {
@@ -187,9 +181,9 @@ function executeRequest(request, resolve, reject) {
         },
         request._clientConfig
     );
-    var headers = config.headers || request.options.headers || {};
+    options.config = config;
+    options.headers = config.headers || request.options.headers || {};
 
-    var url;
     var baseUrl = config.uri;
     if (!baseUrl) {
         baseUrl = config.cors
@@ -198,6 +192,8 @@ function executeRequest(request, resolve, reject) {
     }
 
     if (request.operation === OP_READ && !config.post_for_read) {
+        options.method = 'GET';
+
         var buildGetUrl =
             typeof config.constructGetUri === 'function'
                 ? config.constructGetUri
@@ -219,17 +215,18 @@ function executeRequest(request, resolve, reject) {
 
         // If a custom getUriFn returns falsy value, we should run defaultConstructGetUri
         // TODO: Add test for this fallback
-        url =
+        options.url =
             buildGetUrl.apply(request, args) ||
             defaultConstructGetUri.apply(request, args);
 
-        if (url.length <= MAX_URI_LEN) {
-            return REST.get(url, headers, config, callback);
+        if (options.url.length <= MAX_URI_LEN) {
+            return httpRequest(options);
         }
     }
 
-    url = request._constructPostUri(baseUrl);
-    var data = {
+    options.method = 'POST';
+    options.url = request._constructPostUri(baseUrl);
+    options.data = {
         body: request._body,
         context: request.options.context,
         operation: request.operation,
@@ -237,7 +234,7 @@ function executeRequest(request, resolve, reject) {
         resource: request.resource,
     };
 
-    return REST.post(url, headers, data, config, callback);
+    return httpRequest(options);
 }
 
 /**

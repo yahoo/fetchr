@@ -8,9 +8,13 @@
 const fetchMock = require('fetch-mock');
 const { expect } = require('chai');
 const sinon = require('sinon');
-const http = require('../../../../libs/util/http.client.js');
+const httpRequest = require('../../../../libs/util/http.client').default;
 
 describe('Client HTTP', function () {
+    const data = { data: 'data' };
+    const url = '/url';
+    const headers = { 'X-Foo': 'foo' };
+
     let responseStatus;
     let mockBody;
 
@@ -24,44 +28,46 @@ describe('Client HTTP', function () {
     });
 
     describe('#Successful requests', function () {
+        const config = {};
+
         beforeEach(function () {
             responseStatus = 200;
             mockBody = { data: 'BODY' };
         });
 
-        it('GET', function (done) {
+        it('GET', function () {
             fetchMock.get('/url', {
                 body: mockBody,
                 status: responseStatus,
             });
 
-            http.get('/url', { 'X-Foo': 'foo' }, {}, function (err, response) {
-                expect(fetchMock.calls()).to.have.lengthOf(1);
-                const options = fetchMock.lastCall().request;
-                expect(options.url).to.equal('/url');
-                expect(options.headers.get('X-Requested-With')).to.equal(
-                    'XMLHttpRequest'
-                );
-                expect(options.headers.get('X-Foo')).to.equal('foo');
-                expect(options.method).to.equal('GET');
-                expect(err).to.equal(null);
-                expect(response).to.deep.equal(mockBody);
-                done();
-            });
+            const method = 'GET';
+
+            return httpRequest({ config, headers, method, url }).then(
+                (response) => {
+                    expect(fetchMock.calls()).to.have.lengthOf(1);
+                    const options = fetchMock.lastCall().request;
+                    expect(options.url).to.equal('/url');
+                    expect(options.headers.get('X-Requested-With')).to.equal(
+                        'XMLHttpRequest'
+                    );
+                    expect(options.headers.get('X-Foo')).to.equal('foo');
+                    expect(options.method).to.equal('GET');
+                    expect(response).to.deep.equal(mockBody);
+                }
+            );
         });
 
-        it('POST', function (done) {
+        it('POST', function () {
             fetchMock.post('/url', {
                 body: mockBody,
                 status: responseStatus,
             });
 
-            http.post(
-                '/url',
-                { 'X-Foo': 'foo' },
-                { data: 'data' },
-                {},
-                function () {
+            const method = 'POST';
+
+            return httpRequest({ config, data, headers, method, url }).then(
+                () => {
                     expect(fetchMock.calls()).to.have.lengthOf(1);
                     const options = fetchMock.lastCall().request;
                     expect(options.url).to.equal('/url');
@@ -71,7 +77,6 @@ describe('Client HTTP', function () {
                     expect(options.headers.get('X-Foo')).to.equal('foo');
                     expect(options.method).to.equal('POST');
                     expect(options.body.toString()).to.eql('{"data":"data"}');
-                    done();
                 }
             );
         });
@@ -88,17 +93,17 @@ describe('Client HTTP', function () {
             Request.restore();
         });
 
-        it('GET', function (done) {
+        it('GET', function () {
             fetchMock.get('/url', {
                 body: mockBody,
                 status: responseStatus,
             });
 
-            http.get(
-                '/url',
-                { 'X-Foo': 'foo' },
-                { cors: true, withCredentials: true },
-                function (err, response) {
+            const config = { cors: true, withCredentials: true };
+            const method = 'GET';
+
+            return httpRequest({ config, headers, method, url }).then(
+                (response) => {
                     expect(fetchMock.calls()).to.have.lengthOf(1);
                     const options = fetchMock.lastCall().request;
                     expect(options.url).to.equal('/url');
@@ -107,7 +112,6 @@ describe('Client HTTP', function () {
                     );
                     expect(options.headers.get('X-Foo')).to.equal('foo');
                     expect(options.method).to.equal('GET');
-                    expect(err).to.equal(null);
                     expect(response).to.deep.equal(mockBody);
 
                     sinon.assert.calledWith(
@@ -115,24 +119,21 @@ describe('Client HTTP', function () {
                         sinon.match.string,
                         sinon.match({ credentials: 'include' })
                     );
-
-                    done();
                 }
             );
         });
 
-        it('POST', function (done) {
+        it('POST', function () {
             fetchMock.post('/url', {
                 body: mockBody,
                 status: responseStatus,
             });
 
-            http.post(
-                '/url',
-                { 'X-Foo': 'foo' },
-                { data: 'data' },
-                { cors: true },
-                function () {
+            const config = { cors: true };
+            const method = 'POST';
+
+            return httpRequest({ config, data, headers, method, url }).then(
+                () => {
                     expect(fetchMock.calls()).to.have.lengthOf(1);
                     const options = fetchMock.lastCall().request;
                     expect(options.url).to.equal('/url');
@@ -148,68 +149,66 @@ describe('Client HTTP', function () {
                         sinon.match.string,
                         sinon.match({ credentials: 'same-origin' })
                     );
-
-                    done();
                 }
             );
         });
     });
 
     describe('#400 requests', function () {
+        const requestOptions = {
+            config: {},
+            headers: { 'X-Foo': 'foo' },
+            method: 'GET',
+            url: '/url',
+        };
+
         beforeEach(function () {
             responseStatus = 400;
         });
 
-        it('GET with empty response', function (done) {
+        it('GET with empty response', function () {
             mockBody = '';
             fetchMock.get('/url', {
                 body: mockBody,
                 status: responseStatus,
             });
 
-            http.get('/url', { 'X-Foo': 'foo' }, {}, function (err) {
-                try {
-                    expect(err.message).to.equal('');
-                    expect(err.statusCode).to.equal(400);
-                    expect(err.body).to.equal('');
-                    done();
-                } catch (e) {
-                    done(e);
-                }
+            return httpRequest(requestOptions).catch((err) => {
+                expect(err.message).to.equal('');
+                expect(err.statusCode).to.equal(400);
+                expect(err.body).to.equal('');
             });
         });
 
-        it('GET with JSON response containing message attribute', function (done) {
+        it('GET with JSON response containing message attribute', function () {
             mockBody = '{"message":"some body content"}';
             fetchMock.get('/url', {
                 body: mockBody,
                 status: responseStatus,
             });
 
-            http.get('/url', { 'X-Foo': 'foo' }, {}, function (err) {
+            return httpRequest(requestOptions).catch((err) => {
                 expect(err.message).to.equal('some body content');
                 expect(err.statusCode).to.equal(400);
                 expect(err.body).to.deep.equal({
                     message: 'some body content',
                 });
-                done();
             });
         });
 
-        it('GET with JSON response not containing message attribute', function (done) {
+        it('GET with JSON response not containing message attribute', function () {
             mockBody = '{"other":"some body content"}';
             fetchMock.get('/url', {
                 body: mockBody,
                 status: responseStatus,
             });
 
-            http.get('/url', { 'X-Foo': 'foo' }, {}, function (err) {
+            return httpRequest(requestOptions).catch((err) => {
                 expect(err.message).to.equal(mockBody);
                 expect(err.statusCode).to.equal(400);
                 expect(err.body).to.deep.equal({
                     other: 'some body content',
                 });
-                done();
             });
         });
 
@@ -218,26 +217,26 @@ describe('Client HTTP', function () {
         // may remove body content
         // and replace it with 'Bad Request'
         // if not configured to allow content throughput
-        it('GET with plain text', function (done) {
+        it('GET with plain text', function () {
             mockBody = 'Bad Request';
             fetchMock.get('/url', {
                 body: mockBody,
                 status: responseStatus,
             });
 
-            http.get('/url', { 'X-Foo': 'foo' }, {}, function (err) {
+            return httpRequest(requestOptions).catch((err) => {
                 expect(err.message).to.equal(mockBody);
                 expect(err.statusCode).to.equal(400);
                 expect(err.body).to.equal(mockBody);
-                done();
             });
         });
     });
 
     describe('#Retry', function () {
+        const method = 'GET';
+
         beforeEach(function () {
             mockBody = 'BODY';
-
             responseStatus = 408;
         });
 
@@ -250,44 +249,46 @@ describe('Client HTTP', function () {
             expect(req1.request.body).to.equal(req2.request.body);
         };
 
-        it('GET with no retry', function (done) {
+        it('GET with no retry', function () {
             fetchMock.get('/url', {
                 body: mockBody,
                 status: responseStatus,
             });
 
-            http.get('/url', { 'X-Foo': 'foo' }, {}, function (err) {
-                const options = fetchMock.lastCall().request;
-                expect(fetchMock.calls()).to.have.lengthOf(1);
-                expect(options.url).to.equal('/url');
-                expect(options.headers.get('X-Requested-With')).to.equal(
-                    'XMLHttpRequest'
-                );
-                expect(options.headers.get('X-Foo')).to.equal('foo');
-                expect(options.method).to.equal('GET');
-                expect(err.message).to.equal('BODY');
-                expect(err.statusCode).to.equal(408);
-                expect(err.body).to.equal('BODY');
-                done();
-            });
+            const config = {};
+
+            return httpRequest({ config, method, headers, url }).catch(
+                (err) => {
+                    const options = fetchMock.lastCall().request;
+                    expect(fetchMock.calls()).to.have.lengthOf(1);
+                    expect(options.url).to.equal('/url');
+                    expect(options.headers.get('X-Requested-With')).to.equal(
+                        'XMLHttpRequest'
+                    );
+                    expect(options.headers.get('X-Foo')).to.equal('foo');
+                    expect(options.method).to.equal('GET');
+                    expect(err.message).to.equal('BODY');
+                    expect(err.statusCode).to.equal(408);
+                    expect(err.body).to.equal('BODY');
+                }
+            );
         });
 
-        it('GET with retry', function (done) {
+        it('GET with retry', function () {
             fetchMock.get('/url', {
                 body: mockBody,
                 status: responseStatus,
             });
 
-            http.get(
-                '/url',
-                { 'X-Foo': 'foo' },
-                {
-                    retry: {
-                        interval: 200,
-                        maxRetries: 1,
-                    },
+            const config = {
+                retry: {
+                    interval: 200,
+                    maxRetries: 1,
                 },
-                function (err) {
+            };
+
+            return httpRequest({ config, headers, method, url }).catch(
+                (err) => {
                     expect(fetchMock.calls()).to.have.lengthOf(2);
                     const options = fetchMock.lastCall().request;
                     expect(options.url).to.equal('/url');
@@ -302,43 +303,36 @@ describe('Client HTTP', function () {
 
                     const [req1, req2] = fetchMock.calls();
                     expectRequestsToBeEqual(req1, req2);
-
-                    done();
                 }
             );
         });
 
-        it('GET with retry and custom status code', function (done) {
+        it('GET with retry and custom status code', function () {
             responseStatus = 502;
             fetchMock.get('/url', {
                 body: mockBody,
                 status: responseStatus,
             });
 
-            http.get(
-                '/url',
-                { 'X-Foo': 'foo' },
-                {
-                    retry: {
-                        interval: 20,
-                        maxRetries: 1,
-                        statusCodes: [502],
-                    },
+            const config = {
+                retry: {
+                    interval: 20,
+                    maxRetries: 1,
+                    statusCodes: [502],
                 },
-                function () {
-                    expect(fetchMock.calls()).to.have.lengthOf(2);
+            };
 
-                    const [req1, req2] = fetchMock.calls();
-                    expectRequestsToBeEqual(req1, req2);
+            return httpRequest({ config, headers, method, url }).catch(() => {
+                expect(fetchMock.calls()).to.have.lengthOf(2);
 
-                    done();
-                }
-            );
+                const [req1, req2] = fetchMock.calls();
+                expectRequestsToBeEqual(req1, req2);
+            });
         });
     });
 
     describe('#Timeout', function () {
-        var config;
+        let config;
 
         beforeEach(function () {
             sinon.spy(global, 'setTimeout');
@@ -356,36 +350,40 @@ describe('Client HTTP', function () {
                 config = { xhrTimeout: 3000 };
             });
 
-            it('should use xhrTimeout for GET', function (done) {
+            it('should use xhrTimeout for GET', function () {
                 fetchMock.get('/url', {
                     body: mockBody,
                     status: responseStatus,
                 });
 
-                http.get('/url', { 'X-Foo': 'foo' }, config, function () {
-                    sinon.assert.calledWith(setTimeout, sinon.match.func, 3000);
-                    done();
-                });
-            });
+                const method = 'GET';
 
-            it('should use xhrTimeout for POST', function (done) {
-                fetchMock.post('/url', {
-                    body: mockBody,
-                    status: responseStatus,
-                });
-
-                http.post(
-                    '/url',
-                    { 'X-Foo': 'foo' },
-                    { data: 'data' },
-                    config,
-                    function () {
+                return httpRequest({ config, headers, method, url }).then(
+                    () => {
                         sinon.assert.calledWith(
                             setTimeout,
                             sinon.match.func,
                             3000
                         );
-                        done();
+                    }
+                );
+            });
+
+            it('should use xhrTimeout for POST', function () {
+                fetchMock.post('/url', {
+                    body: mockBody,
+                    status: responseStatus,
+                });
+
+                const method = 'POST';
+
+                return httpRequest({ config, data, headers, method, url }).then(
+                    () => {
+                        sinon.assert.calledWith(
+                            setTimeout,
+                            sinon.match.func,
+                            3000
+                        );
                     }
                 );
             });
@@ -396,36 +394,40 @@ describe('Client HTTP', function () {
                 config = { xhrTimeout: 3000, timeout: 6000 };
             });
 
-            it('should override default xhrTimeout for GET', function (done) {
+            it('should override default xhrTimeout for GET', function () {
                 fetchMock.get('/url', {
                     body: mockBody,
                     status: responseStatus,
                 });
 
-                http.get('/url', { 'X-Foo': 'foo' }, config, function () {
-                    sinon.assert.calledWith(setTimeout, sinon.match.func, 6000);
-                    done();
-                });
-            });
+                const method = 'GET';
 
-            it('should override default xhrTimeout for POST', function (done) {
-                fetchMock.post('/url', {
-                    body: mockBody,
-                    status: responseStatus,
-                });
-
-                http.post(
-                    '/url',
-                    { 'X-Foo': 'foo' },
-                    { data: 'data' },
-                    config,
-                    function () {
+                return httpRequest({ config, headers, method, url }).then(
+                    () => {
                         sinon.assert.calledWith(
                             setTimeout,
                             sinon.match.func,
                             6000
                         );
-                        done();
+                    }
+                );
+            });
+
+            it('should override default xhrTimeout for POST', function () {
+                fetchMock.post('/url', {
+                    body: mockBody,
+                    status: responseStatus,
+                });
+
+                const method = 'POST';
+
+                return httpRequest({ config, data, headers, method, url }).then(
+                    () => {
+                        sinon.assert.calledWith(
+                            setTimeout,
+                            sinon.match.func,
+                            6000
+                        );
                     }
                 );
             });
@@ -433,20 +435,19 @@ describe('Client HTTP', function () {
     });
 
     describe('request errors', function () {
-        it('should pass-through any xhr error', function (done) {
+        it('should pass-through any error', function () {
             responseStatus = 0;
             fetchMock.get('/url', {
                 throws: new Error('AnyError'),
                 status: responseStatus,
             });
 
-            http.get('/url', {}, { xhrTimeout: 42 }, function (err, response) {
-                expect(response).to.equal(undefined);
+            const config = { xhrTimeout: 42 };
+
+            return httpRequest({ url, headers, config }).catch((err) => {
                 expect(err.message).to.equal('AnyError');
                 expect(err.timeout).to.equal(42);
                 expect(err.url).to.equal('/url');
-
-                done();
             });
         });
     });

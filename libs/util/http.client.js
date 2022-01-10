@@ -7,29 +7,64 @@
  * @module rest-http
  */
 
-/*
- * Default configurations:
- *   timeout: timeout (in ms) for each request
- *   retry: retry related settings, such as retry interval amount (in ms), max_retries.
- *          Note that only retry only applies on GET.
- */
-var DEFAULT_CONFIG = {
-        retry: {
-            interval: 200,
-            maxRetries: 0,
-            statusCodes: [0, 408, 999],
-        },
-        unsafeAllowRetry: false,
-    },
-    METHOD_GET = 'GET',
-    METHOD_POST = 'POST';
+function normalizeHeaders(options) {
+    var headers = Object.assign({}, options.headers);
 
-var INITIAL_ATTEMPT = 0;
+    if (!options.config.cors) {
+        headers['X-Requested-With'] = 'XMLHttpRequest';
+    }
+
+    if (options.method === 'POST') {
+        headers['Content-Type'] = 'application/json';
+    }
+
+    return headers;
+}
+
+function normalizeRetry(options) {
+    var retry = {
+        interval: 200,
+        maxRetries: 0,
+        retryOnPost: false,
+        statusCodes: [0, 408, 999],
+    };
+
+    if (!options.config.retry) {
+        return retry;
+    }
+
+    if (options.config.unsafeAllowRetry) {
+        retry.retryOnPost = true;
+    }
+
+    Object.assign(retry, options.config.retry);
+
+    if (retry.max_retries) {
+        console.warn(
+            '"max_retries" is deprecated and will be removed in a future release, use "maxRetries" instead.'
+        );
+        retry.maxRetries = retry.max_retries;
+    }
+
+    return retry;
+}
+
+function normalizeOptions(options) {
+    return {
+        credentials: options.config.withCredentials ? 'include' : 'same-origin',
+        body: options.data != null ? JSON.stringify(options.data) : undefined,
+        headers: normalizeHeaders(options),
+        method: options.method,
+        retry: normalizeRetry(options),
+        timeout: options.config.timeout || options.config.xhrTimeout,
+        url: options.url,
+    };
+}
 
 function parseResponse(response) {
-    if (response && response.responseText) {
+    if (response) {
         try {
-            return JSON.parse(response.responseText);
+            return JSON.parse(response);
         } catch (e) {
             return null;
         }
@@ -37,124 +72,24 @@ function parseResponse(response) {
     return null;
 }
 
-function normalizeHeaders(rawHeaders, method, isCors) {
-    var headers = Object.assign({}, rawHeaders);
-
-    if (!isCors) {
-        headers['X-Requested-With'] = 'XMLHttpRequest';
-    }
-
-    if (method === METHOD_POST) {
-        headers['Content-Type'] = 'application/json';
-    }
-
-    return headers;
-}
-
-function shouldRetry(method, config, statusCode, attempt) {
-    if (attempt >= config.retry.maxRetries) {
+function shouldRetry(options, statusCode, attempt) {
+    if (attempt >= options.retry.maxRetries) {
         return false;
     }
 
-    if (method === METHOD_POST && !config.unsafeAllowRetry) {
+    if (options.method === 'POST' && !options.retry.retryOnPost) {
         return false;
     }
 
-    return config.retry.statusCodes.indexOf(statusCode) !== -1;
+    return options.retry.statusCodes.indexOf(statusCode) !== -1;
 }
 
-function mergeConfig(config) {
-    var cfg = {
-        unsafeAllowRetry: config.unsafeAllowRetry || false,
-        retry: {
-            interval: DEFAULT_CONFIG.retry.interval,
-            maxRetries: DEFAULT_CONFIG.retry.maxRetries,
-            statusCodes: DEFAULT_CONFIG.retry.statusCodes,
-        },
-    };
-
-    if (config) {
-        var timeout = config.timeout || config.xhrTimeout;
-        timeout = parseInt(timeout, 10);
-        if (!isNaN(timeout) && timeout > 0) {
-            cfg.timeout = timeout;
-        }
-
-        if (config.retry) {
-            var interval = parseInt(config.retry.interval, 10);
-            if (!isNaN(interval) && interval > 0) {
-                cfg.retry.interval = interval;
-            }
-
-            if (config.retry.max_retries !== undefined) {
-                console.warn(
-                    '"max_retries" is deprecated and will be removed in a future release, use "maxRetries" instead.'
-                );
-            }
-
-            var maxRetries = parseInt(
-                config.retry.max_retries || config.retry.maxRetries,
-                10
-            );
-            if (!isNaN(maxRetries) && maxRetries >= 0) {
-                cfg.retry.maxRetries = maxRetries;
-            }
-
-            if (config.retry.statusCodes) {
-                cfg.retry.statusCodes = config.retry.statusCodes;
-            }
-        }
-
-        if (config.withCredentials) {
-            cfg.withCredentials = config.withCredentials;
-        }
-    }
-
-    return cfg;
-}
-
-function doRequest(method, url, headers, data, config, attempt, callback) {
-    headers = normalizeHeaders(headers, method, config.cors);
-    config = mergeConfig(config);
-
-    var options = {
-        method: method,
-        timeout: config.timeout,
-        headers: headers,
-        withCredentials: config.withCredentials,
-        on: {
-            success: function (err, response) {
-                callback(null, parseResponse(response));
-            },
-            failure: function (err, response) {
-                if (!shouldRetry(method, config, response.status, attempt)) {
-                    callback(err);
-                } else {
-                    // Use exponential backoff and full jitter strategy published in https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
-                    var delay =
-                        Math.random() *
-                        config.retry.interval *
-                        Math.pow(2, attempt);
-
-                    setTimeout(function retryRequest() {
-                        doRequest(
-                            method,
-                            url,
-                            headers,
-                            data,
-                            config,
-                            attempt + 1,
-                            callback
-                        );
-                    }, delay);
-                }
-            },
-        },
-    };
-    if (data != null) {
-        options.data = JSON.stringify(data);
-    }
-    return io(url, options);
+function delayPromise(fn, delay) {
+    return new Promise(function (resolve, reject) {
+        setTimeout(function () {
+            fn().then(resolve, reject);
+        }, delay);
+    });
 }
 
 function FetchrError(options, request, response, responseBody, originalError) {
@@ -200,111 +135,81 @@ function FetchrError(options, request, response, responseBody, originalError) {
     return err;
 }
 
-function io(url, options) {
-    var controller = new AbortController();
-
-    var request = new Request(url, {
-        method: options.method,
+function io(options) {
+    var request = new Request(options.url, {
+        body: options.body,
+        credentials: options.credentials,
         headers: options.headers,
-        body: options.data,
-        credentials: options.withCredentials ? 'include' : 'same-origin',
-        signal: controller.signal,
+        method: options.method,
+        signal: options.controller.signal,
     });
 
     var timeoutId = setTimeout(function () {
-        controller.abort();
+        options.controller.abort();
     }, options.timeout);
 
-    fetch(request)
-        .then(function (response) {
+    return fetch(request).then(
+        function (response) {
             clearTimeout(timeoutId);
 
             if (response.ok) {
-                response.text().then(function (responseBody) {
-                    options.on.success(null, {
-                        responseText: responseBody,
-                        statusCode: response.status,
-                    });
+                return response.text().then(function (responseBody) {
+                    return parseResponse(responseBody);
                 });
             } else {
-                response.text().then(function (responseBody) {
-                    options.on.failure(
-                        new FetchrError(
-                            options,
-                            request,
-                            response,
-                            responseBody
-                        ),
-                        response
+                return response.text().then(function (responseBody) {
+                    throw new FetchrError(
+                        options,
+                        request,
+                        response,
+                        responseBody
                     );
                 });
             }
-        })
-        .catch(function (err) {
+        },
+        function (err) {
             clearTimeout(timeoutId);
-
-            options.on.failure(
-                new FetchrError(options, request, null, null, err),
-                { status: 0 }
-            );
-        });
-
-    return controller;
+            throw new FetchrError(options, request, null, null, err);
+        }
+    );
 }
 
-/**
- * @class REST.HTTP
- */
-module.exports = {
-    /**
-     * @method get
-     * @public
-     * @param {String} url
-     * @param {Object} headers
-     * @param {Object} config  The config object.
-     * @param {Number} [config.timeout=3000] Timeout (in ms) for each request
-     * @param {Object} config.retry Retry config object.
-     * @param {Number} [config.retry.interval=200] The start interval unit (in ms).
-     * @param {Number} [config.retry.maxRetries=0] Number of max retries.
-     * @param {Number} [config.retry.statusCodes=[0, 408, 999]] Response status codes to be retried.
-     * @param {Boolean} [config.cors] Whether to enable CORS & use XDR on IE8/9.
-     * @param {Function} callback The callback function, with two params (error, response)
-     */
-    get: function (url, headers, config, callback) {
-        return doRequest(
-            METHOD_GET,
-            url,
-            headers,
-            null,
-            config,
-            INITIAL_ATTEMPT,
-            callback
-        );
-    },
+function httpRequest(rawOptions, attempt) {
+    var controller = new AbortController();
+    var currentAttempt = attempt || 0;
+    var options = normalizeOptions(rawOptions);
 
-    /**
-     * @method post
-     * @param {String} url
-     * @param {Object} headers
-     * @param {Mixed}  data
-     * @param {Object} config  The config object. No retries for POST.
-     * @param {Number} [config.timeout=3000] Timeout (in ms) for each request
-     * @param {Boolean} [config.unsafeAllowRetry=false] Whether to allow retrying this post.
-     * @param {Number} [config.retry.interval=200] The start interval unit (in ms).
-     * @param {Number} [config.retry.maxRetries=0] Number of max retries.
-     * @param {Number} [config.retry.statusCodes=[0, 408, 999]] Response status codes to be retried.
-     * @param {Boolean} [config.cors] Whether to enable CORS & use XDR on IE8/9.
-     * @param {Function} callback The callback function, with two params (error, response)
-     */
-    post: function (url, headers, data, config, callback) {
-        return doRequest(
-            METHOD_POST,
-            url,
-            headers,
-            data,
-            config,
-            INITIAL_ATTEMPT,
-            callback
-        );
-    },
-};
+    var promise = io({
+        body: options.body,
+        controller: controller,
+        credentials: options.credentials,
+        headers: options.headers,
+        method: options.method,
+        timeout: options.timeout,
+        url: options.url,
+    }).catch(function (err) {
+        if (!shouldRetry(options, err.statusCode, currentAttempt)) {
+            throw err;
+        }
+
+        // Use exponential backoff and full jitter
+        // strategy published in
+        // https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
+        var delay =
+            Math.random() *
+            options.retry.interval *
+            Math.pow(2, currentAttempt);
+
+        return delayPromise(function () {
+            return httpRequest(rawOptions, currentAttempt + 1);
+        }, delay);
+    });
+
+    return {
+        then: promise.then.bind(promise),
+        catch: promise.catch.bind(promise),
+        abort: controller.abort.bind(controller),
+    };
+}
+
+module.exports.default = httpRequest;
