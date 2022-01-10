@@ -3,7 +3,7 @@ var url = require('./url');
 
 var MAX_URI_LEN = 2048;
 
-function normalizeOptions(request) {
+function requestToOptions(request) {
     var options = {};
 
     var config = Object.assign(
@@ -67,6 +67,61 @@ function normalizeOptions(request) {
     };
 
     return options;
+}
+
+function normalizeHeaders(options) {
+    var headers = Object.assign({}, options.headers);
+
+    if (!options.config.cors) {
+        headers['X-Requested-With'] = 'XMLHttpRequest';
+    }
+
+    if (options.method === 'POST') {
+        headers['Content-Type'] = 'application/json';
+    }
+
+    return headers;
+}
+
+function normalizeRetry(options) {
+    var retry = {
+        interval: 200,
+        maxRetries: 0,
+        retryOnPost: false,
+        statusCodes: [0, 408, 999],
+    };
+
+    if (!options.config.retry) {
+        return retry;
+    }
+
+    if (options.config.unsafeAllowRetry) {
+        retry.retryOnPost = true;
+    }
+
+    Object.assign(retry, options.config.retry);
+
+    if (retry.max_retries) {
+        console.warn(
+            '"max_retries" is deprecated and will be removed in a future release, use "maxRetries" instead.'
+        );
+        retry.maxRetries = retry.max_retries;
+    }
+
+    return retry;
+}
+
+function normalizeOptions(request) {
+    var options = requestToOptions(request);
+    return {
+        credentials: options.config.withCredentials ? 'include' : 'same-origin',
+        body: options.data != null ? JSON.stringify(options.data) : undefined,
+        headers: normalizeHeaders(options),
+        method: options.method,
+        retry: normalizeRetry(options),
+        timeout: options.config.timeout || options.config.xhrTimeout,
+        url: options.url,
+    };
 }
 
 module.exports = normalizeOptions;

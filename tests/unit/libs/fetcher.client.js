@@ -210,7 +210,7 @@ describe('Client Fetcher', function () {
             before(function () {
                 mockery.registerMock('./util/http.client', {
                     default: function (options) {
-                        expect(options.config.xhrTimeout).to.equal(4000);
+                        expect(options.timeout).to.equal(4000);
                         return httpRequest(options);
                     },
                 });
@@ -235,8 +235,7 @@ describe('Client Fetcher', function () {
             before(function () {
                 mockery.registerMock('./util/http.client', {
                     default: function (options) {
-                        expect(options.config.xhrTimeout).to.equal(4000);
-                        expect(options.config.timeout).to.equal(5000);
+                        expect(options.timeout).to.equal(5000);
                         return httpRequest(options);
                     },
                 });
@@ -271,7 +270,7 @@ describe('Client Fetcher', function () {
             before(function () {
                 mockery.registerMock('./util/http.client', {
                     default: function (options) {
-                        expect(options.config.xhrTimeout).to.equal(3000);
+                        expect(options.timeout).to.equal(3000);
                         return httpRequest(options);
                     },
                 });

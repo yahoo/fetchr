@@ -10,11 +10,61 @@ const { expect } = require('chai');
 const sinon = require('sinon');
 const httpRequest = require('../../../../libs/util/http.client').default;
 
-describe('Client HTTP', function () {
-    const data = { data: 'data' };
-    const url = '/url';
-    const headers = { 'X-Foo': 'foo' };
+const contentTypeHeader = { ['Content-Type']: 'application/json' };
+const customHeader = { 'X-Foo': 'foo' };
+const requestedWithHeader = { ['X-Requested-With']: 'XMLHttpRequest' };
 
+const defaultRetry = {
+    interval: 200,
+    maxRetries: 0,
+    retryOnPost: false,
+    statusCodes: [0, 408, 999],
+};
+
+const baseConfig = {
+    credentials: 'same-origin',
+    body: undefined,
+    headers: {
+        ...customHeader,
+        ...requestedWithHeader,
+    },
+    method: 'GET',
+    retry: defaultRetry,
+    timeout: 3000,
+    url: '/url',
+};
+
+const GETConfig = {
+    ...baseConfig,
+    method: 'GET',
+};
+
+const corsGETConfig = {
+    ...GETConfig,
+    credentials: 'include',
+    headers: customHeader,
+};
+
+const POSTConfig = {
+    ...baseConfig,
+    body: JSON.stringify({ data: 'data' }),
+    method: 'POST',
+    headers: {
+        ...contentTypeHeader,
+        ...customHeader,
+        ...requestedWithHeader,
+    },
+};
+
+const corsPOSTConfig = {
+    ...POSTConfig,
+    headers: {
+        ...contentTypeHeader,
+        ...customHeader,
+    },
+};
+
+describe('Client HTTP', function () {
     let responseStatus;
     let mockBody;
 
@@ -28,8 +78,6 @@ describe('Client HTTP', function () {
     });
 
     describe('#Successful requests', function () {
-        const config = {};
-
         beforeEach(function () {
             responseStatus = 200;
             mockBody = { data: 'BODY' };
@@ -41,21 +89,17 @@ describe('Client HTTP', function () {
                 status: responseStatus,
             });
 
-            const method = 'GET';
-
-            return httpRequest({ config, headers, method, url }).then(
-                (response) => {
-                    expect(fetchMock.calls()).to.have.lengthOf(1);
-                    const options = fetchMock.lastCall().request;
-                    expect(options.url).to.equal('/url');
-                    expect(options.headers.get('X-Requested-With')).to.equal(
-                        'XMLHttpRequest'
-                    );
-                    expect(options.headers.get('X-Foo')).to.equal('foo');
-                    expect(options.method).to.equal('GET');
-                    expect(response).to.deep.equal(mockBody);
-                }
-            );
+            return httpRequest(GETConfig).then((response) => {
+                expect(fetchMock.calls()).to.have.lengthOf(1);
+                const options = fetchMock.lastCall().request;
+                expect(options.url).to.equal('/url');
+                expect(options.headers.get('X-Requested-With')).to.equal(
+                    'XMLHttpRequest'
+                );
+                expect(options.headers.get('X-Foo')).to.equal('foo');
+                expect(options.method).to.equal('GET');
+                expect(response).to.deep.equal(mockBody);
+            });
         });
 
         it('POST', function () {
@@ -64,21 +108,17 @@ describe('Client HTTP', function () {
                 status: responseStatus,
             });
 
-            const method = 'POST';
-
-            return httpRequest({ config, data, headers, method, url }).then(
-                () => {
-                    expect(fetchMock.calls()).to.have.lengthOf(1);
-                    const options = fetchMock.lastCall().request;
-                    expect(options.url).to.equal('/url');
-                    expect(options.headers.get('X-Requested-With')).to.equal(
-                        'XMLHttpRequest'
-                    );
-                    expect(options.headers.get('X-Foo')).to.equal('foo');
-                    expect(options.method).to.equal('POST');
-                    expect(options.body.toString()).to.eql('{"data":"data"}');
-                }
-            );
+            return httpRequest(POSTConfig).then(() => {
+                expect(fetchMock.calls()).to.have.lengthOf(1);
+                const options = fetchMock.lastCall().request;
+                expect(options.url).to.equal('/url');
+                expect(options.headers.get('X-Requested-With')).to.equal(
+                    'XMLHttpRequest'
+                );
+                expect(options.headers.get('X-Foo')).to.equal('foo');
+                expect(options.method).to.equal('POST');
+                expect(options.body.toString()).to.equal('{"data":"data"}');
+            });
         });
     });
 
@@ -99,28 +139,23 @@ describe('Client HTTP', function () {
                 status: responseStatus,
             });
 
-            const config = { cors: true, withCredentials: true };
-            const method = 'GET';
+            return httpRequest(corsGETConfig).then((response) => {
+                expect(fetchMock.calls()).to.have.lengthOf(1);
+                const options = fetchMock.lastCall().request;
+                expect(options.url).to.equal('/url');
+                expect(options.headers).to.not.have.property(
+                    'X-Requested-With'
+                );
+                expect(options.headers.get('X-Foo')).to.equal('foo');
+                expect(options.method).to.equal('GET');
+                expect(response).to.deep.equal(mockBody);
 
-            return httpRequest({ config, headers, method, url }).then(
-                (response) => {
-                    expect(fetchMock.calls()).to.have.lengthOf(1);
-                    const options = fetchMock.lastCall().request;
-                    expect(options.url).to.equal('/url');
-                    expect(options.headers).to.not.have.property(
-                        'X-Requested-With'
-                    );
-                    expect(options.headers.get('X-Foo')).to.equal('foo');
-                    expect(options.method).to.equal('GET');
-                    expect(response).to.deep.equal(mockBody);
-
-                    sinon.assert.calledWith(
-                        Request,
-                        sinon.match.string,
-                        sinon.match({ credentials: 'include' })
-                    );
-                }
-            );
+                sinon.assert.calledWith(
+                    Request,
+                    sinon.match.string,
+                    sinon.match({ credentials: 'include' })
+                );
+            });
         });
 
         it('POST', function () {
@@ -129,39 +164,27 @@ describe('Client HTTP', function () {
                 status: responseStatus,
             });
 
-            const config = { cors: true };
-            const method = 'POST';
+            return httpRequest(corsPOSTConfig).then(() => {
+                expect(fetchMock.calls()).to.have.lengthOf(1);
+                const options = fetchMock.lastCall().request;
+                expect(options.url).to.equal('/url');
+                expect(options.headers).to.not.have.property(
+                    'X-Requested-With'
+                );
+                expect(options.headers.get('X-Foo')).to.equal('foo');
+                expect(options.method).to.equal('POST');
+                expect(options.body.toString()).to.eql('{"data":"data"}');
 
-            return httpRequest({ config, data, headers, method, url }).then(
-                () => {
-                    expect(fetchMock.calls()).to.have.lengthOf(1);
-                    const options = fetchMock.lastCall().request;
-                    expect(options.url).to.equal('/url');
-                    expect(options.headers).to.not.have.property(
-                        'X-Requested-With'
-                    );
-                    expect(options.headers.get('X-Foo')).to.equal('foo');
-                    expect(options.method).to.equal('POST');
-                    expect(options.body.toString()).to.eql('{"data":"data"}');
-
-                    sinon.assert.calledWith(
-                        Request,
-                        sinon.match.string,
-                        sinon.match({ credentials: 'same-origin' })
-                    );
-                }
-            );
+                sinon.assert.calledWith(
+                    Request,
+                    sinon.match.string,
+                    sinon.match({ credentials: 'same-origin' })
+                );
+            });
         });
     });
 
     describe('#400 requests', function () {
-        const requestOptions = {
-            config: {},
-            headers: { 'X-Foo': 'foo' },
-            method: 'GET',
-            url: '/url',
-        };
-
         beforeEach(function () {
             responseStatus = 400;
         });
@@ -173,7 +196,7 @@ describe('Client HTTP', function () {
                 status: responseStatus,
             });
 
-            return httpRequest(requestOptions).catch((err) => {
+            return httpRequest(GETConfig).catch((err) => {
                 expect(err.message).to.equal('');
                 expect(err.statusCode).to.equal(400);
                 expect(err.body).to.equal('');
@@ -187,7 +210,7 @@ describe('Client HTTP', function () {
                 status: responseStatus,
             });
 
-            return httpRequest(requestOptions).catch((err) => {
+            return httpRequest(GETConfig).catch((err) => {
                 expect(err.message).to.equal('some body content');
                 expect(err.statusCode).to.equal(400);
                 expect(err.body).to.deep.equal({
@@ -203,7 +226,7 @@ describe('Client HTTP', function () {
                 status: responseStatus,
             });
 
-            return httpRequest(requestOptions).catch((err) => {
+            return httpRequest(GETConfig).catch((err) => {
                 expect(err.message).to.equal(mockBody);
                 expect(err.statusCode).to.equal(400);
                 expect(err.body).to.deep.equal({
@@ -224,7 +247,7 @@ describe('Client HTTP', function () {
                 status: responseStatus,
             });
 
-            return httpRequest(requestOptions).catch((err) => {
+            return httpRequest(GETConfig).catch((err) => {
                 expect(err.message).to.equal(mockBody);
                 expect(err.statusCode).to.equal(400);
                 expect(err.body).to.equal(mockBody);
@@ -233,8 +256,6 @@ describe('Client HTTP', function () {
     });
 
     describe('#Retry', function () {
-        const method = 'GET';
-
         beforeEach(function () {
             mockBody = 'BODY';
             responseStatus = 408;
@@ -255,23 +276,19 @@ describe('Client HTTP', function () {
                 status: responseStatus,
             });
 
-            const config = {};
-
-            return httpRequest({ config, method, headers, url }).catch(
-                (err) => {
-                    const options = fetchMock.lastCall().request;
-                    expect(fetchMock.calls()).to.have.lengthOf(1);
-                    expect(options.url).to.equal('/url');
-                    expect(options.headers.get('X-Requested-With')).to.equal(
-                        'XMLHttpRequest'
-                    );
-                    expect(options.headers.get('X-Foo')).to.equal('foo');
-                    expect(options.method).to.equal('GET');
-                    expect(err.message).to.equal('BODY');
-                    expect(err.statusCode).to.equal(408);
-                    expect(err.body).to.equal('BODY');
-                }
-            );
+            return httpRequest(GETConfig).catch((err) => {
+                const options = fetchMock.lastCall().request;
+                expect(fetchMock.calls()).to.have.lengthOf(1);
+                expect(options.url).to.equal('/url');
+                expect(options.headers.get('X-Requested-With')).to.equal(
+                    'XMLHttpRequest'
+                );
+                expect(options.headers.get('X-Foo')).to.equal('foo');
+                expect(options.method).to.equal('GET');
+                expect(err.message).to.equal('BODY');
+                expect(err.statusCode).to.equal(408);
+                expect(err.body).to.equal('BODY');
+            });
         });
 
         it('GET with retry', function () {
@@ -281,30 +298,29 @@ describe('Client HTTP', function () {
             });
 
             const config = {
+                ...GETConfig,
                 retry: {
-                    interval: 200,
+                    ...defaultRetry,
                     maxRetries: 1,
                 },
             };
 
-            return httpRequest({ config, headers, method, url }).catch(
-                (err) => {
-                    expect(fetchMock.calls()).to.have.lengthOf(2);
-                    const options = fetchMock.lastCall().request;
-                    expect(options.url).to.equal('/url');
-                    expect(options.headers.get('X-Requested-With')).to.equal(
-                        'XMLHttpRequest'
-                    );
-                    expect(options.headers.get('X-Foo')).to.equal('foo');
-                    expect(options.method).to.equal('GET');
-                    expect(err.message).to.equal('BODY');
-                    expect(err.statusCode).to.equal(408);
-                    expect(err.body).to.equal('BODY');
+            return httpRequest(config).catch((err) => {
+                expect(fetchMock.calls()).to.have.lengthOf(2);
+                const options = fetchMock.lastCall().request;
+                expect(options.url).to.equal('/url');
+                expect(options.headers.get('X-Requested-With')).to.equal(
+                    'XMLHttpRequest'
+                );
+                expect(options.headers.get('X-Foo')).to.equal('foo');
+                expect(options.method).to.equal('GET');
+                expect(err.message).to.equal('BODY');
+                expect(err.statusCode).to.equal(408);
+                expect(err.body).to.equal('BODY');
 
-                    const [req1, req2] = fetchMock.calls();
-                    expectRequestsToBeEqual(req1, req2);
-                }
-            );
+                const [req1, req2] = fetchMock.calls();
+                expectRequestsToBeEqual(req1, req2);
+            });
         });
 
         it('GET with retry and custom status code', function () {
@@ -315,14 +331,16 @@ describe('Client HTTP', function () {
             });
 
             const config = {
+                ...GETConfig,
                 retry: {
+                    ...defaultRetry,
                     interval: 20,
                     maxRetries: 1,
                     statusCodes: [502],
                 },
             };
 
-            return httpRequest({ config, headers, method, url }).catch(() => {
+            return httpRequest(config).catch(() => {
                 expect(fetchMock.calls()).to.have.lengthOf(2);
 
                 const [req1, req2] = fetchMock.calls();
@@ -332,11 +350,8 @@ describe('Client HTTP', function () {
     });
 
     describe('#Timeout', function () {
-        let config;
-
         beforeEach(function () {
             sinon.spy(global, 'setTimeout');
-
             responseStatus = 200;
             mockBody = 'BODY';
         });
@@ -345,91 +360,25 @@ describe('Client HTTP', function () {
             setTimeout.restore();
         });
 
-        describe('#No timeout set for individual call', function () {
-            beforeEach(function () {
-                config = { xhrTimeout: 3000 };
+        it('should use xhrTimeout for GET', function () {
+            fetchMock.get('/url', {
+                body: mockBody,
+                status: responseStatus,
             });
 
-            it('should use xhrTimeout for GET', function () {
-                fetchMock.get('/url', {
-                    body: mockBody,
-                    status: responseStatus,
-                });
-
-                const method = 'GET';
-
-                return httpRequest({ config, headers, method, url }).then(
-                    () => {
-                        sinon.assert.calledWith(
-                            setTimeout,
-                            sinon.match.func,
-                            3000
-                        );
-                    }
-                );
-            });
-
-            it('should use xhrTimeout for POST', function () {
-                fetchMock.post('/url', {
-                    body: mockBody,
-                    status: responseStatus,
-                });
-
-                const method = 'POST';
-
-                return httpRequest({ config, data, headers, method, url }).then(
-                    () => {
-                        sinon.assert.calledWith(
-                            setTimeout,
-                            sinon.match.func,
-                            3000
-                        );
-                    }
-                );
+            return httpRequest(GETConfig).then(() => {
+                sinon.assert.calledWith(setTimeout, sinon.match.func, 3000);
             });
         });
 
-        describe('#Timeout set for individual call', function () {
-            beforeEach(function () {
-                config = { xhrTimeout: 3000, timeout: 6000 };
+        it('should use xhrTimeout for POST', function () {
+            fetchMock.post('/url', {
+                body: mockBody,
+                status: responseStatus,
             });
 
-            it('should override default xhrTimeout for GET', function () {
-                fetchMock.get('/url', {
-                    body: mockBody,
-                    status: responseStatus,
-                });
-
-                const method = 'GET';
-
-                return httpRequest({ config, headers, method, url }).then(
-                    () => {
-                        sinon.assert.calledWith(
-                            setTimeout,
-                            sinon.match.func,
-                            6000
-                        );
-                    }
-                );
-            });
-
-            it('should override default xhrTimeout for POST', function () {
-                fetchMock.post('/url', {
-                    body: mockBody,
-                    status: responseStatus,
-                });
-
-                const method = 'POST';
-
-                return httpRequest({ config, data, headers, method, url }).then(
-                    () => {
-                        sinon.assert.calledWith(
-                            setTimeout,
-                            sinon.match.func,
-                            6000
-                        );
-                    }
-                );
+            return httpRequest(POSTConfig).then(() => {
+                sinon.assert.calledWith(setTimeout, sinon.match.func, 3000);
             });
         });
     });
@@ -442,9 +391,12 @@ describe('Client HTTP', function () {
                 status: responseStatus,
             });
 
-            const config = { xhrTimeout: 42 };
+            const config = {
+                ...GETConfig,
+                timeout: 42,
+            };
 
-            return httpRequest({ url, headers, config }).catch((err) => {
+            return httpRequest(config).catch((err) => {
                 expect(err.message).to.equal('AnyError');
                 expect(err.timeout).to.equal(42);
                 expect(err.url).to.equal('/url');

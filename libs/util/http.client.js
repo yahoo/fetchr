@@ -7,60 +7,6 @@
  * @module rest-http
  */
 
-function normalizeHeaders(options) {
-    var headers = Object.assign({}, options.headers);
-
-    if (!options.config.cors) {
-        headers['X-Requested-With'] = 'XMLHttpRequest';
-    }
-
-    if (options.method === 'POST') {
-        headers['Content-Type'] = 'application/json';
-    }
-
-    return headers;
-}
-
-function normalizeRetry(options) {
-    var retry = {
-        interval: 200,
-        maxRetries: 0,
-        retryOnPost: false,
-        statusCodes: [0, 408, 999],
-    };
-
-    if (!options.config.retry) {
-        return retry;
-    }
-
-    if (options.config.unsafeAllowRetry) {
-        retry.retryOnPost = true;
-    }
-
-    Object.assign(retry, options.config.retry);
-
-    if (retry.max_retries) {
-        console.warn(
-            '"max_retries" is deprecated and will be removed in a future release, use "maxRetries" instead.'
-        );
-        retry.maxRetries = retry.max_retries;
-    }
-
-    return retry;
-}
-
-function normalizeOptions(options) {
-    return {
-        credentials: options.config.withCredentials ? 'include' : 'same-origin',
-        body: options.data != null ? JSON.stringify(options.data) : undefined,
-        headers: normalizeHeaders(options),
-        method: options.method,
-        retry: normalizeRetry(options),
-        timeout: options.config.timeout || options.config.xhrTimeout,
-        url: options.url,
-    };
-}
-
 function parseResponse(response) {
     if (response) {
         try {
@@ -174,10 +120,9 @@ function io(options) {
     );
 }
 
-function httpRequest(rawOptions, attempt) {
+function httpRequest(options, attempt) {
     var controller = new AbortController();
     var currentAttempt = attempt || 0;
-    var options = normalizeOptions(rawOptions);
 
     var promise = io({
         body: options.body,
@@ -201,7 +146,7 @@ function httpRequest(rawOptions, attempt) {
             Math.pow(2, currentAttempt);
 
         return delayPromise(function () {
-            return httpRequest(rawOptions, currentAttempt + 1);
+            return httpRequest(options, currentAttempt + 1);
         }, delay);
     });
 
