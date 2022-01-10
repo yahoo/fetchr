@@ -11,7 +11,6 @@
  */
 var httpRequest = require('./util/http.client').default;
 var urlUtil = require('./util/url');
-var forEach = require('./util/forEach');
 var pickContext = require('./util/pickContext');
 
 var DEFAULT_PATH = '/api';
@@ -225,7 +224,7 @@ function executeRequest(request) {
     }
 
     options.method = 'POST';
-    options.url = request._constructPostUri(baseUrl);
+    options.url = urlUtil.buildPOSTUrl(baseUrl, request);
     options.data = {
         body: request._body,
         context: request.options.context,
@@ -236,36 +235,6 @@ function executeRequest(request) {
 
     return httpRequest(options);
 }
-
-/**
- * Build a final uri by adding query params to base uri from this.context
- * @method _constructPostUri
- * @param {String} uri the base uri
- * @private
- */
-Request.prototype._constructPostUri = function (uri) {
-    var query = [];
-    var final_uri = uri;
-
-    // We only want to append the resource if the uri is the fetchr
-    // one. If users set a custom uri (through clientConfig method or
-    // by passing a config obejct to the request), we should not
-    // modify it.
-    if (!this._clientConfig.uri) {
-        final_uri += '/' + this.resource;
-    }
-
-    forEach(
-        pickContext(this.options.context, this.options.contextPicker, 'POST'),
-        function eachContext(v, k) {
-            query.push(k + '=' + encodeURIComponent(v));
-        }
-    );
-    if (query.length > 0) {
-        final_uri += '?' + query.sort().join('&');
-    }
-    return final_uri;
-};
 
 /**
  * Fetcher class for the client. Provides CRUD methods.
