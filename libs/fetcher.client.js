@@ -10,12 +10,10 @@
  * @module Fetcher
  */
 var httpRequest = require('./util/http.client').default;
-var urlUtil = require('./util/url');
-var pickContext = require('./util/pickContext');
+var normalizeOptions = require('./util/normalizeOptions');
 
 var DEFAULT_PATH = '/api';
 var DEFAULT_TIMEOUT = 3000;
-var MAX_URI_LEN = 2048;
 var OP_READ = 'read';
 
 /**
@@ -127,7 +125,7 @@ Request.prototype._captureMetaAndStats = function (err, result) {
 Request.prototype.end = function (callback) {
     var self = this;
     self._startTime = Date.now();
-    var request = executeRequest(self);
+    var request = httpRequest(normalizeOptions(self));
 
     if (callback) {
         request.then(
@@ -162,79 +160,6 @@ Request.prototype.end = function (callback) {
         }
     );
 };
-
-/**
- * Execute and resolve/reject this fetcher request
- * @method executeRequest
- * @param {Object} request Request instance object
- * @param {Function} resolve function to call when request fulfilled
- * @param {Function} reject function to call when request rejected
- */
-function executeRequest(request) {
-    var options = {};
-
-    var config = Object.assign(
-        {
-            unsafeAllowRetry: request.operation === OP_READ,
-            xhrTimeout: request.options.xhrTimeout,
-        },
-        request._clientConfig
-    );
-    options.config = config;
-    options.headers = config.headers || request.options.headers || {};
-
-    var baseUrl = config.uri;
-    if (!baseUrl) {
-        baseUrl = config.cors
-            ? request.options.corsPath
-            : request.options.xhrPath;
-    }
-
-    if (request.operation === OP_READ && !config.post_for_read) {
-        options.method = 'GET';
-
-        var buildGetUrl =
-            typeof config.constructGetUri === 'function'
-                ? config.constructGetUri
-                : urlUtil.buildGETUrl;
-
-        var context = pickContext(
-            request.options.context,
-            request.options.contextPicker,
-            'GET'
-        );
-
-        var args = [
-            baseUrl,
-            request.resource,
-            request._params,
-            request._clientConfig,
-            context,
-        ];
-
-        // If a custom getUriFn returns falsy value, we should run urlUtil.buildGETUrl
-        // TODO: Add test for this fallback
-        options.url =
-            buildGetUrl.apply(request, args) ||
-            urlUtil.buildGETUrl.apply(request, args);
-
-        if (options.url.length <= MAX_URI_LEN) {
-            return httpRequest(options);
-        }
-    }
-
-    options.method = 'POST';
-    options.url = urlUtil.buildPOSTUrl(baseUrl, request);
-    options.data = {
-        body: request._body,
-        context: request.options.context,
-        operation: request.operation,
-        params: request._params,
-        resource: request.resource,
-    };
-
-    return httpRequest(options);
-}
 
 /**
  * Fetcher class for the client. Provides CRUD methods.
