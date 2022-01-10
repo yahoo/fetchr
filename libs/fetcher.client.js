@@ -35,16 +35,8 @@ function Request(operation, resource, options) {
 
     this.operation = operation || OP_READ;
     this.resource = resource;
-    this.options = {
-        headers: options.headers,
-        xhrPath: options.xhrPath || DEFAULT_PATH,
-        xhrTimeout: options.xhrTimeout || DEFAULT_TIMEOUT,
-        corsPath: options.corsPath,
-        context: options.context || {},
-        contextPicker: options.contextPicker || {},
-        statsCollector: options.statsCollector,
-        _serviceMeta: options._serviceMeta || [],
-    };
+    this.options = options;
+
     this._params = {};
     this._body = null;
     this._clientConfig = {};
@@ -186,11 +178,11 @@ function Fetcher(options) {
     this._serviceMeta = [];
     this.options = {
         headers: options.headers,
-        xhrPath: options.xhrPath,
-        xhrTimeout: options.xhrTimeout,
+        xhrPath: options.xhrPath || DEFAULT_PATH,
+        xhrTimeout: options.xhrTimeout || DEFAULT_TIMEOUT,
         corsPath: options.corsPath,
-        context: options.context,
-        contextPicker: options.contextPicker,
+        context: options.context || {},
+        contextPicker: options.contextPicker || {},
         statsCollector: options.statsCollector,
         _serviceMeta: this._serviceMeta,
     };

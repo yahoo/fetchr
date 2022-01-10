@@ -81,17 +81,17 @@ function FetchrError(options, request, response, responseBody, originalError) {
     return err;
 }
 
-function io(options) {
+function io(options, controller) {
     var request = new Request(options.url, {
         body: options.body,
         credentials: options.credentials,
         headers: options.headers,
         method: options.method,
-        signal: options.controller.signal,
+        signal: controller.signal,
     });
 
     var timeoutId = setTimeout(function () {
-        options.controller.abort();
+        controller.abort();
     }, options.timeout);
 
     return fetch(request).then(
@@ -124,15 +124,7 @@ function httpRequest(options, attempt) {
     var controller = new AbortController();
     var currentAttempt = attempt || 0;
 
-    var promise = io({
-        body: options.body,
-        controller: controller,
-        credentials: options.credentials,
-        headers: options.headers,
-        method: options.method,
-        timeout: options.timeout,
-        url: options.url,
-    }).catch(function (err) {
+    var promise = io(options, controller).catch(function (err) {
         if (!shouldRetry(options, err.statusCode, currentAttempt)) {
             throw err;
         }
