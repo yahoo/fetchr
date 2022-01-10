@@ -10,7 +10,7 @@
  * @module Fetcher
  */
 var httpRequest = require('./util/http.client').default;
-var defaultConstructGetUri = require('./util/defaultConstructGetUri');
+var urlUtil = require('./util/url');
 var forEach = require('./util/forEach');
 var pickContext = require('./util/pickContext');
 
@@ -197,7 +197,7 @@ function executeRequest(request) {
         var buildGetUrl =
             typeof config.constructGetUri === 'function'
                 ? config.constructGetUri
-                : defaultConstructGetUri;
+                : urlUtil.buildGETUrl;
 
         var context = pickContext(
             request.options.context,
@@ -213,11 +213,11 @@ function executeRequest(request) {
             context,
         ];
 
-        // If a custom getUriFn returns falsy value, we should run defaultConstructGetUri
+        // If a custom getUriFn returns falsy value, we should run urlUtil.buildGETUrl
         // TODO: Add test for this fallback
         options.url =
             buildGetUrl.apply(request, args) ||
-            defaultConstructGetUri.apply(request, args);
+            urlUtil.buildGETUrl.apply(request, args);
 
         if (options.url.length <= MAX_URI_LEN) {
             return httpRequest(options);

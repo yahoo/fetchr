@@ -12,7 +12,7 @@ var sinon = require('sinon');
 var supertest = require('supertest');
 
 var Fetcher = require('../../../libs/fetcher.client');
-var defaultConstructGetUri = require('../../../libs/util/defaultConstructGetUri');
+var urlUtil = require('../../../libs/util/url');
 var httpRequest = require('../../../libs/util/http.client').default;
 var testCrud = require('../../util/testCrud');
 var defaultOptions = require('../../util/defaultOptions');
@@ -365,9 +365,7 @@ describe('Client Fetcher', function () {
     describe('Custom constructGetUri', () => {
         it('is called correctly', () => {
             const fetcher = new Fetcher({});
-            const constructGetUri = sinon
-                .stub()
-                .callsFake(defaultConstructGetUri);
+            const constructGetUri = sinon.stub().callsFake(urlUtil.buildGETUrl);
 
             return fetcher
                 .read('mock_service', { foo: 'bar' }, { constructGetUri })
