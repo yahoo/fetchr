@@ -7,17 +7,6 @@
  * @module rest-http
  */
 
-function parseResponse(response) {
-    if (response) {
-        try {
-            return JSON.parse(response);
-        } catch (e) {
-            return null;
-        }
-    }
-    return null;
-}
-
 function shouldRetry(options, statusCode, attempt) {
     if (attempt >= options.retry.maxRetries) {
         return false;
@@ -99,8 +88,8 @@ function io(options, controller) {
             clearTimeout(timeoutId);
 
             if (response.ok) {
-                return response.text().then(function (responseBody) {
-                    return parseResponse(responseBody);
+                return response.json().catch(function () {
+                    return null;
                 });
             } else {
                 return response.text().then(function (responseBody) {
