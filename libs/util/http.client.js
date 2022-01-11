@@ -7,26 +7,6 @@
  * @module rest-http
  */
 
-function shouldRetry(options, statusCode, attempt) {
-    if (attempt >= options.retry.maxRetries) {
-        return false;
-    }
-
-    if (options.method === 'POST' && !options.retry.retryOnPost) {
-        return false;
-    }
-
-    return options.retry.statusCodes.indexOf(statusCode) !== -1;
-}
-
-function delayPromise(fn, delay) {
-    return new Promise(function (resolve, reject) {
-        setTimeout(function () {
-            fn().then(resolve, reject);
-        }, delay);
-    });
-}
-
 function FetchrError(options, request, response, responseBody, originalError) {
     var err = originalError;
     var status = response ? response.status : 0;
@@ -68,6 +48,26 @@ function FetchrError(options, request, response, responseBody, originalError) {
     err.url = request.url;
 
     return err;
+}
+
+function shouldRetry(options, statusCode, attempt) {
+    if (attempt >= options.retry.maxRetries) {
+        return false;
+    }
+
+    if (options.method === 'POST' && !options.retry.retryOnPost) {
+        return false;
+    }
+
+    return options.retry.statusCodes.indexOf(statusCode) !== -1;
+}
+
+function delayPromise(fn, delay) {
+    return new Promise(function (resolve, reject) {
+        setTimeout(function () {
+            fn().then(resolve, reject);
+        }, delay);
+    });
 }
 
 function io(options, controller) {
