@@ -14,7 +14,6 @@ var normalizeOptions = require('./util/normalizeOptions');
 
 var DEFAULT_PATH = '/api';
 var DEFAULT_TIMEOUT = 3000;
-var OP_READ = 'read';
 
 /**
  * A RequestClient instance represents a single fetcher request.
@@ -33,7 +32,7 @@ function Request(operation, resource, options) {
         throw new Error('Resource is required for a fetcher request');
     }
 
-    this.operation = operation || OP_READ;
+    this.operation = operation;
     this.resource = resource;
     this.options = options;
 
