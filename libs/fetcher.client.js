@@ -3,8 +3,6 @@
  * Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
  */
 
-/*jslint plusplus:true,nomen:true */
-
 /**
  * Fetcher is a CRUD interface for your data.
  * @module Fetcher
