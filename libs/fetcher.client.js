@@ -3,21 +3,15 @@
  * Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
  */
 
-/*jslint plusplus:true,nomen:true */
-
 /**
  * Fetcher is a CRUD interface for your data.
  * @module Fetcher
  */
-var httpRequest = require('./util/http.client').default;
-var defaultConstructGetUri = require('./util/defaultConstructGetUri');
-var forEach = require('./util/forEach');
-var pickContext = require('./util/pickContext');
+var httpRequest = require('./util/httpRequest');
+var normalizeOptions = require('./util/normalizeOptions');
 
 var DEFAULT_PATH = '/api';
 var DEFAULT_TIMEOUT = 3000;
-var MAX_URI_LEN = 2048;
-var OP_READ = 'read';
 
 /**
  * A RequestClient instance represents a single fetcher request.
@@ -36,18 +30,10 @@ function Request(operation, resource, options) {
         throw new Error('Resource is required for a fetcher request');
     }
 
-    this.operation = operation || OP_READ;
+    this.operation = operation;
     this.resource = resource;
-    this.options = {
-        headers: options.headers,
-        xhrPath: options.xhrPath || DEFAULT_PATH,
-        xhrTimeout: options.xhrTimeout || DEFAULT_TIMEOUT,
-        corsPath: options.corsPath,
-        context: options.context || {},
-        contextPicker: options.contextPicker || {},
-        statsCollector: options.statsCollector,
-        _serviceMeta: options._serviceMeta || [],
-    };
+    this.options = options;
+
     this._params = {};
     this._body = null;
     this._clientConfig = {};
@@ -128,7 +114,7 @@ Request.prototype._captureMetaAndStats = function (err, result) {
 Request.prototype.end = function (callback) {
     var self = this;
     self._startTime = Date.now();
-    var request = executeRequest(self);
+    var request = httpRequest(normalizeOptions(self));
 
     if (callback) {
         request.then(
@@ -165,109 +151,6 @@ Request.prototype.end = function (callback) {
 };
 
 /**
- * Execute and resolve/reject this fetcher request
- * @method executeRequest
- * @param {Object} request Request instance object
- * @param {Function} resolve function to call when request fulfilled
- * @param {Function} reject function to call when request rejected
- */
-function executeRequest(request) {
-    var options = {};
-
-    var config = Object.assign(
-        {
-            unsafeAllowRetry: request.operation === OP_READ,
-            xhrTimeout: request.options.xhrTimeout,
-        },
-        request._clientConfig
-    );
-    options.config = config;
-    options.headers = config.headers || request.options.headers || {};
-
-    var baseUrl = config.uri;
-    if (!baseUrl) {
-        baseUrl = config.cors
-            ? request.options.corsPath
-            : request.options.xhrPath;
-    }
-
-    if (request.operation === OP_READ && !config.post_for_read) {
-        options.method = 'GET';
-
-        var buildGetUrl =
-            typeof config.constructGetUri === 'function'
-                ? config.constructGetUri
-                : defaultConstructGetUri;
-
-        var context = pickContext(
-            request.options.context,
-            request.options.contextPicker,
-            'GET'
-        );
-
-        var args = [
-            baseUrl,
-            request.resource,
-            request._params,
-            request._clientConfig,
-            context,
-        ];
-
-        // If a custom getUriFn returns falsy value, we should run defaultConstructGetUri
-        // TODO: Add test for this fallback
-        options.url =
-            buildGetUrl.apply(request, args) ||
-            defaultConstructGetUri.apply(request, args);
-
-        if (options.url.length <= MAX_URI_LEN) {
-            return httpRequest(options);
-        }
-    }
-
-    options.method = 'POST';
-    options.url = request._constructPostUri(baseUrl);
-    options.data = {
-        body: request._body,
-        context: request.options.context,
-        operation: request.operation,
-        params: request._params,
-        resource: request.resource,
-    };
-
-    return httpRequest(options);
-}
-
-/**
- * Build a final uri by adding query params to base uri from this.context
- * @method _constructPostUri
- * @param {String} uri the base uri
- * @private
- */
-Request.prototype._constructPostUri = function (uri) {
-    var query = [];
-    var final_uri = uri;
-
-    // We only want to append the resource if the uri is the fetchr
-    // one. If users set a custom uri (through clientConfig method or
-    // by passing a config obejct to the request), we should not
-    // modify it.
-    if (!this._clientConfig.uri) {
-        final_uri += '/' + this.resource;
-    }
-
-    forEach(
-        pickContext(this.options.context, this.options.contextPicker, 'POST'),
-        function eachContext(v, k) {
-            query.push(k + '=' + encodeURIComponent(v));
-        }
-    );
-    if (query.length > 0) {
-        final_uri += '?' + query.sort().join('&');
-    }
-    return final_uri;
-};
-
-/**
  * Fetcher class for the client. Provides CRUD methods.
  * @class FetcherClient
  * @param {Object} options configuration options for Fetcher
@@ -292,11 +175,11 @@ function Fetcher(options) {
     this._serviceMeta = [];
     this.options = {
         headers: options.headers,
-        xhrPath: options.xhrPath,
-        xhrTimeout: options.xhrTimeout,
+        xhrPath: options.xhrPath || DEFAULT_PATH,
+        xhrTimeout: options.xhrTimeout || DEFAULT_TIMEOUT,
         corsPath: options.corsPath,
-        context: options.context,
-        contextPicker: options.contextPicker,
+        context: options.context || {},
+        contextPicker: options.contextPicker || {},
         statsCollector: options.statsCollector,
         _serviceMeta: this._serviceMeta,
     };

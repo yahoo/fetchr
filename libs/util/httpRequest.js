@@ -4,93 +4,8 @@
  */
 
 /**
- * @module rest-http
+ * @module httpRequest
  */
-
-function normalizeHeaders(options) {
-    var headers = Object.assign({}, options.headers);
-
-    if (!options.config.cors) {
-        headers['X-Requested-With'] = 'XMLHttpRequest';
-    }
-
-    if (options.method === 'POST') {
-        headers['Content-Type'] = 'application/json';
-    }
-
-    return headers;
-}
-
-function normalizeRetry(options) {
-    var retry = {
-        interval: 200,
-        maxRetries: 0,
-        retryOnPost: false,
-        statusCodes: [0, 408, 999],
-    };
-
-    if (!options.config.retry) {
-        return retry;
-    }
-
-    if (options.config.unsafeAllowRetry) {
-        retry.retryOnPost = true;
-    }
-
-    Object.assign(retry, options.config.retry);
-
-    if (retry.max_retries) {
-        console.warn(
-            '"max_retries" is deprecated and will be removed in a future release, use "maxRetries" instead.'
-        );
-        retry.maxRetries = retry.max_retries;
-    }
-
-    return retry;
-}
-
-function normalizeOptions(options) {
-    return {
-        credentials: options.config.withCredentials ? 'include' : 'same-origin',
-        body: options.data != null ? JSON.stringify(options.data) : undefined,
-        headers: normalizeHeaders(options),
-        method: options.method,
-        retry: normalizeRetry(options),
-        timeout: options.config.timeout || options.config.xhrTimeout,
-        url: options.url,
-    };
-}
-
-function parseResponse(response) {
-    if (response) {
-        try {
-            return JSON.parse(response);
-        } catch (e) {
-            return null;
-        }
-    }
-    return null;
-}
-
-function shouldRetry(options, statusCode, attempt) {
-    if (attempt >= options.retry.maxRetries) {
-        return false;
-    }
-
-    if (options.method === 'POST' && !options.retry.retryOnPost) {
-        return false;
-    }
-
-    return options.retry.statusCodes.indexOf(statusCode) !== -1;
-}
-
-function delayPromise(fn, delay) {
-    return new Promise(function (resolve, reject) {
-        setTimeout(function () {
-            fn().then(resolve, reject);
-        }, delay);
-    });
-}
 
 function FetchrError(options, request, response, responseBody, originalError) {
     var err = originalError;
@@ -135,17 +50,37 @@ function FetchrError(options, request, response, responseBody, originalError) {
     return err;
 }
 
-function io(options) {
+function shouldRetry(options, statusCode, attempt) {
+    if (attempt >= options.retry.maxRetries) {
+        return false;
+    }
+
+    if (options.method === 'POST' && !options.retry.retryOnPost) {
+        return false;
+    }
+
+    return options.retry.statusCodes.indexOf(statusCode) !== -1;
+}
+
+function delayPromise(fn, delay) {
+    return new Promise(function (resolve, reject) {
+        setTimeout(function () {
+            fn().then(resolve, reject);
+        }, delay);
+    });
+}
+
+function io(options, controller) {
     var request = new Request(options.url, {
         body: options.body,
         credentials: options.credentials,
         headers: options.headers,
         method: options.method,
-        signal: options.controller.signal,
+        signal: controller.signal,
     });
 
     var timeoutId = setTimeout(function () {
-        options.controller.abort();
+        controller.abort();
     }, options.timeout);
 
     return fetch(request).then(
@@ -153,8 +88,8 @@ function io(options) {
             clearTimeout(timeoutId);
 
             if (response.ok) {
-                return response.text().then(function (responseBody) {
-                    return parseResponse(responseBody);
+                return response.json().catch(function () {
+                    return null;
                 });
             } else {
                 return response.text().then(function (responseBody) {
@@ -174,20 +109,11 @@ function io(options) {
     );
 }
 
-function httpRequest(rawOptions, attempt) {
+function httpRequest(options, attempt) {
     var controller = new AbortController();
     var currentAttempt = attempt || 0;
-    var options = normalizeOptions(rawOptions);
 
-    var promise = io({
-        body: options.body,
-        controller: controller,
-        credentials: options.credentials,
-        headers: options.headers,
-        method: options.method,
-        timeout: options.timeout,
-        url: options.url,
-    }).catch(function (err) {
+    var promise = io(options, controller).catch(function (err) {
         if (!shouldRetry(options, err.statusCode, currentAttempt)) {
             throw err;
         }
@@ -201,7 +127,7 @@ function httpRequest(rawOptions, attempt) {
             Math.pow(2, currentAttempt);
 
         return delayPromise(function () {
-            return httpRequest(rawOptions, currentAttempt + 1);
+            return httpRequest(options, currentAttempt + 1);
         }, delay);
     });
 
@@ -212,4 +138,4 @@ function httpRequest(rawOptions, attempt) {
     };
 }
 
-module.exports.default = httpRequest;
+module.exports = httpRequest;
