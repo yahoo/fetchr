@@ -8,7 +8,7 @@
 const fetchMock = require('fetch-mock');
 const { expect } = require('chai');
 const sinon = require('sinon');
-const httpRequest = require('../../../../libs/util/http.client').default;
+const httpRequest = require('../../../../libs/util/httpRequest');
 
 const contentTypeHeader = { ['Content-Type']: 'application/json' };
 const customHeader = { 'X-Foo': 'foo' };

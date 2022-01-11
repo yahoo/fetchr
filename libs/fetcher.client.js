@@ -7,7 +7,7 @@
  * Fetcher is a CRUD interface for your data.
  * @module Fetcher
  */
-var httpRequest = require('./util/http.client').default;
+var httpRequest = require('./util/httpRequest');
 var normalizeOptions = require('./util/normalizeOptions');
 
 var DEFAULT_PATH = '/api';

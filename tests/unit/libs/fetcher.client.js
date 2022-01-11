@@ -13,7 +13,7 @@ var supertest = require('supertest');
 
 var Fetcher = require('../../../libs/fetcher.client');
 var urlUtil = require('../../../libs/util/url');
-var httpRequest = require('../../../libs/util/http.client').default;
+var httpRequest = require('../../../libs/util/httpRequest');
 var testCrud = require('../../util/testCrud');
 var defaultOptions = require('../../util/defaultOptions');
 
@@ -208,11 +208,9 @@ describe('Client Fetcher', function () {
     describe('Timeout', function () {
         describe('should be configurable globally', function () {
             before(function () {
-                mockery.registerMock('./util/http.client', {
-                    default: function (options) {
-                        expect(options.timeout).to.equal(4000);
-                        return httpRequest(options);
-                    },
+                mockery.registerMock('./util/httpRequest', function (options) {
+                    expect(options.timeout).to.equal(4000);
+                    return httpRequest(options);
                 });
                 mockery.enable({
                     useCleanCache: true,
@@ -226,18 +224,16 @@ describe('Client Fetcher', function () {
             });
             testCrud(params, body, config, callback, resolve, reject);
             after(function () {
-                mockery.deregisterMock('./util/http.client');
+                mockery.deregisterMock('./util/httpRequest');
                 mockery.disable();
             });
         });
 
         describe('should be configurable per each fetchr call', function () {
             before(function () {
-                mockery.registerMock('./util/http.client', {
-                    default: function (options) {
-                        expect(options.timeout).to.equal(5000);
-                        return httpRequest(options);
-                    },
+                mockery.registerMock('./util/httpRequest', function (options) {
+                    expect(options.timeout).to.equal(5000);
+                    return httpRequest(options);
                 });
                 mockery.enable({
                     useCleanCache: true,
@@ -261,18 +257,16 @@ describe('Client Fetcher', function () {
                 reject: reject,
             });
             after(function () {
-                mockery.deregisterMock('./util/http.client');
+                mockery.deregisterMock('./util/httpRequest');
                 mockery.disable();
             });
         });
 
         describe('should default to DEFAULT_TIMEOUT of 3000', function () {
             before(function () {
-                mockery.registerMock('./util/http.client', {
-                    default: function (options) {
-                        expect(options.timeout).to.equal(3000);
-                        return httpRequest(options);
-                    },
+                mockery.registerMock('./util/httpRequest', function (options) {
+                    expect(options.timeout).to.equal(3000);
+                    return httpRequest(options);
                 });
                 mockery.enable({
                     useCleanCache: true,
@@ -285,7 +279,7 @@ describe('Client Fetcher', function () {
             });
             testCrud(params, body, config, callback, resolve, reject);
             after(function () {
-                mockery.deregisterMock('./util/http.client');
+                mockery.deregisterMock('./util/httpRequest');
                 mockery.disable();
             });
         });
@@ -386,13 +380,9 @@ describe('Client Fetcher', function () {
 
         describe('should be configurable globally', function () {
             before(function () {
-                mockery.registerMock('./util/http.client', {
-                    default: function (options) {
-                        expect(options.headers['X-APP-VERSION']).to.equal(
-                            VERSION
-                        );
-                        return httpRequest(options);
-                    },
+                mockery.registerMock('./util/httpRequest', function (options) {
+                    expect(options.headers['X-APP-VERSION']).to.equal(VERSION);
+                    return httpRequest(options);
                 });
                 mockery.enable({
                     useCleanCache: true,
@@ -408,20 +398,16 @@ describe('Client Fetcher', function () {
             });
             testCrud(params, body, config, callback, resolve, reject);
             after(function () {
-                mockery.deregisterMock('./util/http.client');
+                mockery.deregisterMock('./util/httpRequest');
                 mockery.disable();
             });
         });
 
         describe('should be configurable per request', function () {
             before(function () {
-                mockery.registerMock('./util/http.client', {
-                    default: function (options) {
-                        expect(options.headers['X-APP-VERSION']).to.equal(
-                            VERSION
-                        );
-                        return httpRequest(options);
-                    },
+                mockery.registerMock('./util/httpRequest', function (options) {
+                    expect(options.headers['X-APP-VERSION']).to.equal(VERSION);
+                    return httpRequest(options);
                 });
                 mockery.enable({
                     useCleanCache: true,
@@ -447,7 +433,7 @@ describe('Client Fetcher', function () {
                 reject: reject,
             });
             after(function () {
-                mockery.deregisterMock('./util/http.client');
+                mockery.deregisterMock('./util/httpRequest');
                 mockery.disable();
             });
         });

@@ -4,7 +4,7 @@
  */
 
 /**
- * @module rest-http
+ * @module httpRequest
  */
 
 function FetchrError(options, request, response, responseBody, originalError) {
@@ -138,4 +138,4 @@ function httpRequest(options, attempt) {
     };
 }
 
-module.exports.default = httpRequest;
+module.exports = httpRequest;
