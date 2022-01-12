@@ -13,21 +13,15 @@ function FetchrError(options, request, response, responseBody, originalError) {
     var errMessage, errBody;
 
     if (!err && (status === 0 || (status >= 400 && status < 600))) {
-        if (typeof responseBody === 'string') {
-            try {
-                errBody = JSON.parse(responseBody);
-                if (errBody.message) {
-                    errMessage = errBody.message;
-                } else {
-                    errMessage = responseBody;
-                }
-            } catch (e) {
+        try {
+            errBody = JSON.parse(responseBody);
+            if (errBody.message) {
+                errMessage = errBody.message;
+            } else {
                 errMessage = responseBody;
             }
-        } else {
-            errMessage = status
-                ? 'Error ' + status
-                : 'Internal Fetchr XMLHttpRequest Error';
+        } catch (e) {
+            errMessage = responseBody;
         }
 
         err = new Error(errMessage);
