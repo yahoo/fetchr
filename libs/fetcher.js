@@ -11,6 +11,13 @@ const OP_UPDATE = 'update';
 const OP_DELETE = 'delete';
 const RESOURCE_SANTIZER_REGEXP = /[^\w.]+/g;
 
+class FetchrError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'FetchrError';
+    }
+}
+
 function parseValue(value) {
     // take care of value of type: array, object
     try {
@@ -132,7 +139,7 @@ class Request {
      */
     constructor(operation, resource, options = {}) {
         if (!resource) {
-            throw new Error('Resource is required for a fetcher request');
+            throw new FetchrError('Resource is required for a fetcher request');
         }
 
         this.operation = operation || OP_READ;
@@ -278,7 +285,7 @@ function executeRequest(request, resolve, reject) {
     try {
         const service = Fetcher.getService(request.resource);
         if (!service[op]) {
-            throw new Error(
+            throw new FetchrError(
                 `operation: ${op} is undefined on service: ${request.resource}`
             );
         }
@@ -339,7 +346,7 @@ class Fetcher {
      */
     static registerService(service) {
         if (!service) {
-            throw new Error(
+            throw new FetchrError(
                 'Fetcher.registerService requires a service definition (ex. registerService(service)).'
             );
         }
@@ -351,7 +358,7 @@ class Fetcher {
             resource = service.name;
             Fetcher._deprecatedServicesDefinitions.push(resource);
         } else {
-            throw new Error(
+            throw new FetchrError(
                 '"resource" property is missing in service definition.'
             );
         }
@@ -383,7 +390,7 @@ class Fetcher {
         //Access service by name
         const service = Fetcher.isRegistered(name);
         if (!service) {
-            throw new Error(
+            throw new FetchrError(
                 `Service "${sanitizeResourceName(name)}" could not be found`
             );
         }

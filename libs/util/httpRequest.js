@@ -8,41 +8,36 @@
  */
 
 function FetchrError(options, request, response, responseBody, originalError) {
-    var err = originalError;
-    var status = response ? response.status : 0;
-    var errMessage, errBody;
-
-    if (!err) {
-        try {
-            errBody = JSON.parse(responseBody);
-            if (errBody.message) {
-                errMessage = errBody.message;
-            } else {
-                errMessage = responseBody;
-            }
-        } catch (e) {
-            errMessage = responseBody;
-        }
-
-        err = new Error(errMessage);
-        err.body = errBody || responseBody;
-        if (err.body) {
-            err.output = err.body.output;
-            err.meta = err.body.meta;
-        }
-    }
-
-    err.rawRequest = {
+    this.name = 'FetchrError';
+    this.rawRequest = {
         headers: options.headers,
         method: request.method,
         url: request.url,
     };
-    err.statusCode = status;
-    err.timeout = options.timeout;
-    err.url = request.url;
+    this.statusCode = response ? response.status : 0;
+    this.timeout = options.timeout;
+    this.url = request.url;
 
-    return err;
+    if (originalError) {
+        this.message = originalError.message;
+    } else {
+        try {
+            this.body = JSON.parse(responseBody);
+            this.message = this.body.message || responseBody;
+        } catch (e) {
+            this.body = responseBody;
+            this.message = responseBody;
+        }
+
+        if (this.body) {
+            this.output = this.body.output;
+            this.meta = this.body.meta;
+        }
+    }
 }
+
+FetchrError.prototype = Object.create(Error.prototype);
+FetchrError.prototype.constructor = FetchrError;
 
 function shouldRetry(options, statusCode, attempt) {
     if (attempt >= options.retry.maxRetries) {
