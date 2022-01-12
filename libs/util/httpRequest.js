@@ -12,7 +12,7 @@ function FetchrError(options, request, response, responseBody, originalError) {
     var status = response ? response.status : 0;
     var errMessage, errBody;
 
-    if (!err && (status === 0 || (status >= 400 && status < 600))) {
+    if (!err) {
         try {
             errBody = JSON.parse(responseBody);
             if (errBody.message) {
