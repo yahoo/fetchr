@@ -7,8 +7,12 @@
  * @module httpRequest
  */
 
-function FetchrError(options, request, response, responseBody, originalError) {
+function FetchrError(message, options, request, response) {
+    this.body = null;
+    this.message = message;
+    this.meta = null;
     this.name = 'FetchrError';
+    this.output = null;
     this.rawRequest = {
         headers: options.headers,
         method: request.method,
@@ -18,20 +22,14 @@ function FetchrError(options, request, response, responseBody, originalError) {
     this.timeout = options.timeout;
     this.url = request.url;
 
-    if (originalError) {
-        this.message = originalError.message;
-    } else {
+    if (response) {
         try {
-            this.body = JSON.parse(responseBody);
-            this.message = this.body.message || responseBody;
+            this.body = JSON.parse(message);
+            this.output = this.body.output || null;
+            this.meta = this.body.meta || null;
+            this.message = this.body.message || message;
         } catch (e) {
-            this.body = responseBody;
-            this.message = responseBody;
-        }
-
-        if (this.body) {
-            this.output = this.body.output;
-            this.meta = this.body.meta;
+            this.body = message;
         }
     }
 }
@@ -81,19 +79,14 @@ function io(options, controller) {
                     return null;
                 });
             } else {
-                return response.text().then(function (responseBody) {
-                    throw new FetchrError(
-                        options,
-                        request,
-                        response,
-                        responseBody
-                    );
+                return response.text().then(function (message) {
+                    throw new FetchrError(message, options, request, response);
                 });
             }
         },
         function (err) {
             clearTimeout(timeoutId);
-            throw new FetchrError(options, request, null, null, err);
+            throw new FetchrError(err.message, options, request);
         }
     );
 }

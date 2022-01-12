@@ -139,8 +139,11 @@ describe('client/server integration', () => {
                 });
 
                 expect(response).to.deep.equal({
+                    body: null,
                     message: 'Failed to fetch',
+                    meta: null,
                     name: 'FetchrError',
+                    output: null,
                     statusCode: 0,
                     rawRequest: {
                         url: 'http://localhost:3001/error',
@@ -217,7 +220,9 @@ describe('client/server integration', () => {
                     statusCode: 404,
                     body: { error: 'page not found' },
                     message: '{"error":"page not found"}',
+                    meta: null,
                     name: 'FetchrError',
+                    output: null,
                     rawRequest: {
                         url: 'http://localhost:3000/non-existent/item',
                         method: 'GET',
@@ -237,8 +242,11 @@ describe('client/server integration', () => {
                 });
 
                 expect(response).to.deep.equal({
+                    body: null,
                     message: 'The user aborted a request.',
+                    meta: null,
                     name: 'FetchrError',
+                    output: null,
                     statusCode: 0,
                     rawRequest: {
                         url: 'http://localhost:3000/api/error;error=timeout',
@@ -279,8 +287,11 @@ describe('client/server integration', () => {
                 });
 
                 expect(response).to.deep.equal({
+                    body: null,
                     message: 'Failed to fetch',
+                    meta: null,
                     name: 'FetchrError',
+                    output: null,
                     statusCode: 0,
                     rawRequest: {
                         url: 'http://localhost:3001/error',
@@ -365,7 +376,9 @@ describe('client/server integration', () => {
                 expect(response).to.deep.equal({
                     body: { error: 'page not found' },
                     message: '{"error":"page not found"}',
+                    meta: null,
                     name: 'FetchrError',
+                    output: null,
                     rawRequest: {
                         url: 'http://localhost:3000/non-existent/item',
                         method: 'POST',
@@ -391,8 +404,11 @@ describe('client/server integration', () => {
                 });
 
                 expect(response).to.deep.equal({
+                    body: null,
                     message: 'The user aborted a request.',
+                    meta: null,
                     name: 'FetchrError',
+                    output: null,
                     rawRequest: {
                         url: 'http://localhost:3000/api/error',
                         method: 'POST',
