@@ -225,6 +225,7 @@ export default {
         const err = new Error('it failed');
         err.statusCode = 404;
         err.output = { message: 'Not found', more: 'meta data' };
+        err.meta = { foo: 'bar' };
         return callback(err);
     },
 };
@@ -235,10 +236,18 @@ And in your service call:
 ```js
 fetcher
     .read('someData')
-    .params({id: ###})
+    .params({ id: '42' })
     .end(function (err, data, meta) {
         if (err) {
-            // err.output will be { message: "Not found", more: "meta data" }
+            // err instanceof FetchrError -> true
+            // err.message -> "Not found"
+            // err.meta -> { foo: 'bar' }
+            // err.name = 'FetchrError'
+            // err.output -> { message: "Not found", more: "meta data" }
+            // err.rawRequest -> { headers: {}, method: 'GET', url: '/api/someData' }
+            // err.statusCode -> 404
+            // err.timeout -> 3000
+            // err.url -> '/api/someData'
         }
     });
 ```

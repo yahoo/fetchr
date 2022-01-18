@@ -117,9 +117,8 @@ module.exports = function testCrud(
                 };
                 var allowFailure = function (done) {
                     return function (err) {
-                        expect(err.name).to.equal('Error');
+                        expect(err.name).to.equal('FetchrError');
                         expect(err.message).to.exist;
-                        expect(err.stack).to.exist;
                         done();
                     };
                 };
@@ -209,9 +208,8 @@ module.exports = function testCrud(
                     if (!err) {
                         done(new Error('This operation should have failed'));
                     } else {
-                        expect(err.name).to.equal('Error');
+                        expect(err.name).to.equal('FetchrError');
                         expect(err.message).to.exist;
-                        expect(err.stack).to.exist;
                         done();
                     }
                 };
@@ -404,7 +402,7 @@ module.exports = function testCrud(
                 .read(mockNoopService.resource)
                 .clientConfig(config)
                 .end(function (err) {
-                    expect(err.name).to.equal('Error');
+                    expect(err.name).to.equal('FetchrError');
                     expect(err.message).to.contain(
                         'operation: read is undefined on service: mock_noop_service'
                     );
@@ -418,7 +416,7 @@ module.exports = function testCrud(
                 .clientConfig(config)
                 .end()
                 .catch(function (err) {
-                    expect(err.name).to.equal('Error');
+                    expect(err.name).to.equal('FetchrError');
                     expect(err.message).to.contain(
                         'operation: read is undefined on service: mock_noop_service'
                     );

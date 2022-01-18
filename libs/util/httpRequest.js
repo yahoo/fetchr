@@ -7,48 +7,35 @@
  * @module httpRequest
  */
 
-function FetchrError(options, request, response, responseBody, originalError) {
-    var err = originalError;
-    var status = response ? response.status : 0;
-    var errMessage, errBody;
-
-    if (!err && (status === 0 || (status >= 400 && status < 600))) {
-        if (typeof responseBody === 'string') {
-            try {
-                errBody = JSON.parse(responseBody);
-                if (errBody.message) {
-                    errMessage = errBody.message;
-                } else {
-                    errMessage = responseBody;
-                }
-            } catch (e) {
-                errMessage = responseBody;
-            }
-        } else {
-            errMessage = status
-                ? 'Error ' + status
-                : 'Internal Fetchr XMLHttpRequest Error';
-        }
-
-        err = new Error(errMessage);
-        err.body = errBody || responseBody;
-        if (err.body) {
-            err.output = err.body.output;
-            err.meta = err.body.meta;
-        }
-    }
-
-    err.rawRequest = {
+function FetchrError(message, options, request, response) {
+    this.body = null;
+    this.message = message;
+    this.meta = null;
+    this.name = 'FetchrError';
+    this.output = null;
+    this.rawRequest = {
         headers: options.headers,
         method: request.method,
         url: request.url,
     };
-    err.statusCode = status;
-    err.timeout = options.timeout;
-    err.url = request.url;
+    this.statusCode = response ? response.status : 0;
+    this.timeout = options.timeout;
+    this.url = request.url;
 
-    return err;
+    if (response) {
+        try {
+            this.body = JSON.parse(message);
+            this.output = this.body.output || null;
+            this.meta = this.body.meta || null;
+            this.message = this.body.message || message;
+        } catch (e) {
+            this.body = message;
+        }
+    }
 }
+
+FetchrError.prototype = Object.create(Error.prototype);
+FetchrError.prototype.constructor = FetchrError;
 
 function shouldRetry(options, statusCode, attempt) {
     if (attempt >= options.retry.maxRetries) {
@@ -92,19 +79,14 @@ function io(options, controller) {
                     return null;
                 });
             } else {
-                return response.text().then(function (responseBody) {
-                    throw new FetchrError(
-                        options,
-                        request,
-                        response,
-                        responseBody
-                    );
+                return response.text().then(function (message) {
+                    throw new FetchrError(message, options, request, response);
                 });
             }
         },
         function (err) {
             clearTimeout(timeoutId);
-            throw new FetchrError(options, request, null, null, err);
+            throw new FetchrError(err.message, options, request);
         }
     );
 }
