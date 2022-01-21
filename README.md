@@ -254,7 +254,7 @@ fetcher
 
 ## Abort support
 
-An object with an `abort` method is returned by the `.end()` method as long as you're _not_ chaining promises.
+An object with an `abort` method is returned by the `.end()` method.
 This is useful if you want to abort a request before it is completed.
 
 ```js
@@ -266,17 +266,6 @@ const req = fetcher
     });
 
 req.abort();
-```
-
-However, due to the current implementation, you can't access this method if using promise chaining like so:
-
-```js
-const req = fetcher
-    .read('someData')
-    .params({id: ###})
-    .end();
-// req is a promise
-req.then(onResolve, onReject);
 ```
 
 ## Timeouts

@@ -104,6 +104,8 @@ function io(options, controller) {
                         request
                     );
                 }
+
+                throw new FetchrError('ABORT', err.message, options, request);
             }
 
             throw new FetchrError('UNKNOWN', err.message, options, request);

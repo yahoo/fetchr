@@ -237,6 +237,34 @@ describe('client/server integration', () => {
                 });
             });
 
+            it('can handle aborts', async () => {
+                const response = await page.evaluate(() => {
+                    const fetcher = new Fetchr({});
+                    const request = fetcher.read('slow', null);
+
+                    request.abort();
+
+                    return request.catch((err) => err);
+                });
+
+                expect(response).to.deep.equal({
+                    body: null,
+                    message: 'The user aborted a request.',
+                    meta: null,
+                    name: 'FetchrError',
+                    output: null,
+                    rawRequest: {
+                        url: 'http://localhost:3000/api/slow',
+                        method: 'GET',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    },
+                    reason: 'ABORT',
+                    statusCode: 0,
+                    timeout: 3000,
+                    url: 'http://localhost:3000/api/slow',
+                });
+            });
+
             it('can handle timeouts', async () => {
                 const response = await page.evaluate(() => {
                     const fetcher = new Fetchr({});
