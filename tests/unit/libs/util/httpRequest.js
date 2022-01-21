@@ -294,19 +294,21 @@ describe('Client HTTP', function () {
         it('GET with retry', function () {
             fetchMock.get('/url', {
                 body: mockBody,
-                status: responseStatus,
+                status: 429,
             });
 
             const config = {
                 ...GETConfig,
                 retry: {
                     ...defaultRetry,
-                    maxRetries: 1,
+                    interval: 10,
+                    maxRetries: 2,
+                    statusCodes: [429],
                 },
             };
 
             return httpRequest(config).catch((err) => {
-                expect(fetchMock.calls()).to.have.lengthOf(2);
+                expect(fetchMock.calls()).to.have.lengthOf(3);
                 const options = fetchMock.lastCall().request;
                 expect(options.url).to.equal('/url');
                 expect(options.headers.get('X-Requested-With')).to.equal(
@@ -315,11 +317,12 @@ describe('Client HTTP', function () {
                 expect(options.headers.get('X-Foo')).to.equal('foo');
                 expect(options.method).to.equal('GET');
                 expect(err.message).to.equal('BODY');
-                expect(err.statusCode).to.equal(408);
+                expect(err.statusCode).to.equal(429);
                 expect(err.body).to.equal('BODY');
 
-                const [req1, req2] = fetchMock.calls();
+                const [req1, req2, req3] = fetchMock.calls();
                 expectRequestsToBeEqual(req1, req2);
+                expectRequestsToBeEqual(req1, req3);
             });
         });
 
