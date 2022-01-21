@@ -8,6 +8,7 @@
 const fetchMock = require('fetch-mock');
 const { expect } = require('chai');
 const sinon = require('sinon');
+const FetchrError = require('../../../../libs/util/FetchrError');
 const httpRequest = require('../../../../libs/util/httpRequest');
 
 const contentTypeHeader = { ['Content-Type']: 'application/json' };
@@ -369,7 +370,7 @@ describe('Client HTTP', function () {
             return request.catch((err) => {
                 expect(fetchMock.calls()).to.have.lengthOf(1);
                 expect(err.statusCode).to.equal(0);
-                expect(err.reason).to.equal('ABORT');
+                expect(err.reason).to.equal(FetchrError.ABORT);
             });
         });
     });

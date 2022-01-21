@@ -29,4 +29,10 @@ function FetchrError(reason, message, options, request, response) {
 FetchrError.prototype = Object.create(Error.prototype);
 FetchrError.prototype.constructor = FetchrError;
 
+FetchrError.ABORT = 'ABORT';
+FetchrError.BAD_HTTP_STATUS = 'BAD_HTTP_STATUS';
+FetchrError.BAD_JSON = 'BAD_JSON';
+FetchrError.TIMEOUT = 'TIMEOUT';
+FetchrError.UNKNOWN = 'UNKNOWN';
+
 module.exports = FetchrError;

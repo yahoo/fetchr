@@ -10,7 +10,7 @@
 var FetchrError = require('./FetchrError');
 
 function shouldRetry(err, options, attempt) {
-    if (err.reason === 'ABORT') {
+    if (err.reason === FetchrError.ABORT) {
         return false;
     }
 
@@ -55,7 +55,7 @@ function io(options, controller) {
             if (response.ok) {
                 return response.json().catch(function () {
                     throw new FetchrError(
-                        'BAD_JSON',
+                        FetchrError.BAD_JSON,
                         'Cannot parse response into a JSON object',
                         options,
                         request,
@@ -65,7 +65,7 @@ function io(options, controller) {
             } else {
                 return response.text().then(function (message) {
                     throw new FetchrError(
-                        'BAD_HTTP_STATUS',
+                        FetchrError.BAD_HTTP_STATUS,
                         message,
                         options,
                         request,
@@ -79,17 +79,27 @@ function io(options, controller) {
             if (err.name === 'AbortError') {
                 if (timedOut) {
                     throw new FetchrError(
-                        'TIMEOUT',
+                        FetchrError.TIMEOUT,
                         'Request failed due to timeout',
                         options,
                         request
                     );
                 }
 
-                throw new FetchrError('ABORT', err.message, options, request);
+                throw new FetchrError(
+                    FetchrError.ABORT,
+                    err.message,
+                    options,
+                    request
+                );
             }
 
-            throw new FetchrError('UNKNOWN', err.message, options, request);
+            throw new FetchrError(
+                FetchrError.UNKNOWN,
+                err.message,
+                options,
+                request
+            );
         }
     );
 }
