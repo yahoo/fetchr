@@ -378,7 +378,7 @@ describe('Client HTTP', function () {
         beforeEach(function () {
             sinon.spy(global, 'setTimeout');
             responseStatus = 200;
-            mockBody = 'BODY';
+            mockBody = {};
         });
 
         afterEach(() => {
@@ -408,8 +408,8 @@ describe('Client HTTP', function () {
         });
     });
 
-    describe('request errors', function () {
-        it('should pass-through any error', function () {
+    describe('Other failure scenarios', function () {
+        it('can handle errors from fetch itself', function () {
             responseStatus = 0;
             fetchMock.get('/url', {
                 throws: new Error('AnyError'),
@@ -425,6 +425,20 @@ describe('Client HTTP', function () {
                 expect(err.message).to.equal('AnyError');
                 expect(err.timeout).to.equal(42);
                 expect(err.url).to.equal('/url');
+            });
+        });
+
+        it('can handle OK responses with bad JSON', function () {
+            fetchMock.get('/url', {
+                status: 200,
+                body: 'Hello World!',
+            });
+
+            return httpRequest(GETConfig).catch((err) => {
+                expect(err.statusCode).to.equal(200);
+                expect(err.message).to.equal(
+                    'Cannot parse response into a JSON object'
+                );
             });
         });
     });

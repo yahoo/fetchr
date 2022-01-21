@@ -83,7 +83,13 @@ function io(options, controller) {
 
             if (response.ok) {
                 return response.json().catch(function () {
-                    return null;
+                    throw new FetchrError(
+                        'BAD_JSON',
+                        'Cannot parse response into a JSON object',
+                        options,
+                        request,
+                        response
+                    );
                 });
             } else {
                 return response.text().then(function (message) {
