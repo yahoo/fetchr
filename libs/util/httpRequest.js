@@ -38,7 +38,11 @@ function FetchrError(reason, message, options, request, response) {
 FetchrError.prototype = Object.create(Error.prototype);
 FetchrError.prototype.constructor = FetchrError;
 
-function shouldRetry(options, statusCode, attempt) {
+function shouldRetry(err, options, attempt) {
+    if (err.reason === 'ABORT') {
+        return false;
+    }
+
     if (attempt >= options.retry.maxRetries) {
         return false;
     }
@@ -47,7 +51,7 @@ function shouldRetry(options, statusCode, attempt) {
         return false;
     }
 
-    return options.retry.statusCodes.indexOf(statusCode) !== -1;
+    return options.retry.statusCodes.indexOf(err.statusCode) !== -1;
 }
 
 function delayPromise(fn, delay) {
@@ -118,7 +122,7 @@ function httpRequest(options, attempt) {
     var currentAttempt = attempt || 0;
 
     var promise = io(options, controller).catch(function (err) {
-        if (!shouldRetry(options, err.statusCode, currentAttempt)) {
+        if (!shouldRetry(err, options, currentAttempt)) {
             throw err;
         }
 

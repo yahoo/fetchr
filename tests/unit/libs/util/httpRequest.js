@@ -347,6 +347,28 @@ describe('Client HTTP', function () {
                 expectRequestsToBeEqual(req1, req2);
             });
         });
+
+        it('does not retry user aborted requests', function () {
+            fetchMock.get('/url', {
+                body: mockBody,
+                status: 200,
+            });
+
+            const config = {
+                ...GETConfig,
+                retry: defaultRetry,
+            };
+
+            const request = httpRequest(config);
+
+            request.abort();
+
+            return request.catch((err) => {
+                expect(fetchMock.calls()).to.have.lengthOf(1);
+                expect(err.statusCode).to.equal(0);
+                expect(err.reason).to.equal('ABORT');
+            });
+        });
     });
 
     describe('#Timeout', function () {
