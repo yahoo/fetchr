@@ -247,7 +247,7 @@ describe('client/server integration', () => {
 
                 expect(response).to.deep.equal({
                     body: null,
-                    message: 'The user aborted a request.',
+                    message: 'Request failed due to timeout',
                     meta: null,
                     name: 'FetchrError',
                     output: null,
@@ -256,7 +256,7 @@ describe('client/server integration', () => {
                         method: 'GET',
                         headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     },
-                    reason: 'UNKNOWN',
+                    reason: 'TIMEOUT',
                     statusCode: 0,
                     timeout: 20,
                     url: 'http://localhost:3000/api/error;error=timeout',
@@ -414,7 +414,7 @@ describe('client/server integration', () => {
 
                 expect(response).to.deep.equal({
                     body: null,
-                    message: 'The user aborted a request.',
+                    message: 'Request failed due to timeout',
                     meta: null,
                     name: 'FetchrError',
                     output: null,
@@ -426,7 +426,7 @@ describe('client/server integration', () => {
                             'X-Requested-With': 'XMLHttpRequest',
                         },
                     },
-                    reason: 'UNKNOWN',
+                    reason: 'TIMEOUT',
                     statusCode: 0,
                     timeout: 20,
                     url: 'http://localhost:3000/api/error',

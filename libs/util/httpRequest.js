@@ -59,6 +59,7 @@ function delayPromise(fn, delay) {
 }
 
 function io(options, controller) {
+    var timedOut = false;
     var request = new Request(options.url, {
         body: options.body,
         credentials: options.credentials,
@@ -68,6 +69,7 @@ function io(options, controller) {
     });
 
     var timeoutId = setTimeout(function () {
+        timedOut = true;
         controller.abort();
     }, options.timeout);
 
@@ -93,6 +95,17 @@ function io(options, controller) {
         },
         function (err) {
             clearTimeout(timeoutId);
+            if (err.name === 'AbortError') {
+                if (timedOut) {
+                    throw new FetchrError(
+                        'TIMEOUT',
+                        'Request failed due to timeout',
+                        options,
+                        request
+                    );
+                }
+            }
+
             throw new FetchrError('UNKNOWN', err.message, options, request);
         }
     );
