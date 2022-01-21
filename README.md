@@ -245,6 +245,7 @@ fetcher
             // err.name = 'FetchrError'
             // err.output -> { message: "Not found", more: "meta data" }
             // err.rawRequest -> { headers: {}, method: 'GET', url: '/api/someData' }
+            // err.reason -> BAD_HTTP_STATUS | BAD_JSON | TIMEOUT | ABORT | UNKNOWN
             // err.statusCode -> 404
             // err.timeout -> 3000
             // err.url -> '/api/someData'
