@@ -7,36 +7,7 @@
  * @module httpRequest
  */
 
-function FetchrError(reason, message, options, request, response) {
-    this.body = null;
-    this.message = message;
-    this.meta = null;
-    this.name = 'FetchrError';
-    this.output = null;
-    this.rawRequest = {
-        headers: options.headers,
-        method: request.method,
-        url: request.url,
-    };
-    this.reason = reason;
-    this.statusCode = response ? response.status : 0;
-    this.timeout = options.timeout;
-    this.url = request.url;
-
-    if (response) {
-        try {
-            this.body = JSON.parse(message);
-            this.output = this.body.output || null;
-            this.meta = this.body.meta || null;
-            this.message = this.body.message || message;
-        } catch (e) {
-            this.body = message;
-        }
-    }
-}
-
-FetchrError.prototype = Object.create(Error.prototype);
-FetchrError.prototype.constructor = FetchrError;
+var FetchrError = require('./FetchrError');
 
 function shouldRetry(err, options, attempt) {
     if (err.reason === 'ABORT') {
