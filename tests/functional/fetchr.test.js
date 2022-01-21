@@ -144,14 +144,15 @@ describe('client/server integration', () => {
                     meta: null,
                     name: 'FetchrError',
                     output: null,
-                    statusCode: 0,
                     rawRequest: {
                         url: 'http://localhost:3001/error',
                         method: 'GET',
                         headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     },
-                    url: 'http://localhost:3001/error',
+                    reason: 'UNKNOWN',
+                    statusCode: 0,
                     timeout: 3000,
+                    url: 'http://localhost:3001/error',
                 });
             });
 
@@ -176,6 +177,7 @@ describe('client/server integration', () => {
                         method: 'GET',
                         headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     },
+                    reason: 'BAD_HTTP_STATUS',
                     statusCode: 400,
                     timeout: 3000,
                     url: 'http://localhost:3000/api/error',
@@ -204,6 +206,7 @@ describe('client/server integration', () => {
                         method: 'GET',
                         headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     },
+                    reason: 'BAD_HTTP_STATUS',
                     statusCode: 500,
                     timeout: 3000,
                     url: 'http://localhost:3000/api/error;error=unexpected',
@@ -217,7 +220,6 @@ describe('client/server integration', () => {
                 });
 
                 expect(response).to.deep.equal({
-                    statusCode: 404,
                     body: { error: 'page not found' },
                     message: '{"error":"page not found"}',
                     meta: null,
@@ -228,8 +230,10 @@ describe('client/server integration', () => {
                         method: 'GET',
                         headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     },
-                    url: 'http://localhost:3000/non-existent/item',
+                    reason: 'BAD_HTTP_STATUS',
+                    statusCode: 404,
                     timeout: 3000,
+                    url: 'http://localhost:3000/non-existent/item',
                 });
             });
 
@@ -247,14 +251,15 @@ describe('client/server integration', () => {
                     meta: null,
                     name: 'FetchrError',
                     output: null,
-                    statusCode: 0,
                     rawRequest: {
                         url: 'http://localhost:3000/api/error;error=timeout',
                         method: 'GET',
                         headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     },
-                    url: 'http://localhost:3000/api/error;error=timeout',
+                    reason: 'UNKNOWN',
+                    statusCode: 0,
                     timeout: 20,
+                    url: 'http://localhost:3000/api/error;error=timeout',
                 });
             });
 
@@ -292,7 +297,6 @@ describe('client/server integration', () => {
                     meta: null,
                     name: 'FetchrError',
                     output: null,
-                    statusCode: 0,
                     rawRequest: {
                         url: 'http://localhost:3001/error',
                         method: 'POST',
@@ -301,8 +305,10 @@ describe('client/server integration', () => {
                             'X-Requested-With': 'XMLHttpRequest',
                         },
                     },
-                    url: 'http://localhost:3001/error',
+                    reason: 'UNKNOWN',
+                    statusCode: 0,
                     timeout: 3000,
+                    url: 'http://localhost:3001/error',
                 });
             });
 
@@ -330,6 +336,7 @@ describe('client/server integration', () => {
                             'X-Requested-With': 'XMLHttpRequest',
                         },
                     },
+                    reason: 'BAD_HTTP_STATUS',
                     statusCode: 400,
                     timeout: 3000,
                     url: 'http://localhost:3000/api/error',
@@ -361,6 +368,7 @@ describe('client/server integration', () => {
                             'X-Requested-With': 'XMLHttpRequest',
                         },
                     },
+                    reason: 'BAD_HTTP_STATUS',
                     statusCode: 500,
                     timeout: 3000,
                     url: 'http://localhost:3000/api/error',
@@ -387,9 +395,10 @@ describe('client/server integration', () => {
                             'X-Requested-With': 'XMLHttpRequest',
                         },
                     },
+                    reason: 'BAD_HTTP_STATUS',
                     statusCode: 404,
-                    url: 'http://localhost:3000/non-existent/item',
                     timeout: 3000,
+                    url: 'http://localhost:3000/non-existent/item',
                 });
             });
 
@@ -417,9 +426,10 @@ describe('client/server integration', () => {
                             'X-Requested-With': 'XMLHttpRequest',
                         },
                     },
+                    reason: 'UNKNOWN',
                     statusCode: 0,
-                    url: 'http://localhost:3000/api/error',
                     timeout: 20,
+                    url: 'http://localhost:3000/api/error',
                 });
             });
 

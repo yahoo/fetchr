@@ -7,7 +7,7 @@
  * @module httpRequest
  */
 
-function FetchrError(message, options, request, response) {
+function FetchrError(reason, message, options, request, response) {
     this.body = null;
     this.message = message;
     this.meta = null;
@@ -18,6 +18,7 @@ function FetchrError(message, options, request, response) {
         method: request.method,
         url: request.url,
     };
+    this.reason = reason;
     this.statusCode = response ? response.status : 0;
     this.timeout = options.timeout;
     this.url = request.url;
@@ -80,13 +81,19 @@ function io(options, controller) {
                 });
             } else {
                 return response.text().then(function (message) {
-                    throw new FetchrError(message, options, request, response);
+                    throw new FetchrError(
+                        'BAD_HTTP_STATUS',
+                        message,
+                        options,
+                        request,
+                        response
+                    );
                 });
             }
         },
         function (err) {
             clearTimeout(timeoutId);
-            throw new FetchrError(err.message, options, request);
+            throw new FetchrError('UNKNOWN', err.message, options, request);
         }
     );
 }
