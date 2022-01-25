@@ -8,6 +8,7 @@
 const fetchMock = require('fetch-mock');
 const { expect } = require('chai');
 const sinon = require('sinon');
+const FetchrError = require('../../../../libs/util/FetchrError');
 const httpRequest = require('../../../../libs/util/httpRequest');
 
 const contentTypeHeader = { ['Content-Type']: 'application/json' };
@@ -294,19 +295,21 @@ describe('Client HTTP', function () {
         it('GET with retry', function () {
             fetchMock.get('/url', {
                 body: mockBody,
-                status: responseStatus,
+                status: 429,
             });
 
             const config = {
                 ...GETConfig,
                 retry: {
                     ...defaultRetry,
-                    maxRetries: 1,
+                    interval: 10,
+                    maxRetries: 2,
+                    statusCodes: [429],
                 },
             };
 
             return httpRequest(config).catch((err) => {
-                expect(fetchMock.calls()).to.have.lengthOf(2);
+                expect(fetchMock.calls()).to.have.lengthOf(3);
                 const options = fetchMock.lastCall().request;
                 expect(options.url).to.equal('/url');
                 expect(options.headers.get('X-Requested-With')).to.equal(
@@ -315,11 +318,12 @@ describe('Client HTTP', function () {
                 expect(options.headers.get('X-Foo')).to.equal('foo');
                 expect(options.method).to.equal('GET');
                 expect(err.message).to.equal('BODY');
-                expect(err.statusCode).to.equal(408);
+                expect(err.statusCode).to.equal(429);
                 expect(err.body).to.equal('BODY');
 
-                const [req1, req2] = fetchMock.calls();
+                const [req1, req2, req3] = fetchMock.calls();
                 expectRequestsToBeEqual(req1, req2);
+                expectRequestsToBeEqual(req1, req3);
             });
         });
 
@@ -347,13 +351,35 @@ describe('Client HTTP', function () {
                 expectRequestsToBeEqual(req1, req2);
             });
         });
+
+        it('does not retry user aborted requests', function () {
+            fetchMock.get('/url', {
+                body: mockBody,
+                status: 200,
+            });
+
+            const config = {
+                ...GETConfig,
+                retry: defaultRetry,
+            };
+
+            const request = httpRequest(config);
+
+            request.abort();
+
+            return request.catch((err) => {
+                expect(fetchMock.calls()).to.have.lengthOf(1);
+                expect(err.statusCode).to.equal(0);
+                expect(err.reason).to.equal(FetchrError.ABORT);
+            });
+        });
     });
 
     describe('#Timeout', function () {
         beforeEach(function () {
             sinon.spy(global, 'setTimeout');
             responseStatus = 200;
-            mockBody = 'BODY';
+            mockBody = {};
         });
 
         afterEach(() => {
@@ -383,8 +409,8 @@ describe('Client HTTP', function () {
         });
     });
 
-    describe('request errors', function () {
-        it('should pass-through any error', function () {
+    describe('Other failure scenarios', function () {
+        it('can handle errors from fetch itself', function () {
             responseStatus = 0;
             fetchMock.get('/url', {
                 throws: new Error('AnyError'),
@@ -400,6 +426,20 @@ describe('Client HTTP', function () {
                 expect(err.message).to.equal('AnyError');
                 expect(err.timeout).to.equal(42);
                 expect(err.url).to.equal('/url');
+            });
+        });
+
+        it('can handle OK responses with bad JSON', function () {
+            fetchMock.get('/url', {
+                status: 200,
+                body: 'Hello World!',
+            });
+
+            return httpRequest(GETConfig).catch((err) => {
+                expect(err.statusCode).to.equal(200);
+                expect(err.message).to.equal(
+                    'Cannot parse response into a JSON object'
+                );
             });
         });
     });

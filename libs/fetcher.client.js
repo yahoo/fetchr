@@ -138,7 +138,7 @@ Request.prototype.end = function (callback) {
         return request;
     }
 
-    return request.then(
+    var promise = request.then(
         function (result) {
             self._captureMetaAndStats(null, result);
             return result;
@@ -148,6 +148,10 @@ Request.prototype.end = function (callback) {
             throw err;
         }
     );
+
+    promise.abort = request.abort;
+
+    return promise;
 };
 
 /**

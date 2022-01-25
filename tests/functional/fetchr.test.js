@@ -1,6 +1,7 @@
 /* global Fetchr */
 const { expect } = require('chai');
 const puppeteer = require('puppeteer');
+const FetchrError = require('../../libs/util/FetchrError');
 const app = require('./app');
 const buildClient = require('./buildClient');
 const { itemsData } = require('./resources/item');
@@ -144,14 +145,15 @@ describe('client/server integration', () => {
                     meta: null,
                     name: 'FetchrError',
                     output: null,
-                    statusCode: 0,
                     rawRequest: {
                         url: 'http://localhost:3001/error',
                         method: 'GET',
                         headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     },
-                    url: 'http://localhost:3001/error',
+                    reason: FetchrError.UNKNOWN,
+                    statusCode: 0,
                     timeout: 3000,
+                    url: 'http://localhost:3001/error',
                 });
             });
 
@@ -176,6 +178,7 @@ describe('client/server integration', () => {
                         method: 'GET',
                         headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     },
+                    reason: FetchrError.BAD_HTTP_STATUS,
                     statusCode: 400,
                     timeout: 3000,
                     url: 'http://localhost:3000/api/error',
@@ -204,6 +207,7 @@ describe('client/server integration', () => {
                         method: 'GET',
                         headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     },
+                    reason: FetchrError.BAD_HTTP_STATUS,
                     statusCode: 500,
                     timeout: 3000,
                     url: 'http://localhost:3000/api/error;error=unexpected',
@@ -217,7 +221,6 @@ describe('client/server integration', () => {
                 });
 
                 expect(response).to.deep.equal({
-                    statusCode: 404,
                     body: { error: 'page not found' },
                     message: '{"error":"page not found"}',
                     meta: null,
@@ -228,8 +231,38 @@ describe('client/server integration', () => {
                         method: 'GET',
                         headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     },
-                    url: 'http://localhost:3000/non-existent/item',
+                    reason: FetchrError.BAD_HTTP_STATUS,
+                    statusCode: 404,
                     timeout: 3000,
+                    url: 'http://localhost:3000/non-existent/item',
+                });
+            });
+
+            it('can handle aborts', async () => {
+                const response = await page.evaluate(() => {
+                    const fetcher = new Fetchr({});
+                    const request = fetcher.read('slow', null);
+
+                    request.abort();
+
+                    return request.catch((err) => err);
+                });
+
+                expect(response).to.deep.equal({
+                    body: null,
+                    message: 'The user aborted a request.',
+                    meta: null,
+                    name: 'FetchrError',
+                    output: null,
+                    rawRequest: {
+                        url: 'http://localhost:3000/api/slow',
+                        method: 'GET',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    },
+                    reason: FetchrError.ABORT,
+                    statusCode: 0,
+                    timeout: 3000,
+                    url: 'http://localhost:3000/api/slow',
                 });
             });
 
@@ -243,18 +276,19 @@ describe('client/server integration', () => {
 
                 expect(response).to.deep.equal({
                     body: null,
-                    message: 'The user aborted a request.',
+                    message: 'Request failed due to timeout',
                     meta: null,
                     name: 'FetchrError',
                     output: null,
-                    statusCode: 0,
                     rawRequest: {
                         url: 'http://localhost:3000/api/error;error=timeout',
                         method: 'GET',
                         headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     },
-                    url: 'http://localhost:3000/api/error;error=timeout',
+                    reason: FetchrError.TIMEOUT,
+                    statusCode: 0,
                     timeout: 20,
+                    url: 'http://localhost:3000/api/error;error=timeout',
                 });
             });
 
@@ -292,7 +326,6 @@ describe('client/server integration', () => {
                     meta: null,
                     name: 'FetchrError',
                     output: null,
-                    statusCode: 0,
                     rawRequest: {
                         url: 'http://localhost:3001/error',
                         method: 'POST',
@@ -301,8 +334,10 @@ describe('client/server integration', () => {
                             'X-Requested-With': 'XMLHttpRequest',
                         },
                     },
-                    url: 'http://localhost:3001/error',
+                    reason: FetchrError.UNKNOWN,
+                    statusCode: 0,
                     timeout: 3000,
+                    url: 'http://localhost:3001/error',
                 });
             });
 
@@ -330,6 +365,7 @@ describe('client/server integration', () => {
                             'X-Requested-With': 'XMLHttpRequest',
                         },
                     },
+                    reason: FetchrError.BAD_HTTP_STATUS,
                     statusCode: 400,
                     timeout: 3000,
                     url: 'http://localhost:3000/api/error',
@@ -361,6 +397,7 @@ describe('client/server integration', () => {
                             'X-Requested-With': 'XMLHttpRequest',
                         },
                     },
+                    reason: FetchrError.BAD_HTTP_STATUS,
                     statusCode: 500,
                     timeout: 3000,
                     url: 'http://localhost:3000/api/error',
@@ -387,9 +424,10 @@ describe('client/server integration', () => {
                             'X-Requested-With': 'XMLHttpRequest',
                         },
                     },
+                    reason: FetchrError.BAD_HTTP_STATUS,
                     statusCode: 404,
-                    url: 'http://localhost:3000/non-existent/item',
                     timeout: 3000,
+                    url: 'http://localhost:3000/non-existent/item',
                 });
             });
 
@@ -405,7 +443,7 @@ describe('client/server integration', () => {
 
                 expect(response).to.deep.equal({
                     body: null,
-                    message: 'The user aborted a request.',
+                    message: 'Request failed due to timeout',
                     meta: null,
                     name: 'FetchrError',
                     output: null,
@@ -417,9 +455,10 @@ describe('client/server integration', () => {
                             'X-Requested-With': 'XMLHttpRequest',
                         },
                     },
+                    reason: FetchrError.TIMEOUT,
                     statusCode: 0,
-                    url: 'http://localhost:3000/api/error',
                     timeout: 20,
+                    url: 'http://localhost:3000/api/error',
                 });
             });
 

@@ -7,37 +7,13 @@
  * @module httpRequest
  */
 
-function FetchrError(message, options, request, response) {
-    this.body = null;
-    this.message = message;
-    this.meta = null;
-    this.name = 'FetchrError';
-    this.output = null;
-    this.rawRequest = {
-        headers: options.headers,
-        method: request.method,
-        url: request.url,
-    };
-    this.statusCode = response ? response.status : 0;
-    this.timeout = options.timeout;
-    this.url = request.url;
+var FetchrError = require('./FetchrError');
 
-    if (response) {
-        try {
-            this.body = JSON.parse(message);
-            this.output = this.body.output || null;
-            this.meta = this.body.meta || null;
-            this.message = this.body.message || message;
-        } catch (e) {
-            this.body = message;
-        }
+function shouldRetry(err, options, attempt) {
+    if (err.reason === FetchrError.ABORT) {
+        return false;
     }
-}
 
-FetchrError.prototype = Object.create(Error.prototype);
-FetchrError.prototype.constructor = FetchrError;
-
-function shouldRetry(options, statusCode, attempt) {
     if (attempt >= options.retry.maxRetries) {
         return false;
     }
@@ -46,7 +22,7 @@ function shouldRetry(options, statusCode, attempt) {
         return false;
     }
 
-    return options.retry.statusCodes.indexOf(statusCode) !== -1;
+    return options.retry.statusCodes.indexOf(err.statusCode) !== -1;
 }
 
 function delayPromise(fn, delay) {
@@ -58,6 +34,7 @@ function delayPromise(fn, delay) {
 }
 
 function io(options, controller) {
+    var timedOut = false;
     var request = new Request(options.url, {
         body: options.body,
         credentials: options.credentials,
@@ -67,6 +44,7 @@ function io(options, controller) {
     });
 
     var timeoutId = setTimeout(function () {
+        timedOut = true;
         controller.abort();
     }, options.timeout);
 
@@ -76,17 +54,52 @@ function io(options, controller) {
 
             if (response.ok) {
                 return response.json().catch(function () {
-                    return null;
+                    throw new FetchrError(
+                        FetchrError.BAD_JSON,
+                        'Cannot parse response into a JSON object',
+                        options,
+                        request,
+                        response
+                    );
                 });
             } else {
                 return response.text().then(function (message) {
-                    throw new FetchrError(message, options, request, response);
+                    throw new FetchrError(
+                        FetchrError.BAD_HTTP_STATUS,
+                        message,
+                        options,
+                        request,
+                        response
+                    );
                 });
             }
         },
         function (err) {
             clearTimeout(timeoutId);
-            throw new FetchrError(err.message, options, request);
+            if (err.name === 'AbortError') {
+                if (timedOut) {
+                    throw new FetchrError(
+                        FetchrError.TIMEOUT,
+                        'Request failed due to timeout',
+                        options,
+                        request
+                    );
+                }
+
+                throw new FetchrError(
+                    FetchrError.ABORT,
+                    err.message,
+                    options,
+                    request
+                );
+            }
+
+            throw new FetchrError(
+                FetchrError.UNKNOWN,
+                err.message,
+                options,
+                request
+            );
         }
     );
 }
@@ -96,7 +109,7 @@ function httpRequest(options, attempt) {
     var currentAttempt = attempt || 0;
 
     var promise = io(options, controller).catch(function (err) {
-        if (!shouldRetry(options, err.statusCode, currentAttempt)) {
+        if (!shouldRetry(err, options, currentAttempt)) {
             throw err;
         }
 

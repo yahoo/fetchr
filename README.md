@@ -245,6 +245,7 @@ fetcher
             // err.name = 'FetchrError'
             // err.output -> { message: "Not found", more: "meta data" }
             // err.rawRequest -> { headers: {}, method: 'GET', url: '/api/someData' }
+            // err.reason -> BAD_HTTP_STATUS | BAD_JSON | TIMEOUT | ABORT | UNKNOWN
             // err.statusCode -> 404
             // err.timeout -> 3000
             // err.url -> '/api/someData'
@@ -254,7 +255,7 @@ fetcher
 
 ## Abort support
 
-An object with an `abort` method is returned by the `.end()` method as long as you're _not_ chaining promises.
+An object with an `abort` method is returned by the `.end()` method.
 This is useful if you want to abort a request before it is completed.
 
 ```js
@@ -266,17 +267,6 @@ const req = fetcher
     });
 
 req.abort();
-```
-
-However, due to the current implementation, you can't access this method if using promise chaining like so:
-
-```js
-const req = fetcher
-    .read('someData')
-    .params({id: ###})
-    .end();
-// req is a promise
-req.then(onResolve, onReject);
 ```
 
 ## Timeouts
