@@ -104,11 +104,11 @@ function io(options, controller) {
     );
 }
 
-function httpRequest(options, attempt) {
+function httpRequest(options) {
     var controller = new AbortController();
-    var currentAttempt = attempt || 0;
+    var currentAttempt = 0;
 
-    var promise = io(options, controller).catch(function (err) {
+    var promise = io(options, controller).catch(function retry(err) {
         if (!shouldRetry(err, options, currentAttempt)) {
             throw err;
         }
@@ -121,15 +121,19 @@ function httpRequest(options, attempt) {
             options.retry.interval *
             Math.pow(2, currentAttempt);
 
+        controller = new AbortController();
+        currentAttempt += 1;
         return delayPromise(function () {
-            return httpRequest(options, currentAttempt + 1);
+            return io(options, controller).catch(retry);
         }, delay);
     });
 
     return {
         then: promise.then.bind(promise),
         catch: promise.catch.bind(promise),
-        abort: controller.abort.bind(controller),
+        abort: function () {
+            return controller.abort();
+        },
     };
 }
 

@@ -266,6 +266,25 @@ describe('client/server integration', () => {
                 });
             });
 
+            it('can abort after a timeout', async () => {
+                const response = await page.evaluate(() => {
+                    const fetcher = new Fetchr({});
+                    const promise = fetcher.read('slow', null, {
+                        retry: { maxRetries: 5, interval: 0 },
+                        timeout: 200,
+                    });
+
+                    return new Promise((resolve) =>
+                        setTimeout(() => {
+                            promise.abort();
+                            resolve();
+                        }, 500)
+                    ).then(() => promise.catch((err) => err));
+                });
+
+                expect(response.reason).to.equal(FetchrError.ABORT);
+            });
+
             it('can handle timeouts', async () => {
                 const response = await page.evaluate(() => {
                     const fetcher = new Fetchr({});
