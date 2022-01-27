@@ -309,6 +309,22 @@ describe('client/server integration', () => {
                     meta: {},
                 });
             });
+
+            it('can retry timed out requests', async () => {
+                const response = await page.evaluate(() => {
+                    const fetcher = new Fetchr({});
+                    return fetcher
+                        .read('slow-then-fast', { reset: true })
+                        .then(() =>
+                            fetcher.read('slow-then-fast', null, {
+                                retry: { maxRetries: 5 },
+                                timeout: 80,
+                            })
+                        );
+                });
+
+                expect(response.data.attempts).to.equal(3);
+            });
         });
 
         describe('POST', () => {
