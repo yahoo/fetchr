@@ -4,11 +4,14 @@ const Fetchr = require('../../libs/fetcher');
 const { itemsService } = require('./resources/item');
 const { errorsService } = require('./resources/error');
 const { headersService } = require('./resources/headers');
-const { slowService } = require('./resources/slow');
+const { alwaysSlowService } = require('./resources/alwaysSlow');
+const { slowThenFastService } = require('./resources/slowThenFast');
 
 Fetchr.registerService(itemsService);
 Fetchr.registerService(errorsService);
 Fetchr.registerService(headersService);
+Fetchr.registerService(alwaysSlowService);
+Fetchr.registerService(slowThenFastService);
 
 const app = express();
 

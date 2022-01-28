@@ -104,11 +104,24 @@ function io(options, controller) {
     );
 }
 
-function httpRequest(options, attempt) {
+function httpRequest(options) {
     var controller = new AbortController();
-    var currentAttempt = attempt || 0;
+    var currentAttempt = 0;
 
-    var promise = io(options, controller).catch(function (err) {
+    // handleError is the onReject promise callback that we attach to
+    // the io call (ex. io().catch(handleError)). Since io is a
+    // promise and since we must be able to retry requests (aka call
+    // io function again), we must call io from within
+    // handleError. This means that handleError is a recursive
+    // function. Recursive promises are problematic since they can
+    // block the main thread for a while. However, since the inner io
+    // call is wrapped in a setTimeout (through delayPromise) we are
+    // safe here.
+    //
+    // The call flow:
+    //
+    // httpRequest -> io -> handleError -> io -> handleError -> end
+    function handleError(err) {
         if (!shouldRetry(err, options, currentAttempt)) {
             throw err;
         }
@@ -121,15 +134,28 @@ function httpRequest(options, attempt) {
             options.retry.interval *
             Math.pow(2, currentAttempt);
 
+        controller = new AbortController();
+        currentAttempt += 1;
         return delayPromise(function () {
-            return httpRequest(options, currentAttempt + 1);
+            return io(options, controller).catch(handleError);
         }, delay);
-    });
+    }
+
+    var promise = io(options, controller).catch(handleError);
 
     return {
         then: promise.then.bind(promise),
         catch: promise.catch.bind(promise),
-        abort: controller.abort.bind(controller),
+
+        // Differently from then and catch, we must wrap
+        // controller.abort in our own function to make sure that we
+        // have a fresh reference to the current AbortController being
+        // used. If we don't do it, controller will point to the first
+        // request, preventing users to abort subsequent requests in
+        // case of retries.
+        abort: function () {
+            return controller.abort();
+        },
     };
 }
 

@@ -266,6 +266,36 @@ describe('client/server integration', () => {
                 });
             });
 
+            it('can abort after a timeout', async () => {
+                // This test triggers a call to the slow resource
+                // (which always takes 5s to respond) with a timeout
+                // of 200ms. After that, we schedule an abort call
+                // after 500ms (in the middle of the 3rd call).
+
+                // Since the abort and the timeout mechanisms share
+                // the same AbortController instance, this test
+                // assures that after internal abortions (due to the
+                // timeouts) it's still possible to make the user
+                // abort mechanism work.
+
+                const response = await page.evaluate(() => {
+                    const fetcher = new Fetchr({});
+                    const promise = fetcher.read('slow', null, {
+                        retry: { maxRetries: 5, interval: 0 },
+                        timeout: 200,
+                    });
+
+                    return new Promise((resolve) =>
+                        setTimeout(() => {
+                            promise.abort();
+                            resolve();
+                        }, 500)
+                    ).then(() => promise.catch((err) => err));
+                });
+
+                expect(response.reason).to.equal(FetchrError.ABORT);
+            });
+
             it('can handle timeouts', async () => {
                 const response = await page.evaluate(() => {
                     const fetcher = new Fetchr({});
@@ -308,6 +338,28 @@ describe('client/server integration', () => {
                     data: { retry: 'ok' },
                     meta: {},
                 });
+            });
+
+            it('can retry timed out requests', async () => {
+                // This test makes sure that we are renewing the
+                // AbortController for each new request
+                // attempt. Otherwise, after the first AbortController
+                // is triggered, all the following requests would fail
+                // instantly.
+
+                const response = await page.evaluate(() => {
+                    const fetcher = new Fetchr({});
+                    return fetcher
+                        .read('slow-then-fast', { reset: true })
+                        .then(() =>
+                            fetcher.read('slow-then-fast', null, {
+                                retry: { maxRetries: 5 },
+                                timeout: 80,
+                            })
+                        );
+                });
+
+                expect(response.data.attempts).to.equal(3);
             });
         });
 

@@ -1,4 +1,7 @@
-const slowService = {
+// This resource allows us to exercise timeout and abort capacities of
+// the fetchr client.
+
+const alwaysSlowService = {
     resource: 'slow',
     read(req, resource, params, config, callback) {
         setTimeout(() => {
@@ -13,5 +16,5 @@ const slowService = {
 };
 
 module.exports = {
-    slowService,
+    alwaysSlowService,
 };
