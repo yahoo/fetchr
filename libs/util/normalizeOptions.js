@@ -8,7 +8,6 @@ function requestToOptions(request) {
 
     var config = Object.assign(
         {
-            unsafeAllowRetry: request.operation === 'read',
             xhrTimeout: request.options.xhrTimeout,
         },
         request._clientConfig
@@ -83,23 +82,23 @@ function normalizeHeaders(options) {
     return headers;
 }
 
-function normalizeRetry(options) {
-    var retry = {
-        interval: 200,
-        maxRetries: 0,
-        retryOnPost: false,
-        statusCodes: [0, 408, 999],
-    };
+function normalizeRetry(request) {
+    var retry = Object.assign(
+        {
+            interval: 200,
+            maxRetries: 0,
+            retryOnPost:
+                request.operation === 'read' ||
+                request.options.unsafeAllowRetry,
+            statusCodes: [0, 408, 999],
+        },
+        request.options.retry,
+        request._clientConfig.retry
+    );
 
-    if (!options.config.retry) {
-        return retry;
+    if ('unsafeAllowRetry' in request._clientConfig) {
+        retry.retryOnPost = request._clientConfig.unsafeAllowRetry;
     }
-
-    if (options.config.unsafeAllowRetry) {
-        retry.retryOnPost = true;
-    }
-
-    Object.assign(retry, options.config.retry);
 
     if (retry.max_retries) {
         console.warn(
@@ -118,7 +117,7 @@ function normalizeOptions(request) {
         body: options.data != null ? JSON.stringify(options.data) : undefined,
         headers: normalizeHeaders(options),
         method: options.method,
-        retry: normalizeRetry(options),
+        retry: normalizeRetry(request),
         timeout: options.config.timeout || options.config.xhrTimeout,
         url: options.url,
     };
