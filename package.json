@@ -42,7 +42,7 @@
     "prettier": "^2.3.2",
     "puppeteer": "^13.0.0",
     "sinon": "^13.0.0",
-    "supertest": "6.2.2",
+    "supertest": "6.2.3",
     "webpack": "^5.51.1"
   },
   "keywords": [
