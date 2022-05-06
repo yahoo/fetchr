@@ -184,7 +184,9 @@ function Fetcher(options) {
         corsPath: options.corsPath,
         context: options.context || {},
         contextPicker: options.contextPicker || {},
+        retry: options.retry || null,
         statsCollector: options.statsCollector,
+        unsafeAllowRetry: Boolean(options.unsafeAllowRetry),
         _serviceMeta: this._serviceMeta,
     };
 }

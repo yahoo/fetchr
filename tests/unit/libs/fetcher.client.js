@@ -649,4 +649,83 @@ describe('Client Fetcher', function () {
             });
         });
     });
+
+    describe('Custom retry', function () {
+        describe('should be configurable globally', function () {
+            before(function () {
+                mockery.registerMock('./util/httpRequest', function (options) {
+                    expect(options.retry).to.deep.equal({
+                        interval: 350,
+                        maxRetries: 2,
+                        retryOnPost: true,
+                        statusCodes: [0, 502, 504],
+                    });
+                    return httpRequest(options);
+                });
+                mockery.enable({
+                    useCleanCache: true,
+                    warnOnUnregistered: false,
+                });
+
+                Fetcher = require('../../../libs/fetcher.client');
+
+                this.fetcher = new Fetcher({
+                    retry: {
+                        interval: 350,
+                        maxRetries: 2,
+                        statusCodes: [0, 502, 504],
+                    },
+                    unsafeAllowRetry: true,
+                });
+            });
+
+            testCrud(params, body, config, callback, resolve, reject);
+
+            after(function () {
+                mockery.deregisterMock('./util/httpRequest');
+                mockery.disable();
+            });
+        });
+
+        describe('should be configurable per request', function () {
+            before(function () {
+                mockery.registerMock('./util/httpRequest', function (options) {
+                    expect(options.retry).to.deep.equal({
+                        interval: 350,
+                        maxRetries: 2,
+                        retryOnPost: true,
+                        statusCodes: [0, 502, 504],
+                    });
+                    return httpRequest(options);
+                });
+                mockery.enable({
+                    useCleanCache: true,
+                    warnOnUnregistered: false,
+                });
+                Fetcher = require('../../../libs/fetcher.client');
+                this.fetcher = new Fetcher({});
+            });
+            var customConfig = {
+                retry: {
+                    interval: 350,
+                    maxRetries: 2,
+                    statusCodes: [0, 502, 504],
+                },
+                unsafeAllowRetry: true,
+            };
+            testCrud({
+                disableNoConfigTests: true,
+                params: params,
+                body: body,
+                config: customConfig,
+                callback: callback,
+                resolve: resolve,
+                reject: reject,
+            });
+            after(function () {
+                mockery.deregisterMock('./util/httpRequest');
+                mockery.disable();
+            });
+        });
+    });
 });

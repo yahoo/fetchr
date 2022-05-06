@@ -433,21 +433,43 @@ For requests from the server, the config object is simply passed into the servic
 
 ## Retry
 
-You can set Fetchr to retry failed requests automatically by setting a `retry` settings in the client configuration:
+You can set Fetchr to automatically retry failed requests by specifying a `retry` configuration in the global or in the request configuration:
 
 ```js
-fetcher
+// Globally
+const fetchr = new Fetchr({
+    retry: { maxRetries: 2 },
+});
+
+// Per request
+fetchr
     .read('service')
     .clientConfig({
-        retry: {
-            maxRetries: 2,
-        },
+        retry: { maxRetries: 1 },
     })
     .end();
 ```
 
-With this configuration, Fetchr will retry all requests that fail with 408 status code or that failed without even reaching the service (status code 0 means, for example, that the client was not able to reach the server) two more times before returning an error. The interval between each request respects
-the following formula, based on the exponential backoff and full jitter strategy published in [this AWS architecture blog post](https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/):
+With the above configuration, Fetchr will retry twice all requests
+that fail but only once when calling `read('service')`.
+
+You can further customize how the retry mechanism works. These are all
+settings and their default values:
+
+```js
+const fetchr = new Fetchr({
+  retry: {
+    maxRetries: 2, // amount of retries after the first failed request
+    interval: 200, // maximum interval between each request in ms (see note below)
+    statusCodes: [0, 408], // response status code that triggers a retry (see note below)
+  },
+  unsafeAllowRetry: false, // allow unsafe operations to be retried (see note below)
+}
+```
+
+**interval**
+
+The interval between each request respects the following formula, based on the exponential backoff and full jitter strategy published in [this AWS architecture blog post](https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/):
 
 ```js
 Math.random() * Math.pow(2, attempt) * interval;
@@ -456,35 +478,21 @@ Math.random() * Math.pow(2, attempt) * interval;
 `attempt` is the number of the current retry attempt starting
 from 0. By default `interval` corresponds to 200ms.
 
-You can customize the retry behavior by adding more properties in the
-`retry` object:
+**statusCodes**
 
-```js
-fetcher
-    .read('resource')
-    .clientConfig({
-        retry: {
-            maxRetries: 5,
-            interval: 1000,
-            statusCodes: [408, 502],
-        },
-    })
-    .end();
-```
+For historical reasons, fetchr only retries 408 responses and no
+responses at all (for example, a network error, indicated by a status
+code 0). However, you might find useful to also retry on other codes
+as well (502, 503, 504 can be good candidates for an automatic
+retries).
 
-With the above configuration, Fetchr will retry all failed (408 or 502 status code) requests for a maximum of 5 times. The interval between each request will still use the formula from above, but the interval of 1000ms will be used instead.
+**unsafeAllowRetry**
 
-**Note:** Fetchr doesn't retry POST requests for safety reasons. You can enable retries for POST requests by setting the `unsafeAllowRetry` property to `true`:
-
-```js
-fetcher
-    .create('resource')
-    .clientConfig({
-        retry: { maxRetries: 2 },
-        unsafeAllowRetry: true,
-    })
-    .end();
-```
+By default, Fetchr only retries `read` requests. This is done for
+safety reasons: reading twice an entry from a database is not as bad
+as creating an entry twice. But if your application or resource
+doesn't need this kind of protection, you can allow retries by setting
+`unsafeAllowRetry` to `true` and fetchr will retry all operations.
 
 ## Context Variables
 
