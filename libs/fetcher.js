@@ -284,8 +284,6 @@ function Fetcher(options) {
 
 Fetcher.services = {};
 
-Fetcher._deprecatedServicesDefinitions = [];
-
 /**
  * DEPRECATED
  * Register a data fetcher
@@ -320,7 +318,6 @@ Fetcher.registerService = function (service) {
         resource = service.resource;
     } else if (typeof service.name !== 'undefined') {
         resource = service.name;
-        Fetcher._deprecatedServicesDefinitions.push(resource);
     } else {
         throw new Error(
             '"resource" property is missing in service definition.'
@@ -400,23 +397,6 @@ Fetcher.middleware = function (options) {
         function noOp(req, res, data) {
             return data;
         };
-
-    if (
-        Fetcher._deprecatedServicesDefinitions.length &&
-        'production' !== process.env.NODE_ENV
-    ) {
-        var deprecatedServices = Fetcher._deprecatedServicesDefinitions
-            .sort()
-            .join(', ');
-
-        console.warn(
-            'You have registered services using a deprecated property. ' +
-                'Please, replace the property "name" by "resource" in the ' +
-                'following services definitions:\n' +
-                deprecatedServices +
-                '.'
-        );
-    }
 
     return function (req, res, next) {
         var request;
