@@ -40,7 +40,7 @@
     "node-fetch": "^2.6.2",
     "nyc": "^15.1.0",
     "prettier": "^2.3.2",
-    "puppeteer": "^17.0.0",
+    "puppeteer": "^18.0.4",
     "sinon": "^14.0.0",
     "supertest": "6.2.4",
     "webpack": "^5.51.1"
