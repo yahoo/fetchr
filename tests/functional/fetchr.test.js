@@ -21,7 +21,7 @@ describe('client/server integration', () => {
     });
 
     before(async function setupBrowser() {
-        browser = await puppeteer.launch();
+        browser = await puppeteer.launch({ headless: 'new' });
         page = await browser.newPage();
         await page.goto('http://localhost:3000');
     });
