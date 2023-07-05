@@ -30,12 +30,12 @@ describe('Server Fetcher', function () {
         var getService = Fetcher.getService.bind(Fetcher);
         expect(getService).to.throw(
             Error,
-            'Service "undefined" could not be found'
+            'Service "undefined" could not be found',
         );
         getService = Fetcher.getService.bind(Fetcher, mockService.resource);
         expect(getService).to.throw(
             Error,
-            'Service "' + mockService.resource + '" could not be found'
+            'Service "' + mockService.resource + '" could not be found',
         );
         expect(Object.keys(Fetcher.services)).to.have.length(0);
         Fetcher.registerService(mockService);
@@ -49,23 +49,23 @@ describe('Server Fetcher', function () {
         var validService = { name: 'test_name' };
         var registerInvalidService = Fetcher.registerService.bind(
             Fetcher,
-            undefined
+            undefined,
         );
         expect(registerInvalidService).to.throw(
             Error,
-            'Fetcher.registerService requires a service definition (ex. registerService(service)).'
+            'Fetcher.registerService requires a service definition (ex. registerService(service)).',
         );
         registerInvalidService = Fetcher.registerService.bind(
             Fetcher,
-            invalidService
+            invalidService,
         );
         expect(registerInvalidService).to.throw(
             Error,
-            '"resource" property is missing in service definition.'
+            '"resource" property is missing in service definition.',
         );
         var registerValidService = Fetcher.registerService.bind(
             Fetcher,
-            validService
+            validService,
         );
         expect(registerValidService).to.not.throw;
     });
@@ -76,7 +76,7 @@ describe('Server Fetcher', function () {
         expect(getService()).to.deep.equal(mockService);
         getService = Fetcher.getService.bind(
             Fetcher,
-            mockService.resource + '.subResource'
+            mockService.resource + '.subResource',
         );
         expect(getService).to.not.throw;
         expect(getService()).to.deep.equal(mockService);
@@ -95,7 +95,7 @@ describe('Server Fetcher', function () {
             Fetcher.services = {}; // reset services so we can test getFetcher and registerFetcher methods
             var getFetcher = Fetcher.getFetcher.bind(
                 Fetcher,
-                mockService.resource
+                mockService.resource,
             );
             expect(getFetcher).to.throw;
             Fetcher.registerFetcher(mockService);
@@ -103,7 +103,7 @@ describe('Server Fetcher', function () {
             expect(getFetcher()).to.deep.equal(mockService);
             getFetcher = Fetcher.getFetcher.bind(
                 Fetcher,
-                mockService.resource + '.subResource'
+                mockService.resource + '.subResource',
             );
             expect(getFetcher).to.not.throw;
             expect(getFetcher()).to.deep.equal(mockService);
@@ -167,7 +167,7 @@ describe('Server Fetcher', function () {
                         send: function (code) {
                             console.log(
                                 'Not Expected: middleware responded with',
-                                code
+                                code,
                             );
                         },
                     },
@@ -238,7 +238,7 @@ describe('Server Fetcher', function () {
                         send: function (code) {
                             console.log(
                                 'Not Expected: middleware responded with',
-                                code
+                                code,
                             );
                         },
                     },
@@ -261,7 +261,7 @@ describe('Server Fetcher', function () {
             var makePostApiErrorTest = function (
                 params,
                 expStatusCode,
-                expMessage
+                expMessage,
             ) {
                 return function (done) {
                     var operation = 'create',
@@ -293,13 +293,13 @@ describe('Server Fetcher', function () {
                             send: function (data) {
                                 console.log(
                                     'send() not expected: middleware responded with',
-                                    data
+                                    data,
                                 );
                             },
                         },
                         next = function () {
                             console.log(
-                                'next() not expected: middleware skipped request'
+                                'next() not expected: middleware skipped request',
                             );
                         },
                         middleware = Fetcher.middleware({ pathPrefix: '/api' });
@@ -314,7 +314,7 @@ describe('Server Fetcher', function () {
                     output: {
                         message: 'request failed',
                     },
-                })
+                }),
             );
 
             it(
@@ -324,7 +324,7 @@ describe('Server Fetcher', function () {
                     output: {
                         message: 'request failed',
                     },
-                })
+                }),
             );
 
             it(
@@ -334,7 +334,7 @@ describe('Server Fetcher', function () {
                     output: {
                         message: 'Error message...',
                     },
-                })
+                }),
             );
 
             it(
@@ -344,7 +344,7 @@ describe('Server Fetcher', function () {
                     output: {
                         message: 'request failed',
                     },
-                })
+                }),
             );
 
             describe('should respond to POST api request with custom output', function () {
@@ -365,8 +365,8 @@ describe('Server Fetcher', function () {
                                 message: 'custom message',
                                 foo: 'bar',
                             },
-                        }
-                    )
+                        },
+                    ),
                 );
 
                 it(
@@ -377,8 +377,8 @@ describe('Server Fetcher', function () {
                         {
                             meta: {},
                             output: [1, 2],
-                        }
-                    )
+                        },
+                    ),
                 );
             });
         });
@@ -409,17 +409,17 @@ describe('Server Fetcher', function () {
                             expect(response).to.contain.keys('data', 'meta');
                             expect(response.data).to.contain.keys(
                                 'operation',
-                                'args'
+                                'args',
                             );
                             expect(response.data.operation.name).to.equal(
-                                operation
+                                operation,
                             );
                             expect(response.data.operation.success).to.be.true;
                             expect(response.data.args).to.contain.keys(
-                                'params'
+                                'params',
                             );
                             expect(response.data.args.params).to.deep.equal(
-                                params
+                                params,
                             );
                             expect(response.meta).to.be.empty;
                             expect(statusCodeSet).to.be.true;
@@ -433,7 +433,7 @@ describe('Server Fetcher', function () {
                         send: function (code) {
                             console.log(
                                 'Not Expected: middleware responded with',
-                                code
+                                code,
                             );
                         },
                     },
@@ -473,17 +473,17 @@ describe('Server Fetcher', function () {
                             expect(response).to.contain.keys('data', 'meta');
                             expect(response.data).to.contain.keys(
                                 'operation',
-                                'args'
+                                'args',
                             );
                             expect(response.data.operation.name).to.equal(
-                                operation
+                                operation,
                             );
                             expect(response.data.operation.success).to.be.true;
                             expect(response.data.args).to.contain.keys(
-                                'params'
+                                'params',
                             );
                             expect(response.data.args.params).to.deep.equal(
-                                params
+                                params,
                             );
                             expect(response.meta).to.eql({
                                 headers: responseHeaders,
@@ -505,7 +505,7 @@ describe('Server Fetcher', function () {
                         send: function (code) {
                             console.log(
                                 'Not Expected: middleware responded with',
-                                code
+                                code,
                             );
                         },
                     },
@@ -543,26 +543,26 @@ describe('Server Fetcher', function () {
                             expect(response).to.contain.keys('data', 'meta');
                             expect(response.data).to.contain.keys(
                                 'operation',
-                                'args'
+                                'args',
                             );
                             expect(response.data.operation.name).to.equal(
-                                operation
+                                operation,
                             );
                             expect(response.data.operation.success).to.be.true;
                             expect(response.data.args).to.contain.keys(
-                                'params'
+                                'params',
                             );
                             expect(response.data.args.params.id).to.be.an(
-                                'number'
+                                'number',
                             );
                             expect(
-                                response.data.args.params.id.toString()
+                                response.data.args.params.id.toString(),
                             ).to.equal(params.id);
                             expect(response.data.args.params.bigId).to.be.an(
-                                'string'
+                                'string',
                             );
                             expect(
-                                response.data.args.params.bigId.toString()
+                                response.data.args.params.bigId.toString(),
                             ).to.equal(params.bigId);
                             expect(statusCodeSet).to.be.true;
                             done();
@@ -575,7 +575,7 @@ describe('Server Fetcher', function () {
                         send: function (code) {
                             console.log(
                                 'Not Expected: middleware responded with',
-                                code
+                                code,
                             );
                         },
                     },
@@ -609,26 +609,26 @@ describe('Server Fetcher', function () {
                             expect(response).to.contain.keys('data', 'meta');
                             expect(response.data).to.contain.keys(
                                 'operation',
-                                'args'
+                                'args',
                             );
                             expect(response.data.operation.name).to.equal(
-                                operation
+                                operation,
                             );
                             expect(response.data.operation.success).to.be.true;
                             expect(response.data.args).to.contain.keys(
-                                'params'
+                                'params',
                             );
                             expect(response.data.args.params.decimal).to.be.an(
-                                'number'
+                                'number',
                             );
                             expect(
-                                response.data.args.params.decimal.toString()
+                                response.data.args.params.decimal.toString(),
                             ).to.equal('9007199254740991');
                             expect(
-                                response.data.args.params.bigDecimal
+                                response.data.args.params.bigDecimal,
                             ).to.be.an('string');
                             expect(
-                                response.data.args.params.bigDecimal.toString()
+                                response.data.args.params.bigDecimal.toString(),
                             ).to.equal('9007199254740991.11111');
                             expect(statusCodeSet).to.be.true;
                             done();
@@ -641,7 +641,7 @@ describe('Server Fetcher', function () {
                         send: function (code) {
                             console.log(
                                 'Not Expected: middleware responded with',
-                                code
+                                code,
                             );
                         },
                     },
@@ -674,20 +674,20 @@ describe('Server Fetcher', function () {
                             expect(response).to.contain.keys('data', 'meta');
                             expect(response.data).to.contain.keys(
                                 'operation',
-                                'args'
+                                'args',
                             );
                             expect(response.data.operation.name).to.equal(
-                                operation
+                                operation,
                             );
                             expect(response.data.operation.success).to.be.true;
                             expect(response.data.args).to.contain.keys(
-                                'params'
+                                'params',
                             );
                             expect(response.data.args.params.num).to.be.an(
-                                'string'
+                                'string',
                             );
                             expect(
-                                response.data.args.params.num.toString()
+                                response.data.args.params.num.toString(),
                             ).to.equal('1234e1234');
                             expect(statusCodeSet).to.be.true;
                             done();
@@ -700,7 +700,7 @@ describe('Server Fetcher', function () {
                         send: function (code) {
                             console.log(
                                 'Not Expected: middleware responded with',
-                                code
+                                code,
                             );
                         },
                     },
@@ -724,7 +724,7 @@ describe('Server Fetcher', function () {
             var makeGetApiErrorTest = function (
                 params,
                 expStatusCode,
-                expMessage
+                expMessage,
             ) {
                 return function (done) {
                     var statusCodeSet = false,
@@ -750,13 +750,13 @@ describe('Server Fetcher', function () {
                             send: function (data) {
                                 console.log(
                                     'send() not expected: middleware responded with',
-                                    data
+                                    data,
                                 );
                             },
                         },
                         next = function () {
                             console.log(
-                                'Not Expected: middleware skipped request'
+                                'Not Expected: middleware skipped request',
                             );
                         },
                         middleware = Fetcher.middleware({ pathPrefix: '/api' });
@@ -771,7 +771,7 @@ describe('Server Fetcher', function () {
                     output: {
                         message: 'request failed',
                     },
-                })
+                }),
             );
 
             it(
@@ -781,7 +781,7 @@ describe('Server Fetcher', function () {
                     output: {
                         message: 'request failed',
                     },
-                })
+                }),
             );
 
             it(
@@ -791,7 +791,7 @@ describe('Server Fetcher', function () {
                     output: {
                         message: 'request failed',
                     },
-                })
+                }),
             );
 
             it(
@@ -801,7 +801,7 @@ describe('Server Fetcher', function () {
                     output: {
                         message: 'Error message...',
                     },
-                })
+                }),
             );
 
             describe('should respond to GET api request with custom output', function () {
@@ -822,8 +822,8 @@ describe('Server Fetcher', function () {
                                 message: 'custom message',
                                 foo: 'bar',
                             },
-                        }
-                    )
+                        },
+                    ),
                 );
 
                 it(
@@ -837,8 +837,8 @@ describe('Server Fetcher', function () {
                         {
                             meta: {},
                             output: [1, 2],
-                        }
-                    )
+                        },
+                    ),
                 );
             });
         });
@@ -976,21 +976,21 @@ describe('Server Fetcher', function () {
                             expect(response).to.contain.keys(
                                 'data',
                                 'meta',
-                                'modified'
+                                'modified',
                             );
                             expect(response.data).to.contain.keys(
                                 'operation',
-                                'args'
+                                'args',
                             );
                             expect(response.data.operation.name).to.equal(
-                                operation
+                                operation,
                             );
                             expect(response.data.operation.success).to.be.true;
                             expect(response.data.args).to.contain.keys(
-                                'params'
+                                'params',
                             );
                             expect(response.data.args.params).to.deep.equal(
-                                params
+                                params,
                             );
                             expect(response.meta).to.be.empty;
                             expect(statusCodeSet).to.be.true;
@@ -1004,7 +1004,7 @@ describe('Server Fetcher', function () {
                         send: function (code) {
                             console.log(
                                 'Not Expected: middleware responded with',
-                                code
+                                code,
                             );
                         },
                     };
@@ -1051,18 +1051,18 @@ describe('Server Fetcher', function () {
                                 expect(response).to.contain.keys(
                                     'data',
                                     'meta',
-                                    'modified'
+                                    'modified',
                                 );
                                 var data = response.data;
                                 expect(data).to.contain.keys(
                                     'operation',
-                                    'args'
+                                    'args',
                                 );
                                 expect(data.operation.name).to.equal(operation);
                                 expect(data.operation.success).to.be.true;
                                 expect(data.args).to.contain.keys('params');
                                 expect(data.args.params).to.equal(
-                                    req.body.params
+                                    req.body.params,
                                 );
                                 expect(statusCodeSet).to.be.true;
                                 done();
@@ -1075,13 +1075,13 @@ describe('Server Fetcher', function () {
                             send: function (code) {
                                 console.log(
                                     'Not Expected: middleware responded with',
-                                    code
+                                    code,
                                 );
                             },
                         },
                         next = function () {
                             console.log(
-                                'Not Expected: middleware skipped request'
+                                'Not Expected: middleware skipped request',
                             );
                         },
                         middleware = Fetcher.middleware({
@@ -1126,12 +1126,12 @@ describe('Server Fetcher', function () {
                     expect(response.data.operation.success).to.be.true;
                     expect(response.data.args).to.contain.keys('params');
                     expect(response.data.args.params.uuids).to.deep.equal(
-                        params.uuids
+                        params.uuids,
                     );
                     expect(response.data.args.params.id).to.equal(params.id);
                     expect(response.data.args.params.newParam).to.equal(
                         'YES!',
-                        JSON.stringify(response.data.args.params)
+                        JSON.stringify(response.data.args.params),
                     );
                     // expect(response.meta).to.be.empty;
                     expect(statusCodeSet).to.be.true;
@@ -1145,7 +1145,7 @@ describe('Server Fetcher', function () {
                 send: function (code) {
                     console.log(
                         'Not Expected: middleware responded with',
-                        code
+                        code,
                     );
                 },
             };
@@ -1217,7 +1217,7 @@ describe('Server Fetcher', function () {
                 send: function (code) {
                     console.log(
                         'Not Expected: middleware responded with',
-                        code
+                        code,
                     );
                 },
             };

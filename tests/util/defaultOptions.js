@@ -5,7 +5,7 @@ var resource = mockService.resource;
 
 const removeUndefinedProperties = (obj) =>
     Object.fromEntries(
-        Object.entries(obj).filter((entry) => entry[1] !== undefined)
+        Object.entries(obj).filter((entry) => entry[1] !== undefined),
     );
 
 var params = {
@@ -45,7 +45,7 @@ var resolve = function (operation, done) {
             expect(result.data.args).to.exist;
             expect(result.data.args.resource).to.equal(resource);
             expect(result.data.args.params).to.eql(
-                removeUndefinedProperties(params)
+                removeUndefinedProperties(params),
             );
             expect(result.meta).to.eql(params.meta);
         } catch (e) {

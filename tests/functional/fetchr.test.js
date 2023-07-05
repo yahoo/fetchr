@@ -45,7 +45,7 @@ describe('client/server integration', () => {
                 return fetcher.create(
                     'item',
                     { id: '42' },
-                    { value: 'this is an item' }
+                    { value: 'this is an item' },
                 );
             });
 
@@ -100,7 +100,7 @@ describe('client/server integration', () => {
                 return fetcher.update(
                     'item',
                     { id: '42' },
-                    { value: 'this is an updated item' }
+                    { value: 'this is an updated item' },
                 );
             });
 
@@ -289,7 +289,7 @@ describe('client/server integration', () => {
                         setTimeout(() => {
                             promise.abort();
                             resolve();
-                        }, 500)
+                        }, 500),
                     ).then(() => promise.catch((err) => err));
                 });
 
@@ -329,7 +329,7 @@ describe('client/server integration', () => {
                         .read(
                             'error',
                             { error: 'retry' },
-                            { retry: { maxRetries: 2 } }
+                            { retry: { maxRetries: 2 } },
                         )
                         .catch((err) => err);
                 });
@@ -355,7 +355,7 @@ describe('client/server integration', () => {
                             fetcher.read('slow-then-fast', null, {
                                 retry: { maxRetries: 5 },
                                 timeout: 80,
-                            })
+                            }),
                         );
                 });
 

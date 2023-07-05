@@ -30,7 +30,7 @@ function pickContext(context, picker, method) {
         });
     } else {
         throw new TypeError(
-            'picker must be an string, an array, or a function.'
+            'picker must be an string, an array, or a function.',
         );
     }
 

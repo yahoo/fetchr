@@ -95,7 +95,7 @@ describe('Client HTTP', function () {
                 const options = fetchMock.lastCall().request;
                 expect(options.url).to.equal('/url');
                 expect(options.headers.get('X-Requested-With')).to.equal(
-                    'XMLHttpRequest'
+                    'XMLHttpRequest',
                 );
                 expect(options.headers.get('X-Foo')).to.equal('foo');
                 expect(options.method).to.equal('GET');
@@ -114,7 +114,7 @@ describe('Client HTTP', function () {
                 const options = fetchMock.lastCall().request;
                 expect(options.url).to.equal('/url');
                 expect(options.headers.get('X-Requested-With')).to.equal(
-                    'XMLHttpRequest'
+                    'XMLHttpRequest',
                 );
                 expect(options.headers.get('X-Foo')).to.equal('foo');
                 expect(options.method).to.equal('POST');
@@ -145,7 +145,7 @@ describe('Client HTTP', function () {
                 const options = fetchMock.lastCall().request;
                 expect(options.url).to.equal('/url');
                 expect(options.headers).to.not.have.property(
-                    'X-Requested-With'
+                    'X-Requested-With',
                 );
                 expect(options.headers.get('X-Foo')).to.equal('foo');
                 expect(options.method).to.equal('GET');
@@ -154,7 +154,7 @@ describe('Client HTTP', function () {
                 sinon.assert.calledWith(
                     Request,
                     sinon.match.string,
-                    sinon.match({ credentials: 'include' })
+                    sinon.match({ credentials: 'include' }),
                 );
             });
         });
@@ -170,7 +170,7 @@ describe('Client HTTP', function () {
                 const options = fetchMock.lastCall().request;
                 expect(options.url).to.equal('/url');
                 expect(options.headers).to.not.have.property(
-                    'X-Requested-With'
+                    'X-Requested-With',
                 );
                 expect(options.headers.get('X-Foo')).to.equal('foo');
                 expect(options.method).to.equal('POST');
@@ -179,7 +179,7 @@ describe('Client HTTP', function () {
                 sinon.assert.calledWith(
                     Request,
                     sinon.match.string,
-                    sinon.match({ credentials: 'same-origin' })
+                    sinon.match({ credentials: 'same-origin' }),
                 );
             });
         });
@@ -266,7 +266,7 @@ describe('Client HTTP', function () {
             expect(req1.request.url).to.equal(req2.request.url);
             expect(req1.request.method).to.equal(req2.request.method);
             expect(
-                Object.fromEntries(req1.request.headers.entries())
+                Object.fromEntries(req1.request.headers.entries()),
             ).to.deep.equal(Object.fromEntries(req2.request.headers.entries()));
             expect(req1.request.body).to.equal(req2.request.body);
         };
@@ -282,7 +282,7 @@ describe('Client HTTP', function () {
                 expect(fetchMock.calls()).to.have.lengthOf(1);
                 expect(options.url).to.equal('/url');
                 expect(options.headers.get('X-Requested-With')).to.equal(
-                    'XMLHttpRequest'
+                    'XMLHttpRequest',
                 );
                 expect(options.headers.get('X-Foo')).to.equal('foo');
                 expect(options.method).to.equal('GET');
@@ -313,7 +313,7 @@ describe('Client HTTP', function () {
                 const options = fetchMock.lastCall().request;
                 expect(options.url).to.equal('/url');
                 expect(options.headers.get('X-Requested-With')).to.equal(
-                    'XMLHttpRequest'
+                    'XMLHttpRequest',
                 );
                 expect(options.headers.get('X-Foo')).to.equal('foo');
                 expect(options.method).to.equal('GET');
@@ -438,7 +438,7 @@ describe('Client HTTP', function () {
             return httpRequest(GETConfig).catch((err) => {
                 expect(err.statusCode).to.equal(200);
                 expect(err.message).to.equal(
-                    'Cannot parse response into a JSON object'
+                    'Cannot parse response into a JSON object',
                 );
             });
         });

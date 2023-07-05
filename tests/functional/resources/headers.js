@@ -11,7 +11,7 @@ const headersService = {
         callback(
             null,
             { headers: 'ok' },
-            { headers: { 'x-fetchr-response': '42' } }
+            { headers: { 'x-fetchr-response': '42' } },
         );
     },
 };

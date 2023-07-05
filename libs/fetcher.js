@@ -85,7 +85,7 @@ function badOperationError(resource, operation) {
         `Unsupported "${resourceName}.${operation}" operation`,
         {
             debug: 'Only "create", "read", "update" or "delete" operations are allowed',
-        }
+        },
     );
     error.source = 'fetchr';
     return error;
@@ -166,7 +166,7 @@ class Request {
                 ? this._paramsProcessor(
                       this.req,
                       { operation: this.operation, resource: this.resource },
-                      params
+                      params,
                   )
                 : params;
         return this;
@@ -238,7 +238,7 @@ class Request {
             (errData) => {
                 this._captureMetaAndStats(errData);
                 throw errData.err;
-            }
+            },
         );
 
         if (callback) {
@@ -248,7 +248,7 @@ class Request {
                 },
                 (err) => {
                     setImmediate(callback, err);
-                }
+                },
             );
         } else {
             return promise;
@@ -286,7 +286,7 @@ function executeRequest(request, resolve, reject) {
         const service = Fetcher.getService(request.resource);
         if (!service[op]) {
             throw new FetchrError(
-                `operation: ${op} is undefined on service: ${request.resource}`
+                `operation: ${op} is undefined on service: ${request.resource}`,
             );
         }
         service[op].apply(service, args);
@@ -347,7 +347,7 @@ class Fetcher {
     static registerService(service) {
         if (!service) {
             throw new FetchrError(
-                'Fetcher.registerService requires a service definition (ex. registerService(service)).'
+                'Fetcher.registerService requires a service definition (ex. registerService(service)).',
             );
         }
 
@@ -359,7 +359,7 @@ class Fetcher {
             Fetcher._deprecatedServicesDefinitions.push(resource);
         } else {
             throw new FetchrError(
-                '"resource" property is missing in service definition.'
+                '"resource" property is missing in service definition.',
             );
         }
 
@@ -391,7 +391,7 @@ class Fetcher {
         const service = Fetcher.isRegistered(name);
         if (!service) {
             throw new FetchrError(
-                `Service "${sanitizeResourceName(name)}" could not be found`
+                `Service "${sanitizeResourceName(name)}" could not be found`,
             );
         }
         return service;
@@ -479,11 +479,11 @@ following services definitions: ${services}.`);
                     if (err) {
                         const { statusCode, output } = getErrorResponse(err);
                         res.status(statusCode).json(
-                            formatResponse(req, res, { output, meta })
+                            formatResponse(req, res, { output, meta }),
                         );
                     } else {
                         res.status(meta.statusCode || 200).json(
-                            formatResponse(req, res, { data, meta })
+                            formatResponse(req, res, { data, meta }),
                         );
                     }
                 });
