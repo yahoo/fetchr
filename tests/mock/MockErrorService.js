@@ -47,7 +47,7 @@ var MockErrorService = {
                 read: 'error',
             },
             null,
-            this.meta || params.meta
+            this.meta || params.meta,
         );
         this.meta = null;
     },
@@ -72,7 +72,7 @@ var MockErrorService = {
                 create: 'error',
             },
             null,
-            this.meta || params.meta
+            this.meta || params.meta,
         );
         this.meta = null;
     },
@@ -96,7 +96,7 @@ var MockErrorService = {
                 output: params.output,
                 update: 'error',
             },
-            null
+            null,
         );
     },
     /**
@@ -118,7 +118,7 @@ var MockErrorService = {
                 output: params.output,
                 delete: 'error',
             },
-            null
+            null,
         );
     },
 };

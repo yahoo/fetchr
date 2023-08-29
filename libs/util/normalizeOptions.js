@@ -10,7 +10,7 @@ function requestToOptions(request) {
         {
             xhrTimeout: request.options.xhrTimeout,
         },
-        request._clientConfig
+        request._clientConfig,
     );
     options.config = config;
     options.headers = config.headers || request.options.headers || {};
@@ -33,7 +33,7 @@ function requestToOptions(request) {
         var context = pickContext(
             request.options.context,
             request.options.contextPicker,
-            'GET'
+            'GET',
         );
 
         var args = [
@@ -93,7 +93,7 @@ function normalizeRetry(request) {
             statusCodes: [0, 408, 999],
         },
         request.options.retry,
-        request._clientConfig.retry
+        request._clientConfig.retry,
     );
 
     if ('unsafeAllowRetry' in request._clientConfig) {
@@ -102,7 +102,7 @@ function normalizeRetry(request) {
 
     if (retry.max_retries) {
         console.warn(
-            '"max_retries" is deprecated and will be removed in a future release, use "maxRetries" instead.'
+            '"max_retries" is deprecated and will be removed in a future release, use "maxRetries" instead.',
         );
         retry.maxRetries = retry.max_retries;
     }

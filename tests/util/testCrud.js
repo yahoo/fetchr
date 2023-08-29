@@ -11,7 +11,7 @@ module.exports = function testCrud(
     config,
     callback,
     resolve,
-    reject
+    reject,
 ) {
     var options = {};
     if (arguments.length === 1) {
@@ -58,7 +58,7 @@ module.exports = function testCrud(
                 });
                 it('should throw if no resource is given', function () {
                     expect(this.fetcher.read.bind(this.fetcher)).to.throw(
-                        'Resource is required for a fetcher request'
+                        'Resource is required for a fetcher request',
                     );
                 });
             });
@@ -73,7 +73,7 @@ module.exports = function testCrud(
                         .end()
                         .then(
                             resolve(operation, done),
-                            reject(operation, done)
+                            reject(operation, done),
                         );
                 });
                 it('should handle READ', function (done) {
@@ -84,7 +84,7 @@ module.exports = function testCrud(
                         .end()
                         .then(
                             resolve(operation, done),
-                            reject(operation, done)
+                            reject(operation, done),
                         );
                 });
                 it('should handle UPDATE', function (done) {
@@ -96,7 +96,7 @@ module.exports = function testCrud(
                         .end()
                         .then(
                             resolve(operation, done),
-                            reject(operation, done)
+                            reject(operation, done),
                         );
                 });
                 it('should handle DELETE', function (done) {
@@ -107,7 +107,7 @@ module.exports = function testCrud(
                         .end()
                         .then(
                             resolve(operation, done),
-                            reject(operation, done)
+                            reject(operation, done),
                         );
                 });
                 var denySuccess = function (done) {
@@ -158,7 +158,7 @@ module.exports = function testCrud(
                 });
                 it('should throw if no resource is given', function () {
                     expect(this.fetcher.read.bind(this.fetcher)).to.throw(
-                        'Resource is required for a fetcher request'
+                        'Resource is required for a fetcher request',
                     );
                 });
             });
@@ -172,7 +172,7 @@ module.exports = function testCrud(
                     params,
                     body,
                     config,
-                    callback(operation, done)
+                    callback(operation, done),
                 );
             });
             it('should handle READ', function (done) {
@@ -181,7 +181,7 @@ module.exports = function testCrud(
                     resource,
                     params,
                     config,
-                    callback(operation, done)
+                    callback(operation, done),
                 );
             });
             it('should handle UPDATE', function (done) {
@@ -191,7 +191,7 @@ module.exports = function testCrud(
                     params,
                     body,
                     config,
-                    callback(operation, done)
+                    callback(operation, done),
                 );
             });
             it('should handle DELETE', function (done) {
@@ -200,7 +200,7 @@ module.exports = function testCrud(
                     resource,
                     params,
                     config,
-                    callback(operation, done)
+                    callback(operation, done),
                 );
             });
             var denySuccess = function (done) {
@@ -221,7 +221,7 @@ module.exports = function testCrud(
                     params,
                     body,
                     config,
-                    denySuccess(done)
+                    denySuccess(done),
                 );
             });
             it('should throw catchable error on READ with invalid resource', function (done) {
@@ -230,7 +230,7 @@ module.exports = function testCrud(
                     invalidResource,
                     params,
                     config,
-                    denySuccess(done)
+                    denySuccess(done),
                 );
             });
             it('should throw catchable error on UPDATE with invalid resource', function (done) {
@@ -240,7 +240,7 @@ module.exports = function testCrud(
                     params,
                     body,
                     config,
-                    denySuccess(done)
+                    denySuccess(done),
                 );
             });
             it('should throw catchable error on DELETE with invalid resource', function (done) {
@@ -249,7 +249,7 @@ module.exports = function testCrud(
                     invalidResource,
                     params,
                     config,
-                    denySuccess(done)
+                    denySuccess(done),
                 );
             });
             if (!options.disableNoConfigTests) {
@@ -262,7 +262,7 @@ module.exports = function testCrud(
                         resource,
                         params,
                         body,
-                        callback(operation, done)
+                        callback(operation, done),
                     );
                 });
                 it('should handle READ w/ no config', function (done) {
@@ -270,7 +270,7 @@ module.exports = function testCrud(
                     this.fetcher[operation](
                         resource,
                         params,
-                        callback(operation, done)
+                        callback(operation, done),
                     );
                 });
                 it('should handle UPDATE w/ no config', function (done) {
@@ -279,7 +279,7 @@ module.exports = function testCrud(
                         resource,
                         params,
                         body,
-                        callback(operation, done)
+                        callback(operation, done),
                     );
                 });
                 it('should handle DELETE w/ no config', function (done) {
@@ -287,7 +287,7 @@ module.exports = function testCrud(
                     this.fetcher[operation](
                         resource,
                         params,
-                        callback(operation, done)
+                        callback(operation, done),
                     );
                 });
             }
@@ -326,16 +326,16 @@ module.exports = function testCrud(
                             var serviceMeta = fetcher.getServiceMeta();
                             expect(serviceMeta).to.have.length(2);
                             expect(serviceMeta[0].headers).to.include.keys(
-                                'x-foo'
+                                'x-foo',
                             );
                             expect(serviceMeta[0].headers['x-foo']).to.equal(
-                                'foo'
+                                'foo',
                             );
                             expect(serviceMeta[1].headers).to.include.keys(
-                                'x-bar'
+                                'x-bar',
                             );
                             expect(serviceMeta[1].headers['x-bar']).to.equal(
-                                'bar'
+                                'bar',
                             );
                             done();
                         });
@@ -358,10 +358,10 @@ module.exports = function testCrud(
                             expect(serviceMeta).to.have.length(1);
                             expect(serviceMeta[0]).to.include.keys('headers');
                             expect(serviceMeta[0].headers).to.include.keys(
-                                'x-foo'
+                                'x-foo',
                             );
                             expect(serviceMeta[0].headers['x-foo']).to.equal(
-                                'foo'
+                                'foo',
                             );
                             done();
                         }
@@ -384,10 +384,10 @@ module.exports = function testCrud(
                             expect(serviceMeta).to.have.length(1);
                             expect(serviceMeta[0]).to.include.keys('headers');
                             expect(serviceMeta[0].headers).to.include.keys(
-                                'x-foo'
+                                'x-foo',
                             );
                             expect(serviceMeta[0].headers['x-foo']).to.equal(
-                                'foo'
+                                'foo',
                             );
                             done();
                         }
@@ -404,7 +404,7 @@ module.exports = function testCrud(
                 .end(function (err) {
                     expect(err.name).to.equal('FetchrError');
                     expect(err.message).to.contain(
-                        'operation: read is undefined on service: mock_noop_service'
+                        'operation: read is undefined on service: mock_noop_service',
                     );
                     done();
                 });
@@ -418,7 +418,7 @@ module.exports = function testCrud(
                 .catch(function (err) {
                     expect(err.name).to.equal('FetchrError');
                     expect(err.message).to.contain(
-                        'operation: read is undefined on service: mock_noop_service'
+                        'operation: read is undefined on service: mock_noop_service',
                     );
                     done();
                 });

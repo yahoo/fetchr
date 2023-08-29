@@ -315,7 +315,7 @@ app.use(
             console.log(serviceInfo.resource, serviceInfo.operation);
             return Object.assign({ foo: 'fillDefaultValueForFoo' }, params);
         },
-    })
+    }),
 );
 ```
 
@@ -339,7 +339,7 @@ app.use(
             data.debug = 'some debug information';
             return data;
         },
-    })
+    }),
 );
 ```
 
@@ -587,7 +587,7 @@ const fetcher = new Fetcher({
             stats.statusCode,
             ' within',
             stats.time,
-            'ms'
+            'ms',
         );
     },
 });
@@ -611,10 +611,10 @@ app.use(
                 stats.statusCode,
                 ' within',
                 stats.time,
-                'ms'
+                'ms',
             );
         },
-    })
+    }),
 );
 ```
 

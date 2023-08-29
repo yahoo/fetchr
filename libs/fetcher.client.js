@@ -124,7 +124,7 @@ Request.prototype.end = function (callback) {
                     callback(
                         null,
                         result && result.data,
-                        result && result.meta
+                        result && result.meta,
                     );
                 });
             },
@@ -133,7 +133,7 @@ Request.prototype.end = function (callback) {
                 setTimeout(function () {
                     callback(err);
                 });
-            }
+            },
         );
         return request;
     }
@@ -146,7 +146,7 @@ Request.prototype.end = function (callback) {
         function (err) {
             self._captureMetaAndStats(err);
             throw err;
-        }
+        },
     );
 
     promise.abort = request.abort;
@@ -323,7 +323,7 @@ Fetcher.prototype = {
             contextPicker = Object.assign(
                 {},
                 this.options.contextPicker,
-                options.contextPicker
+                options.contextPicker,
             );
         }
 

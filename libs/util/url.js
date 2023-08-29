@@ -42,7 +42,7 @@ function buildGETUrl(baseUrl, resource, params, config, context) {
             } else if (v !== undefined) {
                 try {
                     matrix.push(
-                        k + '=' + encodeURIComponent(jsonifyComplexType(v))
+                        k + '=' + encodeURIComponent(jsonifyComplexType(v)),
                     );
                 } catch (err) {
                     console.debug('jsonifyComplexType failed: ' + err);
@@ -92,11 +92,11 @@ function buildPOSTUrl(baseUrl, request) {
         pickContext(
             request.options.context,
             request.options.contextPicker,
-            'POST'
+            'POST',
         ),
         function eachContext(v, k) {
             query.push(k + '=' + encodeURIComponent(v));
-        }
+        },
     );
     if (query.length > 0) {
         finalUrl += '?' + query.sort().join('&');

@@ -116,7 +116,7 @@ describe('Client Fetcher', function () {
                             '/' +
                             resource +
                             '?_csrf=' +
-                            context._csrf
+                            context._csrf,
                     );
                 }
             };
@@ -138,7 +138,7 @@ describe('Client Fetcher', function () {
                     expect(req.url).to.contain('_csrf=' + context._csrf);
                 } else if (req.method === 'POST') {
                     expect(req.url).to.contain(
-                        '/' + resource + '?_csrf=' + context._csrf
+                        '/' + resource + '?_csrf=' + context._csrf,
                     );
                 }
             };
@@ -182,7 +182,7 @@ describe('Client Fetcher', function () {
                         }
                         expect(request.abort).to.exist;
                         done();
-                    })
+                    }),
                 );
         });
         it('should be able to abort when calling end w/ callback', function () {
@@ -198,7 +198,7 @@ describe('Client Fetcher', function () {
                             // we want the error to be thrown then request is aborted
                             // done();
                         }
-                    })
+                    }),
                 );
             expect(request.abort).to.exist;
             request.abort();
@@ -301,7 +301,7 @@ describe('Client Fetcher', function () {
                             '?_csrf=' +
                             ctx._csrf +
                             '&random=' +
-                            ctx.random
+                            ctx.random,
                     );
                 }
             };
@@ -369,7 +369,7 @@ describe('Client Fetcher', function () {
                         'mock_service',
                         { foo: 'bar' },
                         { constructGetUri },
-                        {}
+                        {},
                     );
                 });
         });

@@ -59,7 +59,7 @@ function io(options, controller) {
                         'Cannot parse response into a JSON object',
                         options,
                         request,
-                        response
+                        response,
                     );
                 });
             } else {
@@ -69,7 +69,7 @@ function io(options, controller) {
                         message,
                         options,
                         request,
-                        response
+                        response,
                     );
                 });
             }
@@ -82,7 +82,7 @@ function io(options, controller) {
                         FetchrError.TIMEOUT,
                         'Request failed due to timeout',
                         options,
-                        request
+                        request,
                     );
                 }
 
@@ -90,7 +90,7 @@ function io(options, controller) {
                     FetchrError.ABORT,
                     err.message,
                     options,
-                    request
+                    request,
                 );
             }
 
@@ -98,9 +98,9 @@ function io(options, controller) {
                 FetchrError.UNKNOWN,
                 err.message,
                 options,
-                request
+                request,
             );
-        }
+        },
     );
 }
 

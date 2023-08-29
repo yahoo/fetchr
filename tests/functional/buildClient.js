@@ -22,7 +22,7 @@ async function buildClient() {
                 } else {
                     resolve(stats);
                 }
-            }
+            },
         );
     });
 }
