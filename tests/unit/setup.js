@@ -14,10 +14,8 @@ const { fetch, Request } = abortableFetch({
     Request: nodeFetch.Request,
 });
 
-if (!global.fetch) {
-    global.AbortController = AbortController;
-    global.Headers = nodeFetch.Headers;
-    global.Request = Request;
-    global.Response = nodeFetch.Response;
-    global.fetch = fetch;
-}
+global.AbortController = AbortController;
+global.Headers = nodeFetch.Headers;
+global.Request = Request;
+global.Response = nodeFetch.Response;
+global.fetch = fetch;
