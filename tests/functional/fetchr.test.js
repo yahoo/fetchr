@@ -250,7 +250,7 @@ describe('client/server integration', () => {
 
                 expect(response).to.deep.equal({
                     body: null,
-                    message: 'The user aborted a request.',
+                    message: 'signal is aborted without reason',
                     meta: null,
                     name: 'FetchrError',
                     output: null,
