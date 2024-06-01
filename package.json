@@ -31,7 +31,7 @@
   },
   "devDependencies": {
     "abortcontroller-polyfill": "^1.7.3",
-    "chai": "^4.2.0",
+    "chai": "^5.1.1",
     "eslint": "^8.44.0",
     "express": "^4.17.1",
     "fetch-mock": "^9.11.0",
