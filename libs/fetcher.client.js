@@ -174,19 +174,19 @@ Request.prototype.end = function (callback) {
  *      the stats object, which contains resource, operation, params (request params),
  *      statusCode, err, and time (elapsed time)
  */
-
 function Fetcher(options) {
+    var opts = options || {};
     this._serviceMeta = [];
     this.options = {
-        headers: options.headers,
-        xhrPath: options.xhrPath || DEFAULT_PATH,
-        xhrTimeout: options.xhrTimeout || DEFAULT_TIMEOUT,
-        corsPath: options.corsPath,
-        context: options.context || {},
-        contextPicker: options.contextPicker || {},
-        retry: options.retry || null,
-        statsCollector: options.statsCollector,
-        unsafeAllowRetry: Boolean(options.unsafeAllowRetry),
+        headers: opts.headers,
+        xhrPath: opts.xhrPath || DEFAULT_PATH,
+        xhrTimeout: opts.xhrTimeout || DEFAULT_TIMEOUT,
+        corsPath: opts.corsPath,
+        context: opts.context || {},
+        contextPicker: opts.contextPicker || {},
+        retry: opts.retry || null,
+        statsCollector: opts.statsCollector,
+        unsafeAllowRetry: Boolean(opts.unsafeAllowRetry),
         _serviceMeta: this._serviceMeta,
     };
 }
