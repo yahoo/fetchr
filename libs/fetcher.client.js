@@ -114,44 +114,28 @@ Request.prototype._captureMetaAndStats = function (err, result) {
 Request.prototype.end = function (callback) {
     var self = this;
     self._startTime = Date.now();
-    var request = httpRequest(normalizeOptions(self));
 
-    if (callback) {
-        request.then(
-            function (result) {
-                self._captureMetaAndStats(null, result);
-                setTimeout(function () {
-                    callback(
-                        null,
-                        result && result.data,
-                        result && result.meta,
-                    );
-                });
-            },
-            function (err) {
-                self._captureMetaAndStats(err);
-                setTimeout(function () {
-                    callback(err);
-                });
-            },
-        );
-        return request;
-    }
-
-    var promise = request.then(
-        function (result) {
-            self._captureMetaAndStats(null, result);
+    var onResponse = function (err, result) {
+        self._captureMetaAndStats(err, result);
+        if (callback) {
+            setTimeout(function () {
+                callback(err, result && result.data, result && result.meta);
+            });
+        } else if (err) {
+            throw err;
+        } else {
             return result;
+        }
+    };
+
+    return httpRequest(normalizeOptions(self)).then(
+        function (result) {
+            return onResponse(null, result);
         },
         function (err) {
-            self._captureMetaAndStats(err);
-            throw err;
+            return onResponse(err);
         },
     );
-
-    promise.abort = request.abort;
-
-    return promise;
 };
 
 /**
