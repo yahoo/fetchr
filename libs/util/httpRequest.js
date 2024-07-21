@@ -25,14 +25,6 @@ function _shouldRetry(err, options, attempt) {
     return options.retry.statusCodes.indexOf(err.statusCode) !== -1;
 }
 
-function delayPromise(fn, delay) {
-    return new Promise(function (resolve, reject) {
-        setTimeout(function () {
-            fn().then(resolve, reject);
-        }, delay);
-    });
-}
-
 function _fetch(options, controller) {
     var timedOut = false;
     var request = new Request(options.url, {
@@ -135,9 +127,12 @@ function httpRequest(options) {
 
         controller = new AbortController();
         currentAttempt += 1;
-        return delayPromise(function () {
-            return _fetch(options, controller).catch(handleError);
-        }, delay);
+
+        return new Promise(function (resolve, reject) {
+            setTimeout(function () {
+                _fetch(options, controller).catch(_retry).then(resolve, reject);
+            }, delay);
+        });
     }
 
     var promise = _fetch(options, controller).catch(_retry);
