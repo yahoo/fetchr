@@ -104,6 +104,24 @@ Request.prototype._captureMetaAndStats = function (err, result) {
     }
 };
 
+Request.prototype.then = function (resolve, reject) {
+    return this.end(function (err, data, meta) {
+        if (err) {
+            reject(err);
+        } else {
+            resolve({ data, meta });
+        }
+    });
+};
+
+Request.prototype.catch = function (reject) {
+    return this.end(function (err) {
+        if (err) {
+            reject(err);
+        }
+    });
+};
+
 /**
  * Execute this fetcher request and call callback.
  * @method end
@@ -112,6 +130,12 @@ Request.prototype._captureMetaAndStats = function (err, result) {
  * @async
  */
 Request.prototype.end = function (callback) {
+    if (!callback) {
+        console.warn(
+            'You called .end() without a callback. This will become an error in the future. Use .then() instead.',
+        );
+    }
+
     var self = this;
     self._startTime = Date.now();
 

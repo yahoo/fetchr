@@ -226,6 +226,12 @@ class Request {
      * is complete.
      */
     end(callback) {
+        if (!callback) {
+            console.warn(
+                'You called .end() without a callback. This will become an error in the future. Use .then() instead.',
+            );
+        }
+
         this._startTime = Date.now();
 
         const promise = new Promise((resolve, reject) => {
@@ -253,6 +259,24 @@ class Request {
         } else {
             return promise;
         }
+    }
+
+    then(resolve, reject) {
+        return this.end((err, data, meta) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve({ data, meta });
+            }
+        });
+    }
+
+    catch(reject) {
+        return this.end((err) => {
+            if (err) {
+                reject(err);
+            }
+        });
     }
 }
 
