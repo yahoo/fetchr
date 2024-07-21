@@ -108,20 +108,19 @@ function httpRequest(options) {
     var controller = new AbortController();
     var currentAttempt = 0;
 
-    // handleError is the onReject promise callback that we attach to
-    // the io call (ex. io().catch(handleError)). Since io is a
+    // _retry is the onReject promise callback that we attach to the
+    // _fetch call (ex. _fetch().catch(_retry)). Since _fetch is a
     // promise and since we must be able to retry requests (aka call
-    // io function again), we must call io from within
-    // handleError. This means that handleError is a recursive
+    // _fetch function again), we must call _fetch from within
+    // _retry. This means that _fetch is a recursive
     // function. Recursive promises are problematic since they can
-    // block the main thread for a while. However, since the inner io
-    // call is wrapped in a setTimeout (through delayPromise) we are
-    // safe here.
+    // block the main thread for a while. However, since the inner
+    // _fetch call is wrapped in a setTimeout we are safe here.
     //
     // The call flow:
     //
-    // httpRequest -> io -> handleError -> io -> handleError -> end
-    function handleError(err) {
+    // httpRequest -> _fetch -> _retry -> _fetch -> _retry -> end
+    function _retry(err) {
         if (!shouldRetry(err, options, currentAttempt)) {
             throw err;
         }
@@ -141,7 +140,7 @@ function httpRequest(options) {
         }, delay);
     }
 
-    var promise = _fetch(options, controller).catch(handleError);
+    var promise = _fetch(options, controller).catch(_retry);
 
     return {
         then: promise.then.bind(promise),
