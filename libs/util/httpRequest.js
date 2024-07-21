@@ -33,7 +33,7 @@ function delayPromise(fn, delay) {
     });
 }
 
-function io(options, controller) {
+function _fetch(options, controller) {
     var timedOut = false;
     var request = new Request(options.url, {
         body: options.body,
@@ -137,11 +137,11 @@ function httpRequest(options) {
         controller = new AbortController();
         currentAttempt += 1;
         return delayPromise(function () {
-            return io(options, controller).catch(handleError);
+            return _fetch(options, controller).catch(handleError);
         }, delay);
     }
 
-    var promise = io(options, controller).catch(handleError);
+    var promise = _fetch(options, controller).catch(handleError);
 
     return {
         then: promise.then.bind(promise),
