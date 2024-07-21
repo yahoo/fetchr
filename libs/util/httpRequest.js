@@ -9,7 +9,7 @@
 
 var FetchrError = require('./FetchrError');
 
-function shouldRetry(err, options, attempt) {
+function _shouldRetry(err, options, attempt) {
     if (err.reason === FetchrError.ABORT) {
         return false;
     }
@@ -121,7 +121,7 @@ function httpRequest(options) {
     //
     // httpRequest -> _fetch -> _retry -> _fetch -> _retry -> end
     function _retry(err) {
-        if (!shouldRetry(err, options, currentAttempt)) {
+        if (!_shouldRetry(err, options, currentAttempt)) {
             throw err;
         }
 
