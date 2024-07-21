@@ -143,7 +143,7 @@ Request.prototype.end = function (callback) {
  * @class FetcherClient
  * @param {Object} options configuration options for Fetcher
  * @param {String} [options.xhrPath="/api"] The path for requests
- * @param {Number} [options.xhrTimout=3000] Timeout in milliseconds for all requests
+ * @param {Number} [options.xhrTimeout=3000] Timeout in milliseconds for all requests
  * @param {Boolean} [options.corsPath] Base CORS path in case CORS is enabled
  * @param {Object} [options.context] The context object that is propagated to all outgoing
  *      requests as query params.  It can contain current-session/context data that should
