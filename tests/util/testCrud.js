@@ -70,7 +70,6 @@ module.exports = function testCrud(
                         .params(params)
                         .body(body)
                         .clientConfig(config)
-                        .end()
                         .then(
                             resolve(operation, done),
                             reject(operation, done),
@@ -81,7 +80,6 @@ module.exports = function testCrud(
                     this.fetcher[operation](resource)
                         .params(params)
                         .clientConfig(config)
-                        .end()
                         .then(
                             resolve(operation, done),
                             reject(operation, done),
@@ -93,7 +91,6 @@ module.exports = function testCrud(
                         .params(params)
                         .body(body)
                         .clientConfig(config)
-                        .end()
                         .then(
                             resolve(operation, done),
                             reject(operation, done),
@@ -104,7 +101,6 @@ module.exports = function testCrud(
                     this.fetcher[operation](resource)
                         .params(params)
                         .clientConfig(config)
-                        .end()
                         .then(
                             resolve(operation, done),
                             reject(operation, done),
@@ -128,7 +124,6 @@ module.exports = function testCrud(
                         .params(params)
                         .body(body)
                         .clientConfig(config)
-                        .end()
                         .then(denySuccess(done), allowFailure(done));
                 });
                 it('should reject a READ promise on invalid resource', function (done) {
@@ -136,7 +131,6 @@ module.exports = function testCrud(
                     this.fetcher[operation](invalidResource)
                         .params(params)
                         .clientConfig(config)
-                        .end()
                         .then(denySuccess(done), allowFailure(done));
                 });
                 it('should reject a UPDATE promise on invalid resource', function (done) {
@@ -145,7 +139,6 @@ module.exports = function testCrud(
                         .params(params)
                         .body(body)
                         .clientConfig(config)
-                        .end()
                         .then(denySuccess(done), allowFailure(done));
                 });
                 it('should reject a DELETE promise on invalid resource', function (done) {
@@ -153,7 +146,6 @@ module.exports = function testCrud(
                     this.fetcher[operation](invalidResource)
                         .params(params)
                         .clientConfig(config)
-                        .end()
                         .then(denySuccess(done), allowFailure(done));
                 });
                 it('should throw if no resource is given', function () {
@@ -377,7 +369,6 @@ module.exports = function testCrud(
                         meta: { headers: { 'x-foo': 'foo' } },
                     })
                     .clientConfig(config)
-                    .end()
                     .catch(function (err) {
                         if (err) {
                             var serviceMeta = fetcher.getServiceMeta();
@@ -414,7 +405,6 @@ module.exports = function testCrud(
             fetcher
                 .read(mockNoopService.resource)
                 .clientConfig(config)
-                .end()
                 .catch(function (err) {
                     expect(err.name).to.equal('FetchrError');
                     expect(err.message).to.contain(

@@ -104,6 +104,24 @@ Request.prototype._captureMetaAndStats = function (err, result) {
     }
 };
 
+Request.prototype.then = function (resolve, reject) {
+    return this.end(function (err, data, meta) {
+        if (err) {
+            reject(err);
+        } else {
+            resolve({ data, meta });
+        }
+    });
+};
+
+Request.prototype.catch = function (reject) {
+    return this.end(function (err) {
+        if (err) {
+            reject(err);
+        }
+    });
+};
+
 /**
  * Execute this fetcher request and call callback.
  * @method end
@@ -112,46 +130,36 @@ Request.prototype._captureMetaAndStats = function (err, result) {
  * @async
  */
 Request.prototype.end = function (callback) {
-    var self = this;
-    self._startTime = Date.now();
-    var request = httpRequest(normalizeOptions(self));
-
-    if (callback) {
-        request.then(
-            function (result) {
-                self._captureMetaAndStats(null, result);
-                setTimeout(function () {
-                    callback(
-                        null,
-                        result && result.data,
-                        result && result.meta,
-                    );
-                });
-            },
-            function (err) {
-                self._captureMetaAndStats(err);
-                setTimeout(function () {
-                    callback(err);
-                });
-            },
+    if (!callback) {
+        console.warn(
+            'You called .end() without a callback. This will become an error in the future. Use .then() instead.',
         );
-        return request;
     }
 
-    var promise = request.then(
-        function (result) {
-            self._captureMetaAndStats(null, result);
+    var self = this;
+    self._startTime = Date.now();
+
+    var onResponse = function (err, result) {
+        self._captureMetaAndStats(err, result);
+        if (callback) {
+            setTimeout(function () {
+                callback(err, result && result.data, result && result.meta);
+            });
+        } else if (err) {
+            throw err;
+        } else {
             return result;
+        }
+    };
+
+    return httpRequest(normalizeOptions(self)).then(
+        function (result) {
+            return onResponse(null, result);
         },
         function (err) {
-            self._captureMetaAndStats(err);
-            throw err;
+            return onResponse(err);
         },
     );
-
-    promise.abort = request.abort;
-
-    return promise;
 };
 
 /**
@@ -159,7 +167,7 @@ Request.prototype.end = function (callback) {
  * @class FetcherClient
  * @param {Object} options configuration options for Fetcher
  * @param {String} [options.xhrPath="/api"] The path for requests
- * @param {Number} [options.xhrTimout=3000] Timeout in milliseconds for all requests
+ * @param {Number} [options.xhrTimeout=3000] Timeout in milliseconds for all requests
  * @param {Boolean} [options.corsPath] Base CORS path in case CORS is enabled
  * @param {Object} [options.context] The context object that is propagated to all outgoing
  *      requests as query params.  It can contain current-session/context data that should

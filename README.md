@@ -106,19 +106,22 @@ Fetcher.registerService(myDataService);
 // register the middleware
 app.use('/myCustomAPIEndpoint', Fetcher.middleware());
 
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
     // instantiated fetcher with access to req object
     const fetcher = new Fetcher({
         xhrPath: '/myCustomAPIEndpoint', // xhrPath will be ignored on the serverside fetcher instantiation
-        req: req
+        req: req,
     });
 
     // perform read call to get data
     fetcher
         .read('data_service')
-        .params({id: ###})
-        .end(function (err, data, meta) {
-        // handle err and/or data returned from data fetcher in this callback
+        .params({ id: 42 })
+        .then(({ data, meta }) => {
+            // handle data returned from data fetcher in this callback
+        })
+        .catch((err) => {
+            // handle error
         });
 });
 ```
@@ -127,21 +130,27 @@ app.use(function(req, res, next) {
 // app.js - client
 import Fetcher from 'fetchr';
 const fetcher = new Fetcher({
-    xhrPath: '/myCustomAPIEndpoint' // xhrPath is REQUIRED on the clientside fetcher instantiation
+    xhrPath: '/myCustomAPIEndpoint', // xhrPath is REQUIRED on the clientside fetcher instantiation
 });
 fetcher
     .read('data_api_fetcher')
-    .params({id: ###})
-    .end(function (err, data, meta) {
-    // handle err and/or data returned from data fetcher in this callback
+    .params({ id: 42 })
+    .then(({ data, meta }) => {
+        // handle data returned from data fetcher in this callback
+    })
+    .catch((err) => {
+        // handle errors
     });
 
 // for create you can use the body() method to pass data
 fetcher
     .create('data_api_create')
-    .body({"some":"data"})
-    .end(function (err, data, meta) {
-    // handle err and/or data returned from data fetcher in this callback
+    .body({ some: 'data' })
+    .then(({ data, meta }) => {
+        // handle data returned from data fetcher in this callback
+    })
+    .catch((err) => {
+        // handle errors
     });
 ```
 
@@ -182,7 +191,7 @@ export default {
 fetcher
     .read('data_service')
     .params({id: ###})
-    .end(function (err, data, meta) {
+    .then(({ data, meta }) {
         // data will be 'response'
         // meta will have the header and statusCode from above
     });
@@ -237,33 +246,31 @@ And in your service call:
 fetcher
     .read('someData')
     .params({ id: '42' })
-    .end(function (err, data, meta) {
-        if (err) {
-            // err instanceof FetchrError -> true
-            // err.message -> "Not found"
-            // err.meta -> { foo: 'bar' }
-            // err.name = 'FetchrError'
-            // err.output -> { message: "Not found", more: "meta data" }
-            // err.rawRequest -> { headers: {}, method: 'GET', url: '/api/someData' }
-            // err.reason -> BAD_HTTP_STATUS | BAD_JSON | TIMEOUT | ABORT | UNKNOWN
-            // err.statusCode -> 404
-            // err.timeout -> 3000
-            // err.url -> '/api/someData'
-        }
+    .catch((err) => {
+        // err instanceof FetchrError -> true
+        // err.message -> "Not found"
+        // err.meta -> { foo: 'bar' }
+        // err.name = 'FetchrError'
+        // err.output -> { message: "Not found", more: "meta data" }
+        // err.rawRequest -> { headers: {}, method: 'GET', url: '/api/someData' }
+        // err.reason -> BAD_HTTP_STATUS | BAD_JSON | TIMEOUT | ABORT | UNKNOWN
+        // err.statusCode -> 404
+        // err.timeout -> 3000
+        // err.url -> '/api/someData'
     });
 ```
 
 ## Abort support
 
-An object with an `abort` method is returned by the `.end()` method.
+An object with an `abort` method is returned when creating fetchr requests on client.
 This is useful if you want to abort a request before it is completed.
 
 ```js
 const req = fetcher
     .read('someData')
-    .params({id: ###})
-    .end(function (err, data, meta) {
-        // err.output will be { message: "Not found", more: "meta data" }
+    .params({ id: 42 })
+    .catch((err) => {
+        // err.reason will be ABORT
     });
 
 req.abort();
@@ -283,21 +290,21 @@ const fetcher = new Fetcher({
 });
 ```
 
-If you have an individual request that you need to ensure has a specific timeout you can do that via the `timeout` option in `clientConfig`:
+If you want to set a timeout per request you can call `clientConfig` with a `timeout` property:
 
 ```js
 fetcher
     .read('someData')
-    .params({id: ###})
-    .clientConfig({timeout: 5000}) // wait 5 seconds for this request before timing it out
-    .end(function (err, data, meta) {
-    // handle err and/or data returned from data fetcher in this callback
+    .params({ id: 42 })
+    .clientConfig({ timeout: 5000 }) // wait 5 seconds for this request before timing out
+    .catch((err) => {
+        // err.reason will be TIMEOUT
     });
 ```
 
 ## Params Processing
 
-For some applications, there may be a situation where you need to process the service params passed in the request before they are sent to the actual service. Typically, you would process them in the service itself. However, if you neet to perform processing across many services (i.e. sanitization for security), then you can use the `paramsProcessor` option.
+For some applications, there may be a situation where you need to process the service params passed in the request before they are sent to the actual service. Typically, you would process them in the service itself. However, if you need to perform processing across many services (i.e. sanitization for security), then you can use the `paramsProcessor` option.
 
 `paramsProcessor` is a function that is passed into the `Fetcher.middleware` method. It is passed three arguments, the request object, the serviceInfo object, and the service params object. The `paramsProcessor` function can then modify the service params if needed.
 
@@ -357,11 +364,7 @@ const fetcher = new Fetcher({
     corsPath: 'http://www.foo.com',
     xhrPath: '/fooProxy',
 });
-fetcher
-    .read('service')
-    .params({ foo: 1 })
-    .clientConfig({ cors: true })
-    .end(callbackFn);
+fetcher.read('service').params({ foo: 1 }).clientConfig({ cors: true });
 ```
 
 Additionally, you can also customize how the GET URL is constructed by passing in the `constructGetUri` property when you execute your `read` call:
@@ -381,14 +384,10 @@ const fetcher = new Fetcher({
     corsPath: 'http://www.foo.com',
     xhrPath: '/fooProxy',
 });
-fetcher
-    .read('service')
-    .params({ foo: 1 })
-    .clientConfig({
-        cors: true,
-        constructGetUri: customConstructGetUri,
-    })
-    .end(callbackFn);
+fetcher.read('service').params({ foo: 1 }).clientConfig({
+    cors: true,
+    constructGetUri: customConstructGetUri,
+});
 ```
 
 ## CSRF Protection
@@ -426,7 +425,7 @@ const config = {
     unsafeAllowRetry: false, // for POST requests, whether to allow retrying this post
 };
 
-fetcher.read('service').params({ id: 1 }).clientConfig(config).end(callbackFn);
+fetcher.read('service').params({ id: 1 }).clientConfig(config);
 ```
 
 For requests from the server, the config object is simply passed into the service being called.
@@ -442,12 +441,9 @@ const fetchr = new Fetchr({
 });
 
 // Per request
-fetchr
-    .read('service')
-    .clientConfig({
-        retry: { maxRetries: 1 },
-    })
-    .end();
+fetchr.read('service').clientConfig({
+    retry: { maxRetries: 1 },
+});
 ```
 
 With the above configuration, Fetchr will retry twice all requests
@@ -544,7 +540,7 @@ const config = {
     },
 };
 
-fetcher.read('service').params({ id: 1 }).clientConfig(config).end(callbackFn);
+fetcher.read('service').params({ id: 1 }).clientConfig(config);
 ```
 
 All requests contain custom headers when you add `headers` option to constructor arguments of 'Fetcher'.
