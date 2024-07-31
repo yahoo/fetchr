@@ -136,14 +136,14 @@ function _fetch() {
 }
 
 function _send() {
-    this._promise = _fetch.call(this);
+    this._request = _fetch.call(this);
 }
 
 function FetchrHttpRequest(options) {
     this._controller = new AbortController();
     this._currentAttempt = 0;
     this._options = options;
-    this._promise = null;
+    this._request = null;
 }
 
 FetchrHttpRequest.prototype.abort = function () {
@@ -151,12 +151,12 @@ FetchrHttpRequest.prototype.abort = function () {
 };
 
 FetchrHttpRequest.prototype.then = function (resolve, reject) {
-    this._promise = this._promise.then(resolve, reject);
+    this._request = this._request.then(resolve, reject);
     return this;
 };
 
 FetchrHttpRequest.prototype.catch = function (reject) {
-    this._promise = this._promise.catch(reject);
+    this._request = this._request.catch(reject);
     return this;
 };
 
