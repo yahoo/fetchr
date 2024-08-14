@@ -130,7 +130,7 @@ Request.prototype.catch = function (reject) {
  * @async
  */
 Request.prototype.end = function (callback) {
-    if (!callback) {
+    if (!arguments.length) {
         console.warn(
             'You called .end() without a callback. This will become an error in the future. Use .then() instead.',
         );
