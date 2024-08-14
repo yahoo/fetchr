@@ -151,13 +151,11 @@ FetchrHttpRequest.prototype.abort = function () {
 };
 
 FetchrHttpRequest.prototype.then = function (resolve, reject) {
-    this._request = this._request.then(resolve, reject);
-    return this;
+    return this._request.then(resolve, reject);
 };
 
 FetchrHttpRequest.prototype.catch = function (reject) {
-    this._request = this._request.catch(reject);
-    return this;
+    return this._request.catch(reject);
 };
 
 function httpRequest(options) {

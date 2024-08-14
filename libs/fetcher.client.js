@@ -38,6 +38,7 @@ function Request(operation, resource, options) {
     this._body = null;
     this._clientConfig = {};
     this._startTime = 0;
+    this._request = null;
 }
 
 /**
@@ -104,22 +105,39 @@ Request.prototype._captureMetaAndStats = function (err, result) {
     }
 };
 
+Request.prototype._send = function () {
+    if (this._request) {
+        return this._request;
+    }
+
+    this._startTime = Date.now();
+    this._request = httpRequest(normalizeOptions(this));
+    var captureMetaAndStats = this._captureMetaAndStats.bind(this);
+
+    this._request.then(
+        function (result) {
+            captureMetaAndStats(null, result);
+            return result;
+        },
+        function (err) {
+            captureMetaAndStats(err);
+            throw err;
+        },
+    );
+
+    return this._request;
+};
+
 Request.prototype.then = function (resolve, reject) {
-    return this.end(function (err, data, meta) {
-        if (err) {
-            reject(err);
-        } else {
-            resolve({ data, meta });
-        }
-    });
+    return this._send().then(resolve, reject);
 };
 
 Request.prototype.catch = function (reject) {
-    return this.end(function (err) {
-        if (err) {
-            reject(err);
-        }
-    });
+    return this._send().catch(reject);
+};
+
+Request.prototype.abort = function () {
+    return this._request.abort();
 };
 
 /**
@@ -136,30 +154,20 @@ Request.prototype.end = function (callback) {
         );
     }
 
-    var self = this;
-    self._startTime = Date.now();
+    this._send();
 
-    var onResponse = function (err, result) {
-        self._captureMetaAndStats(err, result);
-        if (callback) {
-            setTimeout(function () {
-                callback(err, result && result.data, result && result.meta);
-            });
-        } else if (err) {
-            throw err;
-        } else {
-            return result;
-        }
-    };
+    if (callback) {
+        this._request.then(
+            function (result) {
+                callback(null, result && result.data, result && result.meta);
+            },
+            function (err) {
+                callback(err);
+            },
+        );
+    }
 
-    return httpRequest(normalizeOptions(self)).then(
-        function (result) {
-            return onResponse(null, result);
-        },
-        function (err) {
-            return onResponse(err);
-        },
-    );
+    return this._request;
 };
 
 /**
