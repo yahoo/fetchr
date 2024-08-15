@@ -443,4 +443,29 @@ describe('Client HTTP', function () {
             });
         });
     });
+
+    describe('Promise Support', () => {
+        it('always returns the response if resolved multiple times', async function () {
+            const body = { data: 'BODY' };
+
+            fetchMock.get('/url', { body, status: responseStatus });
+
+            const request = httpRequest(GETConfig);
+
+            expect(await request).to.deep.equal(body);
+            expect(await request).to.deep.equal(body);
+        });
+
+        it('works with Promise.all', function () {
+            const body = { data: 'BODY' };
+
+            fetchMock.get('/url', { body, status: responseStatus });
+
+            const request = httpRequest(GETConfig);
+
+            return Promise.all([request]).then(([result]) => {
+                expect(result).to.deep.equal(body);
+            });
+        });
+    });
 });

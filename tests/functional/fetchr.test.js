@@ -129,6 +129,56 @@ describe('client/server integration', () => {
         });
     });
 
+    describe('Promise support', () => {
+        it('Always return the same value if resolved multiple times', async () => {
+            const [id, value] = await page.evaluate(async () => {
+                const fetcher = new Fetchr();
+
+                await fetcher.create(
+                    'item',
+                    { id: '42' },
+                    { value: 'this is an item' },
+                );
+
+                const request = fetcher.read('item', { id: '42' });
+
+                return Promise.all([
+                    request.then(({ data }) => data.id),
+                    request.then(({ data }) => data.value),
+                ]);
+            });
+
+            expect(id).to.equal('42');
+            expect(value).to.equal('this is an item');
+        });
+
+        it('Works with Promise.all', async () => {
+            const response = await page.evaluate(async () => {
+                const fetcher = new Fetchr();
+
+                await fetcher.create(
+                    'item',
+                    { id: '42' },
+                    { value: 'this is an item' },
+                );
+
+                const promise = fetcher.read('item', { id: '42' });
+
+                return Promise.all([promise])
+                    .then(([result]) => result)
+                    .catch((err) => err);
+            });
+
+            expect(response.data).to.deep.equal({
+                id: '42',
+                value: 'this is an item',
+            });
+            expect(response.meta).to.deep.equal({
+                statusCode: 200,
+            });
+        });
+    });
+
     describe('Error handling', () => {
         describe('GET', () => {
             it('can handle unconfigured server', async () => {
