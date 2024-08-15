@@ -41,7 +41,7 @@ describe('client/server integration', () => {
     describe('CRUD', () => {
         it('can create item', async () => {
             const response = await page.evaluate(() => {
-                const fetcher = new Fetchr({});
+                const fetcher = new Fetchr();
                 return fetcher.create(
                     'item',
                     { id: '42' },
@@ -64,7 +64,7 @@ describe('client/server integration', () => {
 
         it('can read one item', async () => {
             const response = await page.evaluate(() => {
-                const fetcher = new Fetchr({});
+                const fetcher = new Fetchr();
                 return fetcher.read('item', { id: '42' });
             });
 
@@ -79,8 +79,8 @@ describe('client/server integration', () => {
 
         it('can read many items', async () => {
             const response = await page.evaluate(() => {
-                const fetcher = new Fetchr({});
-                return fetcher.read('item', null);
+                const fetcher = new Fetchr();
+                return fetcher.read('item');
             });
 
             expect(response.data).to.deep.equal([
@@ -96,7 +96,7 @@ describe('client/server integration', () => {
 
         it('can update item', async () => {
             const response = await page.evaluate(() => {
-                const fetcher = new Fetchr({});
+                const fetcher = new Fetchr();
                 return fetcher.update(
                     'item',
                     { id: '42' },
@@ -119,13 +119,63 @@ describe('client/server integration', () => {
 
         it('can delete item', async () => {
             const response = await page.evaluate(() => {
-                const fetcher = new Fetchr({});
+                const fetcher = new Fetchr();
                 return fetcher.delete('item', { id: '42' });
             });
 
             expect(itemsData).to.deep.equal({});
             expect(response.data).to.deep.equal(null);
             expect(response.meta).to.deep.equal({ statusCode: 200 });
+        });
+    });
+
+    describe('Promise support', () => {
+        it('Always return the same value if resolved multiple times', async () => {
+            const [id, value] = await page.evaluate(async () => {
+                const fetcher = new Fetchr();
+
+                await fetcher.create(
+                    'item',
+                    { id: '42' },
+                    { value: 'this is an item' },
+                );
+
+                const request = fetcher.read('item', { id: '42' });
+
+                return Promise.all([
+                    request.then(({ data }) => data.id),
+                    request.then(({ data }) => data.value),
+                ]);
+            });
+
+            expect(id).to.equal('42');
+            expect(value).to.equal('this is an item');
+        });
+
+        it('Works with Promise.all', async () => {
+            const response = await page.evaluate(async () => {
+                const fetcher = new Fetchr();
+
+                await fetcher.create(
+                    'item',
+                    { id: '42' },
+                    { value: 'this is an item' },
+                );
+
+                const promise = fetcher.read('item', { id: '42' });
+
+                return Promise.all([promise])
+                    .then(([result]) => result)
+                    .catch((err) => err);
+            });
+
+            expect(response.data).to.deep.equal({
+                id: '42',
+                value: 'this is an item',
+            });
+            expect(response.meta).to.deep.equal({
+                statusCode: 200,
+            });
         });
     });
 
@@ -136,7 +186,7 @@ describe('client/server integration', () => {
                     const fetcher = new Fetchr({
                         xhrPath: 'http://localhost:3001',
                     });
-                    return fetcher.read('error', null).catch((err) => err);
+                    return fetcher.read('error').catch((err) => err);
                 });
 
                 expect(response).to.deep.equal({
@@ -159,8 +209,8 @@ describe('client/server integration', () => {
 
             it('can handle service expected errors', async () => {
                 const response = await page.evaluate(() => {
-                    const fetcher = new Fetchr({});
-                    return fetcher.read('error', null).catch((err) => err);
+                    const fetcher = new Fetchr();
+                    return fetcher.read('error').catch((err) => err);
                 });
 
                 expect(response).to.deep.equal({
@@ -187,7 +237,7 @@ describe('client/server integration', () => {
 
             it('can handle service unexpected errors', async () => {
                 const response = await page.evaluate(() => {
-                    const fetcher = new Fetchr({});
+                    const fetcher = new Fetchr();
                     return fetcher
                         .read('error', { error: 'unexpected' })
                         .catch((err) => err);
@@ -217,7 +267,7 @@ describe('client/server integration', () => {
             it('can handle incorrect api path', async () => {
                 const response = await page.evaluate(() => {
                     const fetcher = new Fetchr({ xhrPath: '/non-existent' });
-                    return fetcher.read('item', null).catch((err) => err);
+                    return fetcher.read('item').catch((err) => err);
                 });
 
                 expect(response).to.deep.equal({
@@ -240,12 +290,26 @@ describe('client/server integration', () => {
 
             it('can handle aborts', async () => {
                 const response = await page.evaluate(() => {
-                    const fetcher = new Fetchr({});
-                    const request = fetcher.read('slow', null);
+                    const fetcher = new Fetchr();
+                    const request = fetcher.read('slow');
 
-                    request.abort();
+                    // We need to abort after 300ms since the current
+                    // implementation does not trigger a request when
+                    // calling read with only one argument. We could
+                    // call .end() or .then() without any callback,
+                    // but doing it with a setTimeout is more
+                    // realistic since it's very likely that users
+                    // would have abort inside an event handler in a
+                    // different stack.
+                    const abort = () =>
+                        new Promise((resolve) => {
+                            setTimeout(() => {
+                                request.abort();
+                                resolve();
+                            }, 300);
+                        });
 
-                    return request.catch((err) => err);
+                    return Promise.all([request, abort()]).catch((err) => err);
                 });
 
                 expect(response).to.deep.equal({
@@ -279,7 +343,7 @@ describe('client/server integration', () => {
                 // abort mechanism work.
 
                 const response = await page.evaluate(() => {
-                    const fetcher = new Fetchr({});
+                    const fetcher = new Fetchr();
                     const promise = fetcher.read('slow', null, {
                         retry: { maxRetries: 5, interval: 0 },
                         timeout: 200,
@@ -298,7 +362,7 @@ describe('client/server integration', () => {
 
             it('can handle timeouts', async () => {
                 const response = await page.evaluate(() => {
-                    const fetcher = new Fetchr({});
+                    const fetcher = new Fetchr();
                     return fetcher
                         .read('error', { error: 'timeout' }, { timeout: 20 })
                         .catch((err) => err);
@@ -324,7 +388,7 @@ describe('client/server integration', () => {
 
             it('can retry failed requests', async () => {
                 const response = await page.evaluate(() => {
-                    const fetcher = new Fetchr({});
+                    const fetcher = new Fetchr();
                     return fetcher
                         .read(
                             'error',
@@ -348,7 +412,7 @@ describe('client/server integration', () => {
                 // instantly.
 
                 const response = await page.evaluate(() => {
-                    const fetcher = new Fetchr({});
+                    const fetcher = new Fetchr();
                     return fetcher
                         .read('slow-then-fast', { reset: true })
                         .then(() =>
@@ -369,7 +433,7 @@ describe('client/server integration', () => {
                     const fetcher = new Fetchr({
                         xhrPath: 'http://localhost:3001',
                     });
-                    return fetcher.create('error', null).catch((err) => err);
+                    return fetcher.create('error').catch((err) => err);
                 });
 
                 expect(response).to.deep.equal({
@@ -395,8 +459,8 @@ describe('client/server integration', () => {
 
             it('can handle service expected errors', async () => {
                 const response = await page.evaluate(() => {
-                    const fetcher = new Fetchr({});
-                    return fetcher.create('error', null).catch((err) => err);
+                    const fetcher = new Fetchr();
+                    return fetcher.create('error').catch((err) => err);
                 });
 
                 expect(response).to.deep.equal({
@@ -426,7 +490,7 @@ describe('client/server integration', () => {
 
             it('can handle service unexpected errors', async () => {
                 const response = await page.evaluate(() => {
-                    const fetcher = new Fetchr({});
+                    const fetcher = new Fetchr();
                     return fetcher
                         .create('error', { error: 'unexpected' })
                         .catch((err) => err);
@@ -459,7 +523,7 @@ describe('client/server integration', () => {
             it('can handle incorrect api path', async () => {
                 const response = await page.evaluate(() => {
                     const fetcher = new Fetchr({ xhrPath: '/non-existent' });
-                    return fetcher.create('item', null).catch((err) => err);
+                    return fetcher.create('item').catch((err) => err);
                 });
 
                 expect(response).to.deep.equal({
@@ -485,7 +549,7 @@ describe('client/server integration', () => {
 
             it('can handle timeouts', async () => {
                 const response = await page.evaluate(() => {
-                    const fetcher = new Fetchr({});
+                    const fetcher = new Fetchr();
                     return fetcher
                         .create('error', { error: 'timeout' }, null, {
                             timeout: 20,
@@ -516,7 +580,7 @@ describe('client/server integration', () => {
 
             it('can retry failed requests', async () => {
                 const response = await page.evaluate(() => {
-                    const fetcher = new Fetchr({});
+                    const fetcher = new Fetchr();
                     return fetcher
                         .create('error', { error: 'retry' }, null, {
                             retry: { maxRetries: 2 },
@@ -536,7 +600,7 @@ describe('client/server integration', () => {
     describe('headers', () => {
         it('can handle request and response headers', async () => {
             const response = await page.evaluate(() => {
-                const fetcher = new Fetchr({});
+                const fetcher = new Fetchr();
                 return fetcher
                     .read('header', null, {
                         headers: { 'x-fetchr-request': '42' },
