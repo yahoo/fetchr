@@ -200,24 +200,67 @@ class Request {
      * @param {Object} errData  The error response for failed request
      * @param {Object} result  The response data for successful request
      */
-    _captureMetaAndStats(errData, result) {
-        const meta = (errData && errData.meta) || (result && result.meta);
+    _captureMetaAndStats(err, meta) {
         if (meta) {
             this.serviceMeta.push(meta);
         }
         if (typeof this._statsCollector === 'function') {
-            const err = errData && errData.err;
             this._statsCollector({
                 resource: this.resource,
                 operation: this.operation,
                 params: this._params,
                 statusCode: err
                     ? err.statusCode
-                    : (result && result.meta && result.meta.statusCode) || 200,
+                    : (meta && meta.statusCode) || 200,
                 err,
                 time: Date.now() - this._startTime,
             });
         }
+    }
+
+    /**
+     * Execute this fetcher request
+     * @returns {Promise<FetchrResponse>}
+     */
+    async _executeRequest() {
+        if (!Fetcher.isRegistered(this.resource)) {
+            const err = new FetchrError(
+                `Service "${sanitizeResourceName(this.resource)}" could not be found`,
+            );
+            return { err };
+        }
+
+        const service = Fetcher.getService(this.resource);
+        const handler = service[this.operation];
+
+        if (!handler) {
+            const err = new FetchrError(
+                `operation: ${this.operation} is undefined on service: ${this.resource}`,
+            );
+            return { err };
+        }
+
+        return new Promise((resolve) => {
+            const args = [
+                this.req,
+                this.resource,
+                this._params,
+                this._clientConfig,
+                function executeRequestCallback(err, data, meta) {
+                    resolve({ err, data, meta });
+                },
+            ];
+
+            if (this.operation === OP_CREATE || this.operation === OP_UPDATE) {
+                args.splice(3, 0, this._body);
+            }
+
+            try {
+                handler.apply(service, args);
+            } catch (err) {
+                resolve({ err });
+            }
+        });
     }
 
     /**
@@ -234,31 +277,19 @@ class Request {
 
         this._startTime = Date.now();
 
-        const promise = new Promise((resolve, reject) => {
-            setImmediate(executeRequest, this, resolve, reject);
-        }).then(
-            (result) => {
-                this._captureMetaAndStats(null, result);
-                return result;
-            },
-            (errData) => {
-                this._captureMetaAndStats(errData);
-                throw errData.err;
-            },
-        );
+        return this._executeRequest().then(({ err, data, meta }) => {
+            this._captureMetaAndStats(err, meta);
+            if (callback) {
+                callback(err, data, meta);
+                return;
+            }
 
-        if (callback) {
-            promise.then(
-                (result) => {
-                    setImmediate(callback, null, result.data, result.meta);
-                },
-                (err) => {
-                    setImmediate(callback, err);
-                },
-            );
-        } else {
-            return promise;
-        }
+            if (err) {
+                throw err;
+            }
+
+            return { data, meta };
+        });
     }
 
     then(resolve, reject) {
@@ -277,45 +308,6 @@ class Request {
                 reject(err);
             }
         });
-    }
-}
-
-/**
- * Execute and resolve/reject this fetcher request
- * @param {Object} request Request instance object
- * @param {Function} resolve function to call when request fulfilled
- * @param {Function} reject function to call when request rejected
- */
-function executeRequest(request, resolve, reject) {
-    const args = [
-        request.req,
-        request.resource,
-        request._params,
-        request._clientConfig,
-        function executeRequestCallback(err, data, meta) {
-            if (err) {
-                reject({ err, meta });
-            } else {
-                resolve({ data, meta });
-            }
-        },
-    ];
-
-    const op = request.operation;
-    if (op === OP_CREATE || op === OP_UPDATE) {
-        args.splice(3, 0, request._body);
-    }
-
-    try {
-        const service = Fetcher.getService(request.resource);
-        if (!service[op]) {
-            throw new FetchrError(
-                `operation: ${op} is undefined on service: ${request.resource}`,
-            );
-        }
-        service[op].apply(service, args);
-    } catch (err) {
-        reject({ err });
     }
 }
 
@@ -689,4 +681,12 @@ module.exports = Fetcher;
  * @param {Object} data request result
  * @param {Object} [meta] request meta-data
  * @param {number} [meta.statusCode=200] http status code to return
+ */
+
+/**
+ * @typedef {Object} FetchrResponse
+ * @property {?object} data - Any data returned by the fetchr resource.
+ * @property {?object} meta - Any meta data returned by the fetchr resource.
+ * @property {?Error} err - an error that occurred before, during or
+ * after request was sent.
  */
