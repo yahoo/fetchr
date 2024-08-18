@@ -1,18 +1,22 @@
 const headersService = {
     resource: 'header',
 
-    read(req, resource, params, config, callback) {
+    async read({ req }) {
         if (req.headers['x-fetchr-request'] !== '42') {
             const err = new Error('missing x-fetchr header');
             err.statusCode = 400;
-            callback(err);
-            return;
+            throw err;
         }
-        callback(
-            null,
-            { headers: 'ok' },
-            { headers: { 'x-fetchr-response': '42' } },
-        );
+        return {
+            data: {
+                headers: 'ok',
+            },
+            meta: {
+                headers: {
+                    'x-fetchr-response': '42',
+                },
+            },
+        };
     },
 };
 
