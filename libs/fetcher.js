@@ -240,6 +240,20 @@ class Request {
             return { err };
         }
 
+        // async based handler
+        if (handler.length <= 1) {
+            return handler
+                .call(service, {
+                    body: this._body,
+                    config: this._clientConfig,
+                    params: this._params,
+                    req: this.req,
+                    resource: this.resource,
+                })
+                .catch((err) => ({ err }));
+        }
+
+        // callback based handler
         return new Promise((resolve) => {
             const args = [
                 this.req,
