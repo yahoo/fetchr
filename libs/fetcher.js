@@ -9,12 +9,29 @@ const OP_READ = 'read';
 const OP_CREATE = 'create';
 const OP_UPDATE = 'update';
 const OP_DELETE = 'delete';
+const OPERATIONS = [OP_READ, OP_CREATE, OP_UPDATE, OP_DELETE];
+
 const RESOURCE_SANTIZER_REGEXP = /[^\w.]+/g;
 
 class FetchrError extends Error {
     constructor(message) {
         super(message);
         this.name = 'FetchrError';
+    }
+}
+
+function _checkResourceHandlers(service) {
+    for (const operation of OPERATIONS) {
+        const handler = service[operation];
+        if (!handler) {
+            continue;
+        }
+
+        if (handler.length > 1) {
+            console.warn(
+                `${service.resource} ${operation} handler is callback based. Callback based resource handlers are deprecated and will be removed in the next version.`,
+            );
+        }
     }
 }
 
@@ -392,6 +409,7 @@ class Fetcher {
                 '"resource" property is missing in service definition.',
             );
         }
+        _checkResourceHandlers(service);
 
         Fetcher.services[resource] = service;
         return;
