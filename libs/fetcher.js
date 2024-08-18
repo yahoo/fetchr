@@ -485,18 +485,14 @@ following services definitions: ${services}.`);
                 return next(badOperationError(resource, operation));
             }
 
-            const serviceMeta = [];
-
             new Request(operation, resource, {
                 req,
-                serviceMeta,
                 statsCollector,
                 paramsProcessor,
             })
                 .params(params)
                 .body(body)
-                .end((err, data) => {
-                    const meta = serviceMeta[0] || {};
+                .end((err, data, meta = {}) => {
                     if (meta.headers) {
                         res.set(meta.headers);
                     }
