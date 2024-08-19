@@ -230,7 +230,7 @@ When an error occurs in your Fetchr CRUD method, you should throw an error objec
 ```js
 export default {
     resource: 'FooService',
-    read: async function create(req, resource, params, configs, callback) {
+    read: async function create(req, resource, params, configs) {
         const err = new Error('it failed');
         err.statusCode = 404;
         err.output = { message: 'Not found', more: 'meta data' };
