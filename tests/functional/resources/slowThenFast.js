@@ -1,3 +1,5 @@
+const wait = require('./wait');
+
 // This resource gives 2 slow responses and then a fast one. This is
 // so, so we can test that fetchr client is able to retry timed out
 // requests.
@@ -8,17 +10,18 @@ const state = {
 
 const slowThenFastService = {
     resource: 'slow-then-fast',
-    read(req, resource, params, config, callback) {
+    async read({ params }) {
         if (params.reset) {
             state.count = 0;
-            callback();
+            return {};
         }
 
         const timeout = state.count === 2 ? 0 : 5000;
         state.count++;
-        setTimeout(() => {
-            callback(null, { attempts: state.count });
-        }, timeout);
+
+        await wait(timeout);
+
+        return { data: { attempts: state.count } };
     },
 };
 

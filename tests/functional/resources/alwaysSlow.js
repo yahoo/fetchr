@@ -1,17 +1,17 @@
+const wait = require('./wait');
+
 // This resource allows us to exercise timeout and abort capacities of
 // the fetchr client.
 
 const alwaysSlowService = {
     resource: 'slow',
-    read(req, resource, params, config, callback) {
-        setTimeout(() => {
-            callback(null, { ok: true });
-        }, 5000);
+    async read() {
+        await wait(5000);
+        return { data: { ok: true } };
     },
-    create(req, resource, params, body, config, callback) {
-        setTimeout(() => {
-            callback(null, { ok: true });
-        }, 5000);
+    async create() {
+        await wait(5000);
+        return { data: { ok: true } };
     },
 };
 

@@ -1,17 +1,17 @@
+const wait = require('./wait');
+
 const retryToggle = { error: true };
 
 const errorsService = {
     resource: 'error',
-    read(req, resource, params, config, callback) {
+    async read({ params }) {
         if (params.error === 'unexpected') {
             throw new Error('unexpected');
         }
 
         if (params.error === 'timeout') {
-            setTimeout(() => {
-                callback(null, { ok: true });
-            }, 100);
-            return;
+            await wait(100);
+            return { data: { ok: true } };
         }
 
         if (params.error === 'retry') {
@@ -19,19 +19,25 @@ const errorsService = {
                 retryToggle.error = false;
                 const err = new Error('retry');
                 err.statusCode = 408;
-                callback(err);
-            } else {
-                callback(null, { retry: 'ok' });
+                throw err;
             }
-            return;
+
+            return { data: { retry: 'ok' } };
         }
 
         const err = new Error('error');
         err.statusCode = 400;
-        callback(err, null, { foo: 'bar' });
+
+        return {
+            err,
+            meta: {
+                foo: 'bar',
+            },
+        };
     },
-    create(req, resource, params, body, config, callback) {
-        this.read(req, resource, params, config, callback);
+
+    async create({ params }) {
+        return this.read({ params });
     },
 };
 

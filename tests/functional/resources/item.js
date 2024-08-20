@@ -3,51 +3,54 @@ const itemsData = {};
 const itemsService = {
     resource: 'item',
 
-    create(req, resource, params, body, config, callback) {
+    async create({ params, body }) {
         const item = {
             id: params.id,
             value: body.value,
         };
         itemsData[item.id] = item;
-        callback(null, item, { statusCode: 201 });
+        return { data: item, meta: { statusCode: 201 } };
     },
 
-    read(req, resource, params, config, callback) {
+    async read({ params }) {
         if (params.id) {
             const item = itemsData[params.id];
             if (!item) {
                 const err = new Error('not found');
                 err.statusCode = 404;
-                callback(err, null, { foo: 42 });
+                return { err, meta: { foo: 42 } };
             } else {
-                callback(null, item, { statusCode: 200 });
+                return { data: item, meta: { statusCode: 200 } };
             }
         } else {
-            callback(null, Object.values(itemsData), { statusCode: 200 });
+            return {
+                data: Object.values(itemsData),
+                meta: { statusCode: 200 },
+            };
         }
     },
 
-    update(req, resource, params, body, config, callback) {
+    async update({ params, body }) {
         const item = itemsData[params.id];
         if (!item) {
             const err = new Error('not found');
             err.statusCode = 404;
-            callback(err);
+            throw err;
         } else {
             const updatedItem = { ...item, ...body };
             itemsData[params.id] = updatedItem;
-            callback(null, updatedItem, { statusCode: 201 });
+            return { data: updatedItem, meta: { statusCode: 201 } };
         }
     },
 
-    delete(req, resource, params, config, callback) {
+    async delete({ params }) {
         try {
             delete itemsData[params.id];
-            callback(null, null, { statusCode: 200 });
-        } catch (_) {
+            return { data: null, meta: { statusCode: 200 } };
+        } catch {
             const err = new Error('not found');
             err.statusCode = 404;
-            callback(err);
+            throw err;
         }
     },
 };

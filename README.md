@@ -75,13 +75,13 @@ export default {
     // resource is required
     resource: 'data_service',
     // at least one of the CRUD methods is required
-    read: function (req, resource, params, config, callback) {
-        //...
+    read: async function ({ req, resource, params, config }) {
+        return { data: 'foo' };
     },
     // other methods
-    // create: function(req, resource, params, body, config, callback) {},
-    // update: function(req, resource, params, body, config, callback) {},
-    // delete: function(req, resource, params, config, callback) {}
+    // create: async function({ req, resource, params, body, config }) {},
+    // update: async function({ req, resource, params, body, config }) {},
+    // delete: async function({ req, resource, params, config }) {}
 };
 ```
 
@@ -173,16 +173,16 @@ property of the resolved value.
 // dataService.js
 export default {
     resource: 'data_service',
-    read: function (req, resource, params, config, callback) {
-        // business logic
-        const data = 'response';
-        const meta = {
-            headers: {
-                'cache-control': 'public, max-age=3600',
+    read: async function ({ req, resource, params, config }) {
+        return {
+            data: 'response', // business logic
+            meta: {
+                headers: {
+                    'cache-control': 'public, max-age=3600',
+                },
+                statusCode: 200, // You can even provide a custom statusCode for the fetch response
             },
-            statusCode: 200, // You can even provide a custom statusCode for the fetch response
         };
-        callback(null, data, meta);
     },
 };
 ```
@@ -225,17 +225,17 @@ fetcher.updateOptions({
 
 ## Error Handling
 
-When an error occurs in your Fetchr CRUD method, you should return an error object to the callback. The error object should contain a `statusCode` (default 500) and `output` property that contains a JSON serializable object which will be sent to the client.
+When an error occurs in your Fetchr CRUD method, you should throw an error object. The error object should contain a `statusCode` (default 500) and `output` property that contains a JSON serializable object which will be sent to the client.
 
 ```js
 export default {
     resource: 'FooService',
-    read: function create(req, resource, params, configs, callback) {
+    read: async function create(req, resource, params, configs) {
         const err = new Error('it failed');
         err.statusCode = 404;
         err.output = { message: 'Not found', more: 'meta data' };
         err.meta = { foo: 'bar' };
-        return callback(err);
+        throw err;
     },
 };
 ```
