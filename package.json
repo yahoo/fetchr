@@ -34,7 +34,7 @@
     "chai": "^4.2.0",
     "eslint": "^8.44.0",
     "express": "^4.17.1",
-    "fetch-mock": "^10.1.1",
+    "fetch-mock": "^11.1.5",
     "mocha": "^10.0.0",
     "mockery": "^2.0.0",
     "node-fetch": "^2.6.2",
