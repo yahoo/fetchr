@@ -5,26 +5,15 @@ const invalidResource = 'invalid_resource';
 const mockErrorService = require('../mock/MockErrorService');
 const mockNoopService = require('../mock/MockNoopService');
 
-module.exports = function testCrud(
-    params,
-    body,
-    config,
-    callback,
-    resolve,
-    reject,
-) {
-    let options = {};
-
-    if (arguments.length === 1) {
-        options = params;
-        params = options.params || defaultOptions.params;
-        body = options.body || defaultOptions.body;
-        config = options.config || defaultOptions.config;
-        callback = options.callback || defaultOptions.callback;
-        resolve = options.resolve || defaultOptions.resolve;
-        reject = options.reject || defaultOptions.reject;
-    }
-
+module.exports = function testCrud({
+    params = defaultOptions.params,
+    body = defaultOptions.body,
+    config = defaultOptions.config,
+    callback = defaultOptions.callback,
+    resolve = defaultOptions.resolve,
+    reject = defaultOptions.reject,
+    disableNoConfigTests = false,
+}) {
     describe('CRUD Interface', function () {
         describe('should work superagent style', function () {
             describe('with callbacks', function () {
@@ -270,7 +259,7 @@ module.exports = function testCrud(
                 );
             });
 
-            if (!options.disableNoConfigTests) {
+            if (!disableNoConfigTests) {
                 // without config
                 // we have a feature flag to disable these tests because
                 // it doesn't make sense to test a feature like CORS without being able to pass in a config

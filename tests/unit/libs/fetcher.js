@@ -1293,8 +1293,15 @@ describe('Server Fetcher', function () {
         beforeEach(function () {
             stats = null;
         });
-        // CRUD
-        testCrud(params, body, config, callbackWithStats, resolve, reject);
+
+        testCrud({
+            params,
+            body,
+            config,
+            callback: callbackWithStats,
+            resolve,
+            reject,
+        });
     });
 });
 
