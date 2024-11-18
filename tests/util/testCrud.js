@@ -13,6 +13,7 @@ module.exports = function testCrud({
     resolve = defaultOptions.resolve,
     reject = defaultOptions.reject,
     disableNoConfigTests = false,
+    isServer = false,
 }) {
     describe('CRUD Interface', function () {
         describe('should work superagent style', function () {
@@ -408,16 +409,23 @@ module.exports = function testCrud({
         });
     });
 
-    describe('should reject no operation service', function () {
+    describe('should reject when resource does not implement operation', function () {
+        function getErrorMessage(err) {
+            return isServer
+                ? err.message
+                : JSON.parse(err.message).output.message;
+        }
+
         it('with callback', function (done) {
             const fetcher = this.fetcher;
             fetcher
                 .read(mockNoopService.resource)
                 .clientConfig(config)
                 .end(function (err) {
+                    const message = getErrorMessage(err);
                     expect(err.name).to.equal('FetchrError');
-                    expect(err.message).to.contain(
-                        'operation: read is undefined on service: mock_noop_service',
+                    expect(message).to.equal(
+                        'Operation "read" is not allowed for resource "mock_noop_service"',
                     );
                     done();
                 });
@@ -429,9 +437,10 @@ module.exports = function testCrud({
                 .read(mockNoopService.resource)
                 .clientConfig(config)
                 .catch(function (err) {
+                    const message = getErrorMessage(err);
                     expect(err.name).to.equal('FetchrError');
-                    expect(err.message).to.contain(
-                        'operation: read is undefined on service: mock_noop_service',
+                    expect(message).to.equal(
+                        'Operation "read" is not allowed for resource "mock_noop_service"',
                     );
                     done();
                 });

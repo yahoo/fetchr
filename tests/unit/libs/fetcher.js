@@ -1301,6 +1301,7 @@ describe('Server Fetcher', function () {
             callback: callbackWithStats,
             resolve,
             reject,
+            isServer: true,
         });
     });
 });
