@@ -595,6 +595,34 @@ describe('client/server integration', () => {
                 });
             });
         });
+
+        describe('client errors', () => {
+            it('handles unknown resources', async () => {
+                const response = await page.evaluate(() => {
+                    const fetcher = new Fetchr();
+                    return fetcher
+                        .create('unknown-resource')
+                        .catch((err) => err);
+                });
+
+                expect(response.statusCode).to.equal(400);
+                expect(response.message).to.equal(
+                    'Resource "unknown*resource" is not registered',
+                );
+            });
+
+            it('handles not implemented operations', async () => {
+                const response = await page.evaluate(() => {
+                    const fetcher = new Fetchr();
+                    return fetcher.delete('error').catch((err) => err);
+                });
+
+                expect(response.statusCode).to.equal(405);
+                expect(JSON.parse(response.message).output.message).to.equal(
+                    'Operation "delete" is not allowed for resource "error"',
+                );
+            });
+        });
     });
 
     describe('headers', () => {

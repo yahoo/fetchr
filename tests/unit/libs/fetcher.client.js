@@ -121,10 +121,20 @@ describe('Client Fetcher', function () {
                 }
             };
         });
+
         beforeEach(function () {
             stats = null;
         });
-        testCrud(params, body, config, callbackWithStats, resolve, reject);
+
+        testCrud({
+            params,
+            body,
+            config,
+            callback: callbackWithStats,
+            reject,
+            resolve,
+        });
+
         after(function () {
             validateRequest = null;
         });
@@ -147,15 +157,17 @@ describe('Client Fetcher', function () {
                 corsPath: corsPath,
             });
         });
+
         testCrud({
-            params: params,
-            body: body,
+            params,
+            body,
             config: { cors: true },
+            callback,
+            reject,
+            resolve,
             disableNoConfigTests: true,
-            callback: callback,
-            resolve: resolve,
-            reject: reject,
         });
+
         after(function () {
             validateRequest = null;
         });
@@ -222,7 +234,16 @@ describe('Client Fetcher', function () {
                     xhrTimeout: 4000,
                 });
             });
-            testCrud(params, body, config, callback, resolve, reject);
+
+            testCrud({
+                params,
+                body,
+                config,
+                callback,
+                resolve,
+                reject,
+            });
+
             after(function () {
                 mockery.deregisterMock('./util/httpRequest');
                 mockery.disable();
@@ -245,17 +266,17 @@ describe('Client Fetcher', function () {
                     xhrTimeout: 4000,
                 });
             });
+
             testCrud({
-                params: params,
-                body: body,
-                config: {
-                    timeout: 5000,
-                },
-                disableNoConfigTests: true,
+                params,
+                body,
+                config: { timeout: 5000 },
                 callback: callback,
                 resolve: resolve,
                 reject: reject,
+                disableNoConfigTests: true,
             });
+
             after(function () {
                 mockery.deregisterMock('./util/httpRequest');
                 mockery.disable();
@@ -277,7 +298,16 @@ describe('Client Fetcher', function () {
                     context: context,
                 });
             });
-            testCrud(params, body, config, callback, resolve, reject);
+
+            testCrud({
+                params,
+                body,
+                config,
+                callback,
+                resolve,
+                reject,
+            });
+
             after(function () {
                 mockery.deregisterMock('./util/httpRequest');
                 mockery.disable();
@@ -325,7 +355,14 @@ describe('Client Fetcher', function () {
                 });
             });
 
-            testCrud(params, body, config, callback, resolve, reject);
+            testCrud({
+                params,
+                body,
+                config,
+                callback,
+                resolve,
+                reject,
+            });
         });
 
         describe('Property Name', function () {
@@ -338,7 +375,14 @@ describe('Client Fetcher', function () {
                 });
             });
 
-            testCrud(params, body, config, callback, resolve, reject);
+            testCrud({
+                params,
+                body,
+                config,
+                callback,
+                resolve,
+                reject,
+            });
         });
 
         describe('Property Names', function () {
@@ -351,7 +395,14 @@ describe('Client Fetcher', function () {
                 });
             });
 
-            testCrud(params, body, config, callback, resolve, reject);
+            testCrud({
+                params,
+                body,
+                config,
+                callback,
+                resolve,
+                reject,
+            });
         });
     });
 
@@ -396,7 +447,16 @@ describe('Client Fetcher', function () {
                     },
                 });
             });
-            testCrud(params, body, config, callback, resolve, reject);
+
+            testCrud({
+                params,
+                body,
+                config,
+                callback,
+                resolve,
+                reject,
+            });
+
             after(function () {
                 mockery.deregisterMock('./util/httpRequest');
                 mockery.disable();
@@ -418,20 +478,17 @@ describe('Client Fetcher', function () {
                     context: context,
                 });
             });
-            var customConfig = {
-                headers: {
-                    'X-APP-VERSION': VERSION,
-                },
-            };
+
             testCrud({
+                params,
+                body,
+                config: { headers: { 'X-APP-VERSION': VERSION } },
+                callback,
+                resolve,
+                reject,
                 disableNoConfigTests: true,
-                params: params,
-                body: body,
-                config: customConfig,
-                callback: callback,
-                resolve: resolve,
-                reject: reject,
             });
+
             after(function () {
                 mockery.deregisterMock('./util/httpRequest');
                 mockery.disable();
@@ -679,7 +736,14 @@ describe('Client Fetcher', function () {
                 });
             });
 
-            testCrud(params, body, config, callback, resolve, reject);
+            testCrud({
+                params,
+                body,
+                config,
+                callback,
+                resolve,
+                reject,
+            });
 
             after(function () {
                 mockery.deregisterMock('./util/httpRequest');
@@ -705,23 +769,24 @@ describe('Client Fetcher', function () {
                 Fetcher = require('../../../libs/fetcher.client');
                 this.fetcher = new Fetcher({});
             });
-            var customConfig = {
-                retry: {
-                    interval: 350,
-                    maxRetries: 2,
-                    statusCodes: [0, 502, 504],
-                },
-                unsafeAllowRetry: true,
-            };
+
             testCrud({
+                params,
+                body,
+                config: {
+                    retry: {
+                        interval: 350,
+                        maxRetries: 2,
+                        statusCodes: [0, 502, 504],
+                    },
+                    unsafeAllowRetry: true,
+                },
+                callback,
+                resolve,
+                reject,
                 disableNoConfigTests: true,
-                params: params,
-                body: body,
-                config: customConfig,
-                callback: callback,
-                resolve: resolve,
-                reject: reject,
             });
+
             after(function () {
                 mockery.deregisterMock('./util/httpRequest');
                 mockery.disable();

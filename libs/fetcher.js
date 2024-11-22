@@ -252,8 +252,10 @@ class Request {
 
         if (!handler) {
             const err = new FetchrError(
-                `operation: ${this.operation} is undefined on service: ${this.resource}`,
+                `Operation "${this.operation}" is not allowed for resource "${sanitizeResourceName(this.resource)}"`,
             );
+            err.statusCode = 405;
+
             return { err };
         }
 
